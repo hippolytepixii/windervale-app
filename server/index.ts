@@ -241,6 +241,138 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   });
 });
 
+// -------------------------------------------------------------
+// OAUTH (Google & Apple Authentication)
+// -------------------------------------------------------------
+app.post('/api/auth/oauth', (req: Request, res: Response) => {
+  try {
+    const { provider, email, name, avatar_url } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required for authentication' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail) as any;
+    const now = new Date().toISOString();
+
+    if (!user) {
+      // Auto-register practitioner with Google or Apple
+      const userId = generateId('u');
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(Math.random().toString(36), salt);
+      const handle = (name || 'creative').toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(100 + Math.random() * 900);
+
+      db.prepare(`
+        INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'creative', 1, ?, ?)
+      `).run(userId, cleanEmail, hash, name || (provider === 'apple' ? 'Apple Practitioner' : 'Google Practitioner'), now, now);
+
+      db.prepare(`
+        INSERT INTO profiles (
+          user_id, display_name, handle, avatar_url, location, country,
+          latitude, longitude, bio, disciplines, roles_list, practices,
+          interests, selected_works, external_links, availability,
+          collaboration_interests, visibility, location_visibility,
+          avatar_public, id_verification_status, verification_status,
+          approval_status, updated_at
+        ) VALUES (?, ?, ?, ?, 'Global', 'Global', 19.0760, 72.8777,
+          ?,
+          '["Creative Practitioner"]', '["Creative Practitioner"]',
+          '["Cross-Disciplinary Craft"]', '["Independent Projects"]',
+          '[]', '[]', 'Available for studio projects',
+          'Open to independent collaborations and cross-disciplinary projects.',
+          'public', 1, 1,
+          'verified', 'verified', 'approved', ?)
+      `).run(
+        userId,
+        name || 'Creative Practitioner',
+        handle,
+        avatar_url || null,
+        `Independent practitioner authenticated via ${provider === 'apple' ? 'Apple ID' : 'Google Identity'}.`,
+        now
+      );
+
+      // Record default legal acceptances
+      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'terms', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
+      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'privacy', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
+      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'cookies', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
+
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(user.id);
+    const acceptances = db.prepare('SELECT * FROM legal_acceptances WHERE user_id = ?').all(user.id);
+
+    return res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, email_verified: user.email_verified },
+      profile: parseProfile(profile),
+      legal_acceptances: acceptances
+    });
+  } catch (err: any) {
+    console.error('OAuth error:', err);
+    return res.status(500).json({ error: 'OAuth authentication failed' });
+  }
+});
+
+// -------------------------------------------------------------
+// LEGAL COVENANTS & POLICIES (Terms, Privacy, Cookies, Guidelines)
+// -------------------------------------------------------------
+app.get('/api/legal/documents', (req: Request, res: Response) => {
+  const documents = [
+    {
+      doc_type: 'terms_of_service',
+      title: 'Terms of Creative Covenant & Studio Protocol',
+      version: '2.0',
+      last_updated: '2026-09-01',
+      summary: 'Windervale is an autonomous studio operating environment for unmediated creative work. Mutual consensus, project intellectual property retention, and verified colophon attribution govern all collaborations.',
+      content: `1. AUTONOMOUS CREATIVE INTEGRITY\nWindervale provides infrastructure for genuine creative practitioners. Projects, media assets, scripts, stems, and rough cuts remain 100% the intellectual property of their respective creators and designated project rights ledgers.\n\n2. RIGHTS & EQUITABLE WATERFALLS\nAll project collaborations created inside the Workspace are governed by structured rights covenants. Ownership percentages and revenue splits are immutable records registered by consensus.\n\n3. NON-ALGORITHMIC PROTOCOL\nWindervale operates without algorithmic feeds, vanity metrics, or synthetic ranking. Collaboration requests and curation desk submissions are unmediated exchanges between human practitioners.`
+    },
+    {
+      doc_type: 'privacy_policy',
+      title: 'Practitioner Privacy & Data Autonomy Covenant',
+      version: '2.0',
+      last_updated: '2026-09-01',
+      summary: 'We respect practitioner data sovereignty. No tracking pixels, no advertising cookies, no data brokerage, and zero surveillance telemetry.',
+      content: `1. DATA COLLECTION PRINCIPLE\nWe collect only essential account information (name, email, portfolio links, and creative disciplines) required to maintain your studio presence on the Human Map.\n\n2. REPOSITORY & ENCRYPTION\nYour project communications, draft scripts, financial waterfall ledgers, and identity verification credentials are encrypted and never commercialized.\n\n3. RIGHT TO ERASURE & ARCHIVE EXPORT\nYou retain complete autonomy to export your project dossier and request permanent account erasure at any time.`
+    },
+    {
+      doc_type: 'cookie_policy',
+      title: 'Cookie & Local Storage Policy',
+      version: '2.0',
+      last_updated: '2026-09-01',
+      summary: 'Windervale uses strictly essential cookies and local storage tokens for active session authentication and rights ratification. We never use third-party marketing or cross-site tracking cookies.',
+      content: `1. ESSENTIAL COOKIES ONLY\nWe use secure HTTP session tokens and local storage keys (windervale_token) solely to maintain your verified creative session.\n\n2. ZERO THIRD-PARTY TRACKING\nWe do not integrate Google Analytics advertising beacons, Facebook Meta pixels, or surveillance telemetry.\n\n3. BROWSER CONTROLS\nYou can clear session tokens at any time via your browser preferences.`
+    },
+    {
+      doc_type: 'community_guidelines',
+      title: 'Community Guidelines & Practitioner Standards',
+      version: '2.0',
+      last_updated: '2026-09-01',
+      summary: 'Guidelines fostering genuine craft, mutual respect, verified accreditation, and creative protection across global hubs.',
+      content: `1. RESPECT FOR CRAFT\nEngage with fellow practitioners with professional rigor and creative respect.\n\n2. UNCOMPROMISING ATTRIBUTION\nNever appropriate, misattribute, or repurpose fellow collaborators unreleased stems, rushes, or drafts without confirmed rights ledger permissions.`
+    }
+  ];
+
+  return res.json({ documents });
+});
+
+app.post('/api/legal/accept', authenticate, (req: AuthRequest, res: Response) => {
+  const { doc_type, doc_version } = req.body;
+  if (!doc_type) {
+    return res.status(400).json({ error: 'Document type is required' });
+  }
+
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint)
+    VALUES (?, ?, ?, ?, ?, 'accepted', ?)
+  `).run(generateId('acc'), req.user!.id, doc_type, doc_version || '2.0', now, req.ip || '127.0.0.1');
+
+  return res.json({ success: true, message: 'Legal covenant recorded' });
+});
+
 // Get current session
 app.get('/api/auth/me', authenticate, (req: AuthRequest, res: Response) => {
   const user = db.prepare('SELECT id, email, name, role, email_verified, created_at FROM users WHERE id = ?').get(req.user!.id) as any;

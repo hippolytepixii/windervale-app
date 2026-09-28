@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { LegalDocument } from '../../types';
-import { Check, ArrowRight, ShieldCheck, Upload, Camera, AlertCircle, Eye, EyeOff, Link as LinkIcon } from 'lucide-react';
+import { Check, ArrowRight, ShieldCheck, Upload, Camera, AlertCircle, Eye, EyeOff, Link as LinkIcon, X } from 'lucide-react';
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -29,8 +29,14 @@ const ID_TYPES = [
 ];
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
-  const { register, login } = useAuth();
+  const { register, login, oauthLogin } = useAuth();
   const [step, setStep] = useState<'identity' | 'media_id' | 'practice' | 'offer_seek' | 'covenants' | 'login'>('identity');
+
+  // OAuth State
+  const [oauthModalOpen, setOauthModalOpen] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState<'google' | 'apple'>('google');
+  const [oauthEmail, setOauthEmail] = useState('');
+  const [oauthName, setOauthName] = useState('');
 
   // Step 1: Identity
   const [name, setName] = useState('');
@@ -266,6 +272,40 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     }
   };
 
+  const handleOpenOAuth = (provider: 'google' | 'apple') => {
+    setOauthProvider(provider);
+    if (provider === 'google') {
+      setOauthEmail(email || loginEmail || 'maya.rao@gmail.com');
+      setOauthName(name || 'Maya Rao');
+    } else {
+      setOauthEmail(email || loginEmail || 'maya.rao@icloud.com');
+      setOauthName(name || 'Maya Rao');
+    }
+    setOauthModalOpen(true);
+  };
+
+  const handleOAuthSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!oauthEmail.trim()) {
+      setError('Please provide an email address for your creative identity.');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      await oauthLogin(oauthProvider, {
+        email: oauthEmail.trim().toLowerCase(),
+        name: oauthName.trim() || undefined,
+      });
+      setOauthModalOpen(false);
+      onComplete();
+    } catch (err: any) {
+      setError(err.message || 'Social authentication protocol failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fbf6f0] text-black p-4 sm:p-6 md:p-10 flex flex-col justify-center items-center select-none film-grain">
       {/* 
@@ -302,6 +342,42 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
                 Establish your practitioner monograph on the independent network.
               </p>
+            </div>
+
+            {/* Social Authentication */}
+            <div className="pt-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenOAuth('google')}
+                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#6A1A4C] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Continue with Google</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenOAuth('apple')}
+                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#6A1A4C] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 170 170">
+                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.07-7.64-7.85-11.83-14.34-5.96-9.14-10.4-19.34-13.32-30.59-2.92-11.25-4.39-21.73-4.39-31.43 0-14.3 3.6-26.15 10.79-35.53 7.2-9.39 16.22-14.15 27.07-14.28 5.75 0 11.75 1.57 18 4.7 6.25 3.13 10.37 4.77 12.38 4.92 1.63-.26 5.86-1.89 12.69-4.89 6.83-3 12.98-4.32 18.45-3.96 14.13.78 25.13 5.85 33.02 15.22-11.64 7.07-17.3 16.73-17 28.98.3 9.4 3.99 17.26 11.06 23.59 7.07 6.33 15.35 10.05 24.84 11.16-2.18 6.53-4.68 13.06-7.5 19.59zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.64 5.53-6.7 12.39-10.47 20.59-11.3 0 .98.05 1.83.16 2.54.1 2.22-.38 4.88-1.44 7.97-1.06 3.09-2.6 6.04-4.62 8.85-4.47 6.07-10.59 9.87-18.35 11.41-.66-4.63-2.2-9.43-4.62-17.83z"/>
+                  </svg>
+                  <span>Continue with Apple</span>
+                </button>
+              </div>
+              <div className="flex items-center my-3">
+                <div className="flex-1 border-t-[1.5px] border-black/20"></div>
+                <span className="px-2 font-mono text-[9px] uppercase tracking-wider text-black/50">
+                  or register with email
+                </span>
+                <div className="flex-1 border-t-[1.5px] border-black/20"></div>
+              </div>
             </div>
 
             <div className="space-y-3 pt-2">
@@ -932,6 +1008,42 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </p>
             </div>
 
+            {/* Social Authentication */}
+            <div className="pt-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenOAuth('google')}
+                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#6A1A4C] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Continue with Google</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenOAuth('apple')}
+                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#6A1A4C] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 170 170">
+                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.07-7.64-7.85-11.83-14.34-5.96-9.14-10.4-19.34-13.32-30.59-2.92-11.25-4.39-21.73-4.39-31.43 0-14.3 3.6-26.15 10.79-35.53 7.2-9.39 16.22-14.15 27.07-14.28 5.75 0 11.75 1.57 18 4.7 6.25 3.13 10.37 4.77 12.38 4.92 1.63-.26 5.86-1.89 12.69-4.89 6.83-3 12.98-4.32 18.45-3.96 14.13.78 25.13 5.85 33.02 15.22-11.64 7.07-17.3 16.73-17 28.98.3 9.4 3.99 17.26 11.06 23.59 7.07 6.33 15.35 10.05 24.84 11.16-2.18 6.53-4.68 13.06-7.5 19.59zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.64 5.53-6.7 12.39-10.47 20.59-11.3 0 .98.05 1.83.16 2.54.1 2.22-.38 4.88-1.44 7.97-1.06 3.09-2.6 6.04-4.62 8.85-4.47 6.07-10.59 9.87-18.35 11.41-.66-4.63-2.2-9.43-4.62-17.83z"/>
+                  </svg>
+                  <span>Continue with Apple</span>
+                </button>
+              </div>
+              <div className="flex items-center my-3">
+                <div className="flex-1 border-t-[1.5px] border-black/20"></div>
+                <span className="px-2 font-mono text-[9px] uppercase tracking-wider text-black/50">
+                  or sign in with password
+                </span>
+                <div className="flex-1 border-t-[1.5px] border-black/20"></div>
+              </div>
+            </div>
+
             <div className="space-y-3 pt-2">
               <div>
                 <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
@@ -979,6 +1091,120 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </button>
             </div>
           </form>
+        )}
+
+        {/* SOCIAL AUTHENTICATION MODAL */}
+        {oauthModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-[#fbf6f0] border-[2.5px] border-black p-6 shadow-2xl relative animate-editorial-fade">
+              <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4 font-mono text-[10px]">
+                <span className="font-bold uppercase tracking-wider text-black flex items-center gap-1.5">
+                  {oauthProvider === 'google' ? 'GOOGLE CREATIVE AUTHENTICATION' : 'APPLE CREATIVE AUTHENTICATION'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOauthModalOpen(false)}
+                  className="p-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-1 mb-4">
+                <h3 className="font-fun font-bold text-xl text-black lowercase">
+                  authorize practitioner profile
+                </h3>
+                <p className="font-fun italic text-xs text-black/75">
+                  Single sign-on authorization protocol for {oauthProvider === 'google' ? 'Google Account' : 'Apple ID'}.
+                </p>
+              </div>
+
+              <form onSubmit={handleOAuthSubmit} className="space-y-3">
+                <div>
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
+                    Practitioner Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={oauthName}
+                    onChange={(e) => setOauthName(e.target.value)}
+                    placeholder="e.g. Clara Vance"
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
+                    {oauthProvider === 'google' ? 'Google Account Email' : 'Apple ID Email'}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={oauthEmail}
+                    onChange={(e) => setOauthEmail(e.target.value)}
+                    placeholder={oauthProvider === 'google' ? 'clara@gmail.com' : 'clara@icloud.com'}
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-black/60 block mb-1.5">
+                    Quick Select Archetypes:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (oauthProvider === 'google') {
+                          setOauthName('Clara Vance');
+                          setOauthEmail('clara.vance@gmail.com');
+                        } else {
+                          setOauthName('Julian Rost');
+                          setOauthEmail('julian.rost@icloud.com');
+                        }
+                      }}
+                      className="px-2 py-1 text-[10px] font-mono bg-white border-[1.5px] border-black hover:bg-[#6A1A4C] hover:text-white transition-colors cursor-pointer"
+                    >
+                      {oauthProvider === 'google' ? 'Clara Vance (Google)' : 'Julian Rost (Apple)'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (oauthProvider === 'google') {
+                          setOauthName('Maya Rao');
+                          setOauthEmail('maya.rao@cinema-lab.org');
+                        } else {
+                          setOauthName('Aarav Mehta');
+                          setOauthEmail('aarav.mehta@appleid.com');
+                        }
+                      }}
+                      className="px-2 py-1 text-[10px] font-mono bg-white border-[1.5px] border-black hover:bg-[#6A1A4C] hover:text-white transition-colors cursor-pointer"
+                    >
+                      {oauthProvider === 'google' ? 'Maya Rao (Director)' : 'Aarav Mehta (Cinematographer)'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t-[2px] border-black flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setOauthModalOpen(false)}
+                    className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !oauthEmail.trim()}
+                    className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>{loading ? 'Authenticating...' : `Authorize with ${oauthProvider === 'google' ? 'Google' : 'Apple'} \u2192`}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ interface AuthContextType {
   legalAcceptances: LegalAcceptance[];
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
+  oauthLogin: (provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -56,6 +57,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const data = await api.login(email, pass);
+      localStorage.setItem('windervale_token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      setProfile(data.profile);
+      setLegalAcceptances(data.legal_acceptances || []);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const oauthLogin = async (provider: 'google' | 'apple', authData: { email: string; name?: string; avatar_url?: string }) => {
+    setIsLoading(true);
+    try {
+      const data = await api.oauthLogin(provider, authData);
       localStorage.setItem('windervale_token', data.token);
       setToken(data.token);
       setUser(data.user);
@@ -133,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         legalAcceptances,
         isLoading,
         login,
+        oauthLogin,
         register,
         logout,
         refreshProfile,
