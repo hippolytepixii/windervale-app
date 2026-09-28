@@ -1,0 +1,46 @@
+{
+  "name": "windervale",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "server": "tsx server/index.ts",
+    "start": "tsx server/index.ts",
+    "dev:all": "concurrently -k -n \"SERVER,CLIENT\" -c \"bgMagenta.bold,bgCyan.bold\" \"npm run server\" \"npm run dev\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "tsx server/test.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.46.0",
+    "mapbox-gl": "^3.30.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mapbox-gl": "^3.4.1",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.6.0",
+    "concurrently": "^10.0.5",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vite": "^5.4.14"
+  }
+}

@@ -1,0 +1,22 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQLite WAL and temp files
+*.db-journal
+*.db-wal
+*.db-shm
+windervale_test.db
+
+# OS files
+.DS_Store
+Thumbs.db
