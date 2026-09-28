@@ -2873,6 +2873,19 @@ app.get('/api/admin/export', requireAdmin, (req: Request, res: Response) => {
   }
 });
 
+// Serve frontend assets from dist in production
+const distDir = path.resolve(__dirname, '../dist');
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.get('*', (req: Request, res: Response, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    return res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`[WINDERVALE API] Creative Operating Environment Server running on port ${PORT}`);
 });
+
