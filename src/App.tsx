@@ -59,11 +59,31 @@ const MainLayout: React.FC = () => {
 
   // Two-Stage Opening Sequence: 'logo' (Stage 1) -> 'splash' (Stage 2) -> 'done'
   const [openingStage, setOpeningStage] = useState<'logo' | 'splash' | 'done'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get('skip_intro') === 'true' ||
+        params.get('view') === 'map' ||
+        params.get('from') === 'website' ||
+        window.location.hash.includes('map')
+      ) {
+        return 'done';
+      }
+    }
     return sessionStorage.getItem('windervale_entered') ? 'done' : 'logo';
   });
 
   // Exactly 4 primary mobile tabs: 'map' | 'connections' | 'workspace' | 'profile'
-  const [activeTab, setActiveTab] = useState<MobileTab>('map');
+  const [activeTab, setActiveTab] = useState<MobileTab>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') || params.get('view');
+      if (tabParam === 'map' || tabParam === 'connections' || tabParam === 'workspace' || tabParam === 'profile') {
+        return tabParam as MobileTab;
+      }
+    }
+    return 'map';
+  });
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectStage, setProjectStage] = useState<'cover' | 'space'>('cover');
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
