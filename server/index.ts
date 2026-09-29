@@ -2874,14 +2874,40 @@ app.get('/api/admin/export', requireAdmin, (req: Request, res: Response) => {
 });
 
 // Serve frontend assets from dist in production
-const distDir = path.resolve(__dirname, '../dist');
-if (fs.existsSync(distDir)) {
+const candidateDistDirs = [
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(__dirname, '../dist'),
+  path.resolve(__dirname, 'dist')
+];
+
+const distDir = candidateDistDirs.find(d => fs.existsSync(path.join(d, 'index.html')));
+
+if (distDir) {
+  console.log(`[WINDERVALE] Serving static production bundle from: ${distDir}`);
   app.use(express.static(distDir));
-  app.get('*', (req: Request, res: Response, next) => {
+  // Express 5 compatible SPA fallback middleware
+  app.use((req: Request, res: Response, next) => {
+    if (req.method !== 'GET') return next();
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
     return res.sendFile(path.join(distDir, 'index.html'));
+  });
+} else {
+  console.warn('[WINDERVALE WARNING] No production dist directory found. Checked:', candidateDistDirs);
+  app.get('/', (_req: Request, res: Response) => {
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Windervale - Initializing</title></head>
+        <body style="background:#0a0a0c;color:#f3efe6;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+          <div style="text-align:center;">
+            <h1 style="letter-spacing:0.2em;text-transform:uppercase;">Windervale</h1>
+            <p style="color:#888;">Compiling production assets... Please refresh in a moment.</p>
+          </div>
+        </body>
+      </html>
+    `);
   });
 }
 
