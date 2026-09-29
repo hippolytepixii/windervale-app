@@ -4,7 +4,6 @@ import { api } from './services/api';
 import { MobileAppShell } from './components/mobile/MobileAppShell';
 import { MobileNav, MobileTab } from './components/mobile/MobileNav';
 import { WebAppShell } from './components/web/WebAppShell';
-import { LogoOpening } from './components/onboarding/LogoOpening';
 import { Splash } from './components/onboarding/Splash';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { HumanMap } from './components/map/HumanMap';
@@ -57,8 +56,8 @@ const MainLayout: React.FC = () => {
     };
   }, []);
 
-  // Two-Stage Opening Sequence: 'logo' (Stage 1) -> 'splash' (Stage 2) -> 'done'
-  const [openingStage, setOpeningStage] = useState<'logo' | 'splash' | 'done'>(() => {
+  // Opening Sequence: 'splash' -> 'done'
+  const [openingStage, setOpeningStage] = useState<'splash' | 'done'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (
@@ -70,7 +69,7 @@ const MainLayout: React.FC = () => {
         return 'done';
       }
     }
-    return sessionStorage.getItem('windervale_entered') ? 'done' : 'logo';
+    return sessionStorage.getItem('windervale_entered') ? 'done' : 'splash';
   });
 
   // Exactly 4 primary mobile tabs: 'map' | 'connections' | 'workspace' | 'profile'
@@ -132,12 +131,7 @@ const MainLayout: React.FC = () => {
     );
   }
 
-  // Stage 1: Classical muse cameo medallion with physical ink animation
-  if (openingStage === 'logo') {
-    return <LogoOpening onComplete={() => setOpeningStage('splash')} />;
-  }
-
-  // Stage 2: How Windervale Works (Editorial Homepage)
+  // How Windervale Works (Editorial Homepage)
   if (openingStage === 'splash') {
     return <Splash onComplete={handleSplashComplete} />;
   }
