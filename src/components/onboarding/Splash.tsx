@@ -20,37 +20,7 @@ const FigureWalking = ({ className = "text-black" }: { className?: string }) => 
   </svg>
 );
 
-// Figure 2: Standing figure looking quietly into the open white void
-const FigureStandingVoid = ({ className = "text-black" }: { className?: string }) => (
-  <svg className={`w-5 h-8 inline-block shrink-0 ${className}`} viewBox="0 0 20 32" fill="currentColor">
-    <circle cx="10" cy="4" r="2.8" />
-    <path d="M8 8 h4 v11 h-4 z" />
-    <line x1="8.5" y1="19" x2="8.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    <line x1="11.5" y1="19" x2="11.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
-
-// Figure 3: Gazing figure looking upward at the architecture
-const FigureGazingVoid = ({ className = "text-black" }: { className?: string }) => (
-  <svg className={`w-5 h-8 inline-block shrink-0 ${className}`} viewBox="0 0 20 32" fill="currentColor">
-    <circle cx="10" cy="3.8" r="2.8" />
-    <path d="M8 7.8 h4 v11 h-4 z" />
-    <line x1="9" y1="18.8" x2="7.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    <line x1="11" y1="18.8" x2="12.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
-
-// Figure 4: Tiny figure climbing staircase
-const FigureClimbing = ({ className = "text-black" }: { className?: string }) => (
-  <svg className={`w-6 h-9 inline-block shrink-0 ${className}`} viewBox="0 0 24 36" fill="currentColor">
-    <circle cx="13" cy="5" r="2.6" />
-    <path d="M10.5 8.5 h5 v10 h-5 z" />
-    <path d="M10.5 10 L6 7 M15.5 10 L20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M11 18.5 L8 28 M14 18.5 L17 23 L21 23" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-// Figure 5: Cinematographer with 16mm camera on tripod
+// Figure 2: Cinematographer with 16mm camera on tripod
 const FigureCamera = ({ className = "text-black" }: { className?: string }) => (
   <svg className={`w-8 h-10 inline-block shrink-0 ${className}`} viewBox="0 0 36 44" fill="currentColor">
     <line x1="24" y1="20" x2="16" y2="42" stroke="currentColor" strokeWidth="1.8" />
@@ -65,7 +35,7 @@ const FigureCamera = ({ className = "text-black" }: { className?: string }) => (
   </svg>
 );
 
-// Figure 6: Reading/drafting seated figure
+// Figure 3: Reading/drafting seated figure
 const FigureReading = ({ className = "text-black" }: { className?: string }) => (
   <svg className={`w-6 h-8 inline-block shrink-0 ${className}`} viewBox="0 0 28 36" fill="currentColor">
     <circle cx="11" cy="6" r="3.2" />
@@ -73,94 +43,6 @@ const FigureReading = ({ className = "text-black" }: { className?: string }) => 
     <path d="M7 22 q-4 6 2 9 q8 1 12 -2 q3 -3 -3 -7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
     <path d="M15 16 l6 -3.5 v7 l-6 3.5 z M15 16 l-6 -3.5 v7 l6 3.5 z" fill="none" stroke="currentColor" strokeWidth="1.4" />
   </svg>
-);
-
-// -----------------------------------------------------------------------------
-// EXACT ARCHITECTURAL MOTIFS FROM THE SUBSTACK SPREAD
-// 1. Tilted empty box, circle, and spaced 't h e   w i n d o w'
-// 2. Staircase elevation with handrail & vertical railings directly on the page
-// -----------------------------------------------------------------------------
-
-const ArchitecturalWindowDrafting = () => (
-  <div className="py-2 my-2 select-none">
-    <div className="flex items-center justify-between pb-1 font-mono text-[9px] uppercase tracking-[0.3em] text-black/70">
-      <span>t &nbsp; h &nbsp; e &nbsp;&nbsp; w &nbsp; i &nbsp; n &nbsp; d &nbsp; o &nbsp; w</span>
-      <span className="text-[7.5px] tracking-widest text-black/40">ELEVATION // PLAN</span>
-    </div>
-
-    {/* Tilted rectangle & circle schema */}
-    <div className="relative w-full h-24 flex items-center justify-center">
-      <svg className="w-full h-full" viewBox="0 0 220 90" fill="none">
-        {/* Tilted empty drafting box (exact pattern from reference) */}
-        <g transform="rotate(-26 70 45)">
-          <rect x="25" y="16" width="60" height="38" stroke="currentColor" strokeWidth="1.3" fill="none" />
-          <line x1="25" y1="16" x2="85" y2="54" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.4" />
-        </g>
-
-        {/* Survey circle with center point */}
-        <circle cx="145" cy="42" r="16" stroke="currentColor" strokeWidth="1.2" fill="none" />
-        <circle cx="145" cy="42" r="2" fill="currentColor" />
-        <line x1="125" y1="42" x2="165" y2="42" stroke="currentColor" strokeWidth="0.6" strokeDasharray="2 2" opacity="0.6" />
-        <line x1="145" y1="22" x2="145" y2="62" stroke="currentColor" strokeWidth="0.6" strokeDasharray="2 2" opacity="0.6" />
-
-        {/* Tiny figure standing near the circle */}
-        <g transform="translate(180, 26) scale(0.65)">
-          <circle cx="10" cy="4" r="2.8" fill="currentColor" />
-          <path d="M8 8 h4 v11 h-4 z" fill="currentColor" />
-          <line x1="8.5" y1="19" x2="8.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="11.5" y1="19" x2="11.5" y2="30" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </g>
-      </svg>
-    </div>
-  </div>
-);
-
-const ArchitecturalStaircasePure = () => (
-  <div className="w-full my-4 select-none">
-    {/* Pure architectural line drawing directly on the page (NO rounded cards, NO gray boxes) */}
-    <div className="relative w-full">
-      <svg className="w-full h-32" viewBox="0 0 320 120" fill="none">
-        {/* Ground baseline */}
-        <line x1="10" y1="105" x2="310" y2="105" stroke="currentColor" strokeWidth="1.4" />
-
-        {/* Elevation staircase steps */}
-        <path
-          d="M 40 105 L 85 105 L 85 85 L 135 85 L 135 65 L 185 65 L 185 45 L 235 45 L 235 25 L 285 25"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          fill="none"
-        />
-
-        {/* Top landing and rear vertical wall */}
-        <line x1="285" y1="25" x2="305" y2="25" stroke="currentColor" strokeWidth="1.6" />
-        <line x1="305" y1="25" x2="305" y2="105" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" opacity="0.5" />
-
-        {/* Handrail parallel to stairs */}
-        <line x1="38" y1="70" x2="238" y2="-10" stroke="currentColor" strokeWidth="1.4" />
-        <line x1="238" y1="-10" x2="305" y2="-10" stroke="currentColor" strokeWidth="1.4" />
-
-        {/* Vertical baluster spindles */}
-        <line x1="60" y1="105" x2="60" y2="60" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-        <line x1="110" y1="85" x2="110" y2="40" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-        <line x1="160" y1="65" x2="160" y2="20" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-        <line x1="210" y1="45" x2="210" y2="0" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-        <line x1="260" y1="25" x2="260" y2="-10" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-        <line x1="300" y1="25" x2="300" y2="-10" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
-
-        {/* Dimension labels */}
-        <text x="12" y="115" className="font-mono text-[7px] fill-current opacity-60">+0.00</text>
-        <text x="290" y="115" className="font-mono text-[7px] fill-current opacity-60">+2.40m</text>
-
-        {/* Tiny figure climbing the steps */}
-        <g transform="translate(145, 34) scale(0.7)">
-          <circle cx="13" cy="5" r="2.6" fill="currentColor" />
-          <path d="M10.5 8.5 h5 v10 h-5 z" fill="currentColor" />
-          <path d="M10.5 10 L6 7 M15.5 10 L20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M11 18.5 L8 28 M14 18.5 L17 23 L21 23" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </g>
-      </svg>
-    </div>
-  </div>
 );
 
 export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
@@ -436,179 +318,9 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
               className="flex items-center gap-2 group cursor-pointer text-white/70 hover:text-white transition-colors"
             >
               <span className="font-mono text-[11px] md:text-xs tracking-[0.2em] uppercase font-bold text-center bg-black/80 px-4 py-1.5 rounded-full border border-white/20 shadow-[2px_2px_0px_#000000]">
-                EXPLORE ARCHITECTURE &amp; MOVEMENTS &darr;
+                EXPLORE THE 8 MOVEMENTS &darr;
               </span>
             </button>
-          </div>
-        </section>
-
-        {/* ====================================================================
-            THE AUTHENTIC AVANT-GARDE BOOK SPREAD (GRACE PISCITELLO PATTERN)
-            Exact replication of the user's reference image:
-            - Open facing book pages side by side on ivory paper (#FFFDF9)
-            - NO gray cards, NO rounded enclosing boxes around diagrams
-            - Left Page: 'Wandering About the Creative Field' with text flowing
-              and wrapping around intentional white voids with lonely scale figures!
-            - Right Page: 'FONDATION // The Poetry of Space' with:
-              * 'Part 1.' margin mark
-              * Spaced text 't h e   w i n d o w' with tilted box and circle
-              * Raw architectural staircase elevation directly on the baseline
-              * Text wrapping tightly under and around the stairs
-              * Full justified text across the bottom
-            ==================================================================== */}
-        <section className="my-14 sm:my-20">
-          <div className="w-full bg-[#FFFDF9] text-black border-[2.5px] border-black rounded-3xl p-6 sm:p-10 md:p-14 shadow-[10px_10px_0px_#000000] relative">
-            {/* Center Book Spine Line (Desktop) */}
-            <div className="hidden lg:block absolute top-8 bottom-8 left-1/2 w-[1px] bg-black/15 pointer-events-none" />
-
-            {/* Two Facing Book Pages */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-              
-              {/* =============================================================
-                  PAGE 1 (LEFT): WANDERING ABOUT THE CREATIVE FIELD
-                  Exact pattern: dense justified book text with open white voids
-                  where tiny figures stand, walk, and look into the space
-                  ============================================================= */}
-              <div className="space-y-4">
-                {/* Book Running Header */}
-                <div className="flex items-center justify-between border-b border-black/20 pb-2 text-[10px] font-mono uppercase tracking-widest text-black/60">
-                  <span>WINDERVALE // BROADSHEET</span>
-                  <span>FOLIO 106</span>
-                </div>
-
-                {/* Chapter Title matching the reference layout */}
-                <div className="pt-1 pb-3">
-                  <h2 className="font-serif font-bold text-xl sm:text-2xl text-black tracking-tight leading-snug">
-                    Wandering About the Creative Field
-                  </h2>
-                  <div className="w-8 h-[1px] bg-black/40 mt-1.5" />
-                </div>
-
-                {/* 
-                  Dense Book Prose with True Floating Negative Spaces
-                  Text naturally wraps around the open white space where tiny figures stand
-                */}
-                <div className="text-[12.5px] sm:text-[13px] leading-[1.65] font-serif text-black/90 text-justify hyphens-auto space-y-3">
-                  {/* Floating White Void 1 (Upper Right): A lonely figure looking into the void */}
-                  <div className="float-right w-24 h-28 ml-3 mb-2 flex flex-col items-center justify-center pointer-events-none">
-                    <FigureStandingVoid className="text-black scale-110" />
-                    <span className="font-mono text-[6.5px] text-black/40 uppercase tracking-widest pt-2">
-                      FIG. 01 &middot; FIELD
-                    </span>
-                  </div>
-
-                  <p>
-                    <span className="float-left text-3xl font-serif font-bold pr-1.5 pt-0.5 leading-none text-black">
-                      I
-                    </span>
-                    ndependent art demands architectural silence. For decades, creative practitioners have been corralled into algorithmic funnels where creative output is pulverized into ephemeral vanity metrics. The memory came into focus: unmediated craft as a shelter of time. In contemplation, the lines and edges of each frame define space rather than commercial consumption.
-                  </p>
-
-                  {/* Floating White Void 2 (Mid-Left): Walking figure between paragraphs */}
-                  <div className="float-left w-20 h-24 mr-3 my-1 flex flex-col items-center justify-center pointer-events-none">
-                    <FigureWalking className="text-black scale-105" />
-                  </div>
-
-                  <p>
-                    On the Human Map, every practitioner is an unmediated node in space. The physical film roll exists in real meters; a sound stem occupies real Hertz; a creative partnership is an immutable covenant between two names. You wander across disciplines: finding the 16mm cinematographer who shoots what your modular synthesizer plays, or the scenographer who understands your spatial score.
-                  </p>
-
-                  <p>
-                    The words fall into place as stones become walls. No automated feeds. No algorithmic ranking. Just architects, directors, typographers, and sound artists building complete project worlds together inside sovereign workspaces.
-                  </p>
-
-                  {/* Floating White Void 3 (Bottom Center): Tiny gazing figure */}
-                  <div className="float-right w-16 h-20 ml-2 mt-2 flex flex-col items-center justify-center pointer-events-none">
-                    <FigureGazingVoid className="text-black scale-105" />
-                  </div>
-
-                  <p>
-                    He looked across the landscape, taking it all in: his mind quiet and relentless. The practitioner stands alone before the blank ground, until another hand is extended across the grid. The work remains sovereign. The colophon is signed. The archive is sealed.
-                  </p>
-                </div>
-
-                {/* Left Page Bottom Folio */}
-                <div className="pt-4 border-t border-black/15 flex items-center justify-between font-mono text-[9px] text-black/50 uppercase">
-                  <span>UNMEDIATED FIELD // SECTION A</span>
-                  <span className="font-bold text-black">106</span>
-                </div>
-              </div>
-
-              {/* =============================================================
-                  PAGE 2 (RIGHT): FONDATION // THE POETRY OF SPACE
-                  Exact pattern:
-                  - Centered FONDATION header with rule and subtitle
-                  - 'Part 1.' in left margin
-                  - Spaced 't h e   w i n d o w' with tilted box and survey circle
-                  - Raw staircase elevation line drawing directly on page baseline
-                  - Text wrapping around the stairs
-                  - Grounding wide-measure book text at bottom
-                  ============================================================= */}
-              <div className="space-y-4">
-                {/* Book Running Header */}
-                <div className="flex items-center justify-between border-b border-black/20 pb-2 text-[10px] font-mono uppercase tracking-widest text-black/60">
-                  <span>STUDIO ATELIER ELEVATION</span>
-                  <span>FOLIO 107</span>
-                </div>
-
-                {/* Centered FONDATION Header matching the reference */}
-                <div className="text-center pt-1 pb-2">
-                  <h3 className="font-serif font-bold text-lg sm:text-xl tracking-[0.22em] uppercase text-black">
-                    FONDATION
-                  </h3>
-                  <div className="w-12 h-[1px] bg-black mx-auto my-1.5" />
-                  <p className="font-serif italic text-xs text-black/75 tracking-tight">
-                    The Poetry of Language in Context of Space
-                  </p>
-                </div>
-
-                {/* Margin label 'Part 1.' and upper drafting field */}
-                <div className="relative">
-                  <span className="font-serif italic font-bold text-xs text-black block pb-1">
-                    Part 1.
-                  </span>
-
-                  {/* Upper prose wrapping around the window drafting schema */}
-                  <div className="text-[12.5px] sm:text-[13px] leading-[1.65] font-serif text-black/90 text-justify hyphens-auto">
-                    <p>
-                      "Like a footing reminder of that of the universe or rather its reality: every beginning is slow." The architect returns to the table, his hands resting on a white sheet of paper.
-                    </p>
-
-                    {/* Tilted box, compass circle, and 't h e   w i n d o w' */}
-                    <ArchitecturalWindowDrafting />
-
-                    <p>
-                      He entered to the place where a thin line was drawn across the darkness: a table, four planes of illumination, a window looking out toward the unmeasured terrain.
-                    </p>
-                  </div>
-
-                  {/* 
-                    Raw Staircase Elevation line drawing directly on page
-                    (NO card, NO gray box, pure architectural drafting)
-                  */}
-                  <ArchitecturalStaircasePure />
-
-                  {/* 
-                    Full-width grounding text beneath the staircase
-                    Matching the reference's broad paragraph lines
-                  */}
-                  <div className="text-[12.5px] sm:text-[13px] leading-[1.65] font-serif text-black/90 text-justify hyphens-auto space-y-2 pt-1">
-                    <p>
-                      Each step of the eight movements forms an immutable threshold: from discovery on the Human Map to legal rights protection, sound stem archiving, and cinema slates. The words fall into place as stones become walls, in rhythm of exciting reeds and percussion.
-                    </p>
-                    <p>
-                      The space opens once again: day after day will become his home. My house is based on noble words. The work is protected before the lights are struck.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right Page Bottom Folio */}
-                <div className="pt-4 border-t border-black/15 flex items-center justify-between font-mono text-[9px] text-black/50 uppercase">
-                  <span>ATELIER ELEVATION // SECTION B</span>
-                  <span className="font-bold text-black">107</span>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
