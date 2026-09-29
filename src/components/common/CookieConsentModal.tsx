@@ -13,10 +13,16 @@ export const CookieConsentModal: React.FC = () => {
   useEffect(() => {
     const consent = localStorage.getItem('windervale_cookie_consent');
     if (!consent) {
-      // Show banner after brief delay
-      const timer = setTimeout(() => setShowBanner(true), 800);
-      return () => clearTimeout(timer);
+      setShowBanner(true);
     }
+
+    const handleOpenCookies = () => {
+      setShowBanner(true);
+      setShowLegalModal(false);
+    };
+
+    window.addEventListener('windervale_open_cookies', handleOpenCookies);
+    return () => window.removeEventListener('windervale_open_cookies', handleOpenCookies);
   }, []);
 
   const loadDocs = async () => {
@@ -64,7 +70,7 @@ export const CookieConsentModal: React.FC = () => {
     <>
       {/* FLOATING BOTTOM BANNER */}
       {showBanner && !showLegalModal && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-8 md:right-8 z-50 max-w-4xl mx-auto animate-editorial-fade">
+        <div className="fixed bottom-4 left-4 right-4 md:left-8 md:right-8 z-[99999] max-w-4xl mx-auto animate-editorial-fade">
           <div className="border-[2.5px] border-black bg-[#FFFDF9] p-4 sm:p-5 shadow-[6px_6px_0px_#000000] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5 max-w-2xl">
               <div className="flex items-center gap-2">
@@ -123,7 +129,7 @@ export const CookieConsentModal: React.FC = () => {
 
       {/* FULL LEGAL COVENANT MODAL */}
       {showLegalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-editorial-fade">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-editorial-fade">
           <div className="border-[2.5px] border-black bg-[#FFFDF9] max-w-2xl w-full p-6 space-y-4 shadow-[0_16px_36px_rgba(0,0,0,0.6)] max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
@@ -221,6 +227,19 @@ export const CookieConsentModal: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* PERSISTENT FLOATING COOKIES & PRIVACY BADGE */}
+      {!showBanner && !showLegalModal && (
+        <button
+          type="button"
+          onClick={() => setShowBanner(true)}
+          className="fixed bottom-3 left-3 z-[9999] bg-[#0a0a0c]/85 hover:bg-[#0a0a0c] text-white/80 hover:text-white border border-white/20 px-2.5 py-1.5 rounded font-mono text-[9px] uppercase tracking-wider backdrop-blur flex items-center gap-1.5 shadow-lg transition-all cursor-pointer select-none"
+          title="Cookies, Privacy &amp; Creative Protocol"
+        >
+          <Cookie className="w-3 h-3 text-[#FAF7F2]" />
+          <span>Cookies &amp; Privacy</span>
+        </button>
       )}
     </>
   );

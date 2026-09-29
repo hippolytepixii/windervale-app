@@ -274,13 +274,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const handleOpenOAuth = (provider: 'google' | 'apple') => {
     setOauthProvider(provider);
-    if (provider === 'google') {
-      setOauthEmail(email || loginEmail || 'maya.rao@gmail.com');
-      setOauthName(name || 'Maya Rao');
-    } else {
-      setOauthEmail(email || loginEmail || 'maya.rao@icloud.com');
-      setOauthName(name || 'Maya Rao');
-    }
+    setOauthEmail((email || loginEmail || '').trim());
+    setOauthName((name || '').trim());
     setOauthModalOpen(true);
   };
 
@@ -1099,7 +1094,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="w-full max-w-md bg-[#fbf6f0] border-[2.5px] border-black p-6 shadow-2xl relative animate-editorial-fade">
               <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4 font-mono text-[10px]">
                 <span className="font-bold uppercase tracking-wider text-black flex items-center gap-1.5">
-                  {oauthProvider === 'google' ? 'GOOGLE CREATIVE AUTHENTICATION' : 'APPLE CREATIVE AUTHENTICATION'}
+                  {oauthProvider === 'google' ? 'SIGN IN WITH GOOGLE' : 'SIGN IN WITH APPLE'}
                 </span>
                 <button
                   type="button"
@@ -1112,78 +1107,40 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
               <div className="space-y-1 mb-4">
                 <h3 className="font-fun font-bold text-xl text-black lowercase">
-                  authorize practitioner profile
+                  {oauthProvider === 'google' ? 'google account sign in' : 'apple id sign in'}
                 </h3>
                 <p className="font-fun italic text-xs text-black/75">
-                  Single sign-on authorization protocol for {oauthProvider === 'google' ? 'Google Account' : 'Apple ID'}.
+                  Enter your {oauthProvider === 'google' ? 'Google' : 'Apple'} email to connect and enter the application.
                 </p>
               </div>
 
               <form onSubmit={handleOAuthSubmit} className="space-y-3">
                 <div>
                   <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    Practitioner Name
+                    Your Full Name
                   </label>
                   <input
                     type="text"
                     required
                     value={oauthName}
                     onChange={(e) => setOauthName(e.target.value)}
-                    placeholder="e.g. Clara Vance"
+                    placeholder="Your Name"
                     className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    {oauthProvider === 'google' ? 'Google Account Email' : 'Apple ID Email'}
+                    {oauthProvider === 'google' ? 'Google Email' : 'Apple ID Email'}
                   </label>
                   <input
                     type="email"
                     required
                     value={oauthEmail}
                     onChange={(e) => setOauthEmail(e.target.value)}
-                    placeholder={oauthProvider === 'google' ? 'clara@gmail.com' : 'clara@icloud.com'}
+                    placeholder={oauthProvider === 'google' ? 'you@gmail.com' : 'you@icloud.com'}
                     className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                   />
-                </div>
-
-                <div className="pt-2">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-black/60 block mb-1.5">
-                    Quick Select Archetypes:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (oauthProvider === 'google') {
-                          setOauthName('Clara Vance');
-                          setOauthEmail('clara.vance@gmail.com');
-                        } else {
-                          setOauthName('Julian Rost');
-                          setOauthEmail('julian.rost@icloud.com');
-                        }
-                      }}
-                      className="px-2 py-1 text-[10px] font-mono bg-white border-[1.5px] border-black hover:bg-[#6A1A4C] hover:text-white transition-colors cursor-pointer"
-                    >
-                      {oauthProvider === 'google' ? 'Clara Vance (Google)' : 'Julian Rost (Apple)'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (oauthProvider === 'google') {
-                          setOauthName('Maya Rao');
-                          setOauthEmail('maya.rao@cinema-lab.org');
-                        } else {
-                          setOauthName('Aarav Mehta');
-                          setOauthEmail('aarav.mehta@appleid.com');
-                        }
-                      }}
-                      className="px-2 py-1 text-[10px] font-mono bg-white border-[1.5px] border-black hover:bg-[#6A1A4C] hover:text-white transition-colors cursor-pointer"
-                    >
-                      {oauthProvider === 'google' ? 'Maya Rao (Director)' : 'Aarav Mehta (Cinematographer)'}
-                    </button>
-                  </div>
                 </div>
 
                 <div className="pt-3 border-t-[2px] border-black flex items-center justify-between">
@@ -1199,7 +1156,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     disabled={loading || !oauthEmail.trim()}
                     className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer"
                   >
-                    <span>{loading ? 'Authenticating...' : `Authorize with ${oauthProvider === 'google' ? 'Google' : 'Apple'} \u2192`}</span>
+                    <span>{loading ? 'Authenticating...' : 'Enter Application \u2192'}</span>
                   </button>
                 </div>
               </form>

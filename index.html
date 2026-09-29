@@ -20,5 +20,12 @@
   <body class="bg-[#fbf6f0] text-black font-serif antialiased selection:bg-[#6A1A4C] selection:text-white overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

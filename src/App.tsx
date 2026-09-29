@@ -16,6 +16,7 @@ import { SettingsView } from './components/settings/SettingsView';
 import { CurationPendingView } from './components/onboarding/CurationPendingView';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { CookieConsentModal } from './components/common/CookieConsentModal';
+import { MobileInstallBanner } from './components/common/MobileInstallBanner';
 
 const MainLayout: React.FC = () => {
   const { user, profile, refreshProfile, isLoading } = useAuth();
@@ -281,6 +282,7 @@ const MainLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
+      <MobileInstallBanner />
       <MainLayout />
       <CookieConsentModal />
     </AuthProvider>
