@@ -228,19 +228,6 @@ export const CookieConsentModal: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* PERSISTENT FLOATING COOKIES & PRIVACY BADGE */}
-      {!showBanner && !showLegalModal && (
-        <button
-          type="button"
-          onClick={() => setShowBanner(true)}
-          className="fixed bottom-3 left-3 z-[9999] bg-[#0a0a0c]/85 hover:bg-[#0a0a0c] text-white/80 hover:text-white border border-white/20 px-2.5 py-1.5 rounded font-mono text-[9px] uppercase tracking-wider backdrop-blur flex items-center gap-1.5 shadow-lg transition-all cursor-pointer select-none"
-          title="Cookies, Privacy &amp; Creative Protocol"
-        >
-          <Cookie className="w-3 h-3 text-[#FAF7F2]" />
-          <span>Cookies &amp; Privacy</span>
-        </button>
-      )}
     </>
   );
 };

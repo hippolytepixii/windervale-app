@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { NotificationItem } from '../../types';
 import { Search, Bell, Settings, User as UserIcon, LogOut, CheckCheck, Compass, Sparkles } from 'lucide-react';
+import { InstallAppButton } from './InstallAppModal';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -73,6 +74,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
             <span className="hidden sm:inline">SEARCH</span>
             <kbd className="hidden sm:inline text-[9px] bg-wv-surface px-1.5 py-0.5 border border-wv-border text-wv-dust">⌘K</kbd>
           </button>
+
+          {/* Download Standalone App */}
+          <InstallAppButton variant="masthead" />
 
           {user ? (
             <>

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { InstallAppButton, MobileInstallTopBanner } from '../common/InstallAppModal';
+import { Smartphone } from 'lucide-react';
 
 interface SplashProps {
   onComplete: () => void;
@@ -74,7 +76,10 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-[#000000] text-[#FAF7F2] select-none overflow-x-hidden relative">
+    <div className="min-h-screen w-full bg-[#000000] text-[#FAF7F2] select-none overflow-x-hidden relative flex flex-col">
+      {/* Mobile Top Install Announcement */}
+      <MobileInstallTopBanner />
+
       {/* Solid pitch dark canvas background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-[#000000]" />
 
@@ -100,6 +105,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             </div>
 
             <div className="flex items-center gap-3 self-end sm:self-auto">
+              <InstallAppButton variant="masthead" />
               <span className="font-mono text-[10px] tracking-widest uppercase bg-[#FFFDF9] text-black px-3.5 py-1 rounded-full font-black border border-black shadow-[2px_2px_0px_#000000]">
                 STUDIO DIRECTORY
               </span>
@@ -146,8 +152,8 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
               </p>
             </div>
 
-            {/* Instant Hero CTA Button */}
-            <div className="pt-2 flex items-center gap-4">
+            {/* Instant Hero CTA Buttons */}
+            <div className="pt-2 flex flex-wrap items-center gap-4">
               <button
                 onClick={handleEnter}
                 className="group inline-flex items-center gap-4 bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] border-[2.5px] border-black px-7 sm:px-9 py-3.5 sm:py-4 rounded-full shadow-[6px_6px_0px_#000000] hover:shadow-[2px_2px_0px_#000000] hover:translate-x-1 hover:translate-y-1 transition-all duration-200 cursor-pointer select-none"
@@ -160,6 +166,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
                   [ open workspace &rarr; ]
                 </span>
               </button>
+              <InstallAppButton variant="hero" />
             </div>
           </div>
 
@@ -284,6 +291,27 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
                 <span className="font-bold underline underline-offset-2">CLICK TO ENTER &rarr;</span>
               </div>
             </button>
+          </div>
+
+          {/* Dedicated Standalone Mobile Atelier Plaque */}
+          <div className="pt-6 max-w-2xl mx-auto">
+            <div className="bg-[#FFFDF9] rounded-3xl border-[2.5px] border-black p-6 sm:p-7 space-y-4 shadow-[7px_7px_0px_#000000] text-black">
+              <div className="flex items-center justify-between border-b-[2px] border-black pb-2.5">
+                <span className="font-mono text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
+                  <span className="p-1 bg-[#6A1A4C] text-white">
+                    <Smartphone className="w-3.5 h-3.5" />
+                  </span>
+                  <span>STANDALONE MOBILE APPLICATION</span>
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-wider bg-black text-white px-2.5 py-0.5 font-bold">
+                  DIRECT INSTALL
+                </span>
+              </div>
+              <p className="font-fun text-xs sm:text-sm text-black/85 leading-relaxed">
+                Launch Windervale unmediated from your home screen in full screen without browser tabs or address bars. Instant access to your studio and the Human Map.
+              </p>
+              <InstallAppButton variant="card" />
+            </div>
           </div>
 
           {/* Colophon Footer */}
