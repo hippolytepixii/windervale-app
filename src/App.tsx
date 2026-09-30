@@ -47,6 +47,22 @@ const MainLayout: React.FC = () => {
         window.location.hash.startsWith('#admin') ||
         window.location.search.includes('admin=true')
       );
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || params.get('view');
+      if (path.startsWith('/map') || tab === 'map' || window.location.hash.includes('map')) {
+        setOpeningStage('done');
+        setActiveTab('map');
+      } else if (path.startsWith('/connections') || tab === 'connections') {
+        setOpeningStage('done');
+        setActiveTab('connections');
+      } else if (path.startsWith('/workspace') || tab === 'workspace') {
+        setOpeningStage('done');
+        setActiveTab('workspace');
+      } else if (path.startsWith('/profile') || tab === 'profile') {
+        setOpeningStage('done');
+        setActiveTab('profile');
+      }
     };
     window.addEventListener('hashchange', handleLocationChange);
     window.addEventListener('popstate', handleLocationChange);
@@ -60,10 +76,16 @@ const MainLayout: React.FC = () => {
   const [openingStage, setOpeningStage] = useState<'splash' | 'done'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const path = window.location.pathname.toLowerCase();
       if (
         params.get('skip_intro') === 'true' ||
         params.get('view') === 'map' ||
         params.get('from') === 'website' ||
+        path.startsWith('/map') ||
+        path === '/map' ||
+        path.startsWith('/connections') ||
+        path.startsWith('/workspace') ||
+        path.startsWith('/profile') ||
         window.location.hash.includes('map')
       ) {
         return 'done';
@@ -76,6 +98,19 @@ const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<MobileTab>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith('/map') || path === '/map') {
+        return 'map';
+      }
+      if (path.startsWith('/connections') || path === '/connections') {
+        return 'connections';
+      }
+      if (path.startsWith('/workspace') || path === '/workspace') {
+        return 'workspace';
+      }
+      if (path.startsWith('/profile') || path === '/profile') {
+        return 'profile';
+      }
       const tabParam = params.get('tab') || params.get('view');
       if (tabParam === 'map' || tabParam === 'connections' || tabParam === 'workspace' || tabParam === 'profile') {
         return tabParam as MobileTab;
