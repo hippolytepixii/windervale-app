@@ -144,14 +144,6 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
               <p className="font-fun text-base sm:text-lg text-black/90 leading-relaxed font-normal">
                 No algorithmic scoring. No vanity metrics. Just artists, filmmakers, musicians, and designers building master works together in unmediated project spaces.
               </p>
-
-              {/* Pill tags for disciplines */}
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-black/15 font-mono text-[10px] font-bold">
-                <span className="bg-black text-[#FFFDF9] px-3 py-1 rounded-full uppercase">16MM &amp; 35MM CINEMA</span>
-                <span className="bg-black text-[#FFFDF9] px-3 py-1 rounded-full uppercase">ANALOG AUDIO</span>
-                <span className="bg-black text-[#FFFDF9] px-3 py-1 rounded-full uppercase">TYPOGRAPHY &amp; PRINT</span>
-                <span className="bg-black text-[#FFFDF9] px-3 py-1 rounded-full uppercase">SCULPTURE &amp; SPATIAL</span>
-              </div>
             </div>
 
             {/* Instant Hero CTA Button */}

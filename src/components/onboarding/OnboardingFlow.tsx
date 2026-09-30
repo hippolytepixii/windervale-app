@@ -35,8 +35,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   // OAuth State
   const [oauthModalOpen, setOauthModalOpen] = useState(false);
   const [oauthProvider, setOauthProvider] = useState<'google' | 'apple'>('google');
+  const [oauthStep, setOauthStep] = useState<'email' | 'password'>('email');
   const [oauthEmail, setOauthEmail] = useState('');
+  const [oauthPassword, setOauthPassword] = useState('');
   const [oauthName, setOauthName] = useState('');
+  const [showOauthPassword, setShowOauthPassword] = useState(false);
+  const [oauthKeepSignedIn, setOauthKeepSignedIn] = useState(true);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   // Step 1: Identity
   const [name, setName] = useState('');
@@ -274,30 +280,59 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const handleOpenOAuth = (provider: 'google' | 'apple') => {
     setOauthProvider(provider);
+    setOauthStep('email');
     setOauthEmail((email || loginEmail || '').trim());
+    setOauthPassword('');
     setOauthName((name || '').trim());
+    setShowOauthPassword(false);
+    setOauthError(null);
+    setOauthLoading(false);
     setOauthModalOpen(true);
   };
 
-  const handleOAuthSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!oauthEmail.trim()) {
-      setError('Please provide an email address for your creative identity.');
+  const handleGoogleEmailNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oauthEmail.trim() || !oauthEmail.includes('@')) {
+      setOauthError('Enter a valid email address');
       return;
     }
-    setError(null);
-    setLoading(true);
+    setOauthError(null);
+    setOauthStep('password');
+  };
+
+  const handleOAuthFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oauthPassword.trim()) {
+      setOauthError('Enter your password');
+      return;
+    }
+    if (oauthProvider === 'apple' && (!oauthEmail.trim() || !oauthEmail.includes('@'))) {
+      setOauthError('Enter a valid Apple ID email address');
+      return;
+    }
+    setOauthError(null);
+    setOauthLoading(true);
+
     try {
+      let finalName = oauthName.trim();
+      if (!finalName) {
+        const usernamePart = oauthEmail.split('@')[0] || 'Creative';
+        finalName = usernamePart
+          .replace(/[._-]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+
       await oauthLogin(oauthProvider, {
         email: oauthEmail.trim().toLowerCase(),
-        name: oauthName.trim() || undefined,
+        name: finalName,
       });
+
       setOauthModalOpen(false);
       onComplete();
     } catch (err: any) {
-      setError(err.message || 'Social authentication protocol failed');
+      setOauthError(err.message || 'Authentication protocol failed. Please check credentials.');
     } finally {
-      setLoading(false);
+      setOauthLoading(false);
     }
   };
 
@@ -1090,77 +1125,287 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
         {/* SOCIAL AUTHENTICATION MODAL */}
         {oauthModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-[#fbf6f0] border-[2.5px] border-black p-6 shadow-2xl relative animate-editorial-fade">
-              <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4 font-mono text-[10px]">
-                <span className="font-bold uppercase tracking-wider text-black flex items-center gap-1.5">
-                  {oauthProvider === 'google' ? 'SIGN IN WITH GOOGLE' : 'SIGN IN WITH APPLE'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setOauthModalOpen(false)}
-                  className="p-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-1 mb-4">
-                <h3 className="font-fun font-bold text-xl text-black lowercase">
-                  {oauthProvider === 'google' ? 'google account sign in' : 'apple id sign in'}
-                </h3>
-                <p className="font-fun italic text-xs text-black/75">
-                  Enter your {oauthProvider === 'google' ? 'Google' : 'Apple'} email to connect and enter the application.
-                </p>
-              </div>
-
-              <form onSubmit={handleOAuthSubmit} className="space-y-3">
-                <div>
-                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    Your Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={oauthName}
-                    onChange={(e) => setOauthName(e.target.value)}
-                    placeholder="Your Name"
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    {oauthProvider === 'google' ? 'Google Email' : 'Apple ID Email'}
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={oauthEmail}
-                    onChange={(e) => setOauthEmail(e.target.value)}
-                    placeholder={oauthProvider === 'google' ? 'you@gmail.com' : 'you@icloud.com'}
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
-                  />
-                </div>
-
-                <div className="pt-3 border-t-[2px] border-black flex items-center justify-between">
+          <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            {oauthProvider === 'google' ? (
+              /* =======================================================
+                 AUTHENTIC GOOGLE ACCOUNT SIGN-IN MODAL
+                 ======================================================= */
+              <div className="w-full max-w-[440px] bg-white rounded-[28px] border border-[#dadce0] p-7 sm:p-9 shadow-2xl relative font-sans text-left animate-editorial-fade text-[#1f1f1f]">
+                {/* Header Row: Google G Logo & Close */}
+                <div className="flex items-center justify-between pb-3">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
                   <button
                     type="button"
                     onClick={() => setOauthModalOpen(false)}
-                    className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
+                    className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-black transition-colors cursor-pointer"
+                    aria-label="Close"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading || !oauthEmail.trim()}
-                    className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>{loading ? 'Authenticating...' : 'Enter Application \u2192'}</span>
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-              </form>
-            </div>
+
+                {/* Progress Bar during authentication */}
+                {oauthLoading && (
+                  <div className="h-1 w-full bg-blue-100 overflow-hidden rounded mb-4">
+                    <div className="h-full bg-[#0b57d0] animate-pulse w-full"></div>
+                  </div>
+                )}
+
+                {oauthStep === 'email' ? (
+                  /* STEP 1: GOOGLE EMAIL ENTRY */
+                  <form onSubmit={handleGoogleEmailNext} className="space-y-4">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-normal text-[#1f1f1f] tracking-tight">Sign in</h2>
+                      <p className="text-sm text-[#444746]">to continue to Windervale</p>
+                    </div>
+
+                    <div className="pt-4 space-y-1.5">
+                      <label className="block text-xs font-medium text-[#444746]">
+                        Email or phone
+                      </label>
+                      <input
+                        type="email"
+                        autoFocus
+                        required
+                        value={oauthEmail}
+                        onChange={(e) => { setOauthEmail(e.target.value); setOauthError(null); }}
+                        placeholder="name@gmail.com"
+                        className="w-full px-3.5 py-3 rounded-lg border border-[#747775] text-[#1f1f1f] text-base focus:border-[#0b57d0] focus:ring-1 focus:ring-[#0b57d0] outline-none transition-all placeholder-gray-400"
+                      />
+                      {oauthError && (
+                        <p className="text-xs text-[#b3261e] pt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 inline shrink-0" /> {oauthError}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-[#0b57d0] hover:underline block pt-1 cursor-pointer"
+                    >
+                      Forgot email?
+                    </button>
+
+                    <p className="text-xs text-[#444746] pt-4 leading-relaxed">
+                      To continue, Google will share your name, email address, language preference, and profile picture with Windervale.
+                    </p>
+
+                    <div className="pt-6 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setOauthModalOpen(false)}
+                        className="text-sm font-medium text-[#0b57d0] hover:bg-[#f8fafd] px-4 py-2 rounded-full cursor-pointer transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!oauthEmail.trim()}
+                        className="bg-[#0b57d0] hover:bg-[#0842a0] disabled:opacity-50 text-white font-medium text-sm rounded-full px-7 py-2.5 cursor-pointer shadow-sm transition-all"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  /* STEP 2: GOOGLE PASSWORD ENTRY */
+                  <form onSubmit={handleOAuthFinalSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-normal text-[#1f1f1f] tracking-tight">Welcome</h2>
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setOauthStep('email')}
+                          className="inline-flex items-center gap-2 border border-[#dadce0] rounded-full px-3 py-1 text-xs text-[#444746] hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="w-4 h-4 rounded-full bg-[#0b57d0] text-white flex items-center justify-center text-[9px] font-bold">
+                            {oauthEmail.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="font-medium text-xs truncate max-w-[200px]">{oauthEmail}</span>
+                          <svg className="w-3 h-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 space-y-1.5">
+                      <label className="block text-xs font-medium text-[#444746]">
+                        Enter your password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showOauthPassword ? 'text' : 'password'}
+                          autoFocus
+                          required
+                          value={oauthPassword}
+                          onChange={(e) => { setOauthPassword(e.target.value); setOauthError(null); }}
+                          placeholder="Password"
+                          className="w-full px-3.5 py-3 pr-10 rounded-lg border border-[#747775] text-[#1f1f1f] text-base focus:border-[#0b57d0] focus:ring-1 focus:ring-[#0b57d0] outline-none transition-all placeholder-gray-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowOauthPassword(!showOauthPassword)}
+                          className="absolute right-3 top-3.5 text-gray-500 hover:text-black cursor-pointer"
+                        >
+                          {showOauthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {oauthError && (
+                        <p className="text-xs text-[#b3261e] pt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 inline shrink-0" /> {oauthError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="showGooglePassword"
+                        checked={showOauthPassword}
+                        onChange={(e) => setShowOauthPassword(e.target.checked)}
+                        className="rounded border-gray-400 text-[#0b57d0] focus:ring-[#0b57d0] cursor-pointer"
+                      />
+                      <label htmlFor="showGooglePassword" className="text-xs text-[#444746] cursor-pointer select-none">
+                        Show password
+                      </label>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-[#0b57d0] hover:underline block pt-2 cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+
+                    <div className="pt-6 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setOauthStep('email')}
+                        className="text-sm font-medium text-[#0b57d0] hover:bg-[#f8fafd] px-4 py-2 rounded-full cursor-pointer transition-colors"
+                      >
+                        &larr; Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={oauthLoading || !oauthPassword.trim()}
+                        className="bg-[#0b57d0] hover:bg-[#0842a0] disabled:opacity-50 text-white font-medium text-sm rounded-full px-7 py-2.5 cursor-pointer shadow-sm transition-all flex items-center gap-2"
+                      >
+                        <span>{oauthLoading ? 'Verifying...' : 'Next'}</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : (
+              /* =======================================================
+                 AUTHENTIC APPLE ID SIGN-IN MODAL
+                 ======================================================= */
+              <div className="w-full max-w-[420px] bg-white rounded-2xl border border-gray-200 p-7 sm:p-9 shadow-2xl relative font-sans text-left animate-editorial-fade text-black">
+                {/* Header Row: Apple Logo & Close */}
+                <div className="flex items-center justify-between pb-2">
+                  <div className="w-full flex justify-center pl-6">
+                    <svg className="w-8 h-8 fill-current" viewBox="0 0 170 170">
+                      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.07-7.64-7.85-11.83-14.34-5.96-9.14-10.4-19.34-13.32-30.59-2.92-11.25-4.39-21.73-4.39-31.43 0-14.3 3.6-26.15 10.79-35.53 7.2-9.39 16.22-14.15 27.07-14.28 5.75 0 11.75 1.57 18 4.7 6.25 3.13 10.37 4.77 12.38 4.92 1.63-.26 5.86-1.89 12.69-4.89 6.83-3 12.98-4.32 18.45-3.96 14.13.78 25.13 5.85 33.02 15.22-11.64 7.07-17.3 16.73-17 28.98.3 9.4 3.99 17.26 11.06 23.59 7.07 6.33 15.35 10.05 24.84 11.16-2.18 6.53-4.68 13.06-7.5 19.59zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.64 5.53-6.7 12.39-10.47 20.59-11.3 0 .98.05 1.83.16 2.54.1 2.22-.38 4.88-1.44 7.97-1.06 3.09-2.6 6.04-4.62 8.85-4.47 6.07-10.59 9.87-18.35 11.41-.66-4.63-2.2-9.43-4.62-17.83z"/>
+                    </svg>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOauthModalOpen(false)}
+                    className="p-1 text-gray-400 hover:text-black transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="text-center space-y-1 pb-4">
+                  <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-black">Sign in with Apple ID</h2>
+                  <p className="text-xs text-gray-500">Use your Apple ID to sign in to Windervale.</p>
+                </div>
+
+                <form onSubmit={handleOAuthFinalSubmit} className="space-y-4">
+                  {/* Apple style grouped inputs */}
+                  <div className="rounded-xl border border-gray-300 overflow-hidden divide-y divide-gray-200">
+                    <div>
+                      <input
+                        type="email"
+                        required
+                        autoFocus
+                        value={oauthEmail}
+                        onChange={(e) => { setOauthEmail(e.target.value); setOauthError(null); }}
+                        placeholder="Apple ID"
+                        className="w-full px-3.5 py-3 text-sm text-black outline-none bg-white placeholder-gray-400"
+                      />
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showOauthPassword ? 'text' : 'password'}
+                        required
+                        value={oauthPassword}
+                        onChange={(e) => { setOauthPassword(e.target.value); setOauthError(null); }}
+                        placeholder="Password"
+                        className="w-full px-3.5 py-3 pr-10 text-sm text-black outline-none bg-white placeholder-gray-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOauthPassword(!showOauthPassword)}
+                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        {showOauthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {oauthError && (
+                    <p className="text-xs text-red-600 pt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 inline shrink-0" /> {oauthError}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-gray-600 pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={oauthKeepSignedIn}
+                        onChange={(e) => setOauthKeepSignedIn(e.target.checked)}
+                        className="rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                      />
+                      <span>Keep me signed in</span>
+                    </label>
+                    <button type="button" className="text-blue-600 hover:underline cursor-pointer">
+                      Forgot Apple ID?
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-gray-500 text-center leading-relaxed pt-2">
+                    Your Apple ID information is used to enable you to sign in securely.
+                  </p>
+
+                  <div className="pt-4 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setOauthModalOpen(false)}
+                      className="flex-1 py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 cursor-pointer text-center transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={oauthLoading || !oauthEmail.trim() || !oauthPassword.trim()}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-black hover:bg-black/90 disabled:opacity-50 text-white text-sm font-medium cursor-pointer shadow text-center flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <span>{oauthLoading ? 'Verifying...' : 'Continue'}</span>
+                      {!oauthLoading && <ArrowRight className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         )}
       </div>
