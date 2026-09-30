@@ -66,7 +66,17 @@ export const api = {
     return handleResponse(res);
   },
 
-  async oauthLogin(provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }): Promise<{ token: string; user: User; profile: Profile; legal_acceptances: LegalAcceptance[] }> {
+  async oauthLogin(provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }): Promise<{
+    registered: boolean;
+    isNewUser?: boolean;
+    token?: string;
+    user?: User;
+    profile?: Profile;
+    legal_acceptances?: LegalAcceptance[];
+    email?: string;
+    name?: string;
+    message?: string;
+  }> {
     const res = await fetch(`${API_BASE}/auth/oauth`, {
       method: 'POST',
       headers: getHeaders(false),

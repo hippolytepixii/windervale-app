@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InstallAppButton, MobileInstallTopBanner } from '../common/InstallAppModal';
+import { InstallAppButton, MobileInstallTopBanner, StandaloneAppPlaque } from '../common/InstallAppModal';
 import { Smartphone } from 'lucide-react';
 
 interface SplashProps {
@@ -293,26 +293,8 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             </button>
           </div>
 
-          {/* Dedicated Standalone Mobile Atelier Plaque */}
-          <div className="pt-6 max-w-2xl mx-auto">
-            <div className="bg-[#FFFDF9] rounded-3xl border-[2.5px] border-black p-6 sm:p-7 space-y-4 shadow-[7px_7px_0px_#000000] text-black">
-              <div className="flex items-center justify-between border-b-[2px] border-black pb-2.5">
-                <span className="font-mono text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
-                  <span className="p-1 bg-[#6A1A4C] text-white">
-                    <Smartphone className="w-3.5 h-3.5" />
-                  </span>
-                  <span>STANDALONE MOBILE APPLICATION</span>
-                </span>
-                <span className="font-mono text-[9px] uppercase tracking-wider bg-black text-white px-2.5 py-0.5 font-bold">
-                  DIRECT INSTALL
-                </span>
-              </div>
-              <p className="font-fun text-xs sm:text-sm text-black/85 leading-relaxed">
-                Launch Windervale unmediated from your home screen in full screen without browser tabs or address bars. Instant access to your studio and the Human Map.
-              </p>
-              <InstallAppButton variant="card" />
-            </div>
-          </div>
+          {/* Dedicated Standalone Mobile Atelier Plaque (Automatically removed when downloaded or on desktop) */}
+          <StandaloneAppPlaque />
 
           {/* Colophon Footer */}
           <footer className="pt-8 mt-12 border-t-[2px] border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[10px] text-white/60 uppercase tracking-widest text-center sm:text-left">

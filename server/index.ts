@@ -256,48 +256,16 @@ app.post('/api/auth/oauth', (req: Request, res: Response) => {
     const now = new Date().toISOString();
 
     if (!user) {
-      // Auto-register practitioner with Google or Apple
-      const userId = generateId('u');
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(Math.random().toString(36), salt);
-      const handle = (name || 'creative').toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(100 + Math.random() * 900);
-
-      db.prepare(`
-        INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'creative', 1, ?, ?)
-      `).run(userId, cleanEmail, hash, name || (provider === 'apple' ? 'Apple Practitioner' : 'Google Practitioner'), now, now);
-
-      db.prepare(`
-        INSERT INTO profiles (
-          user_id, display_name, handle, avatar_url, location, country,
-          latitude, longitude, bio, disciplines, roles_list, practices,
-          interests, selected_works, external_links, availability,
-          collaboration_interests, visibility, location_visibility,
-          avatar_public, id_verification_status, verification_status,
-          approval_status, updated_at
-        ) VALUES (?, ?, ?, ?, 'Global', 'Global', 19.0760, 72.8777,
-          ?,
-          '["Creative Practitioner"]', '["Creative Practitioner"]',
-          '["Cross-Disciplinary Craft"]', '["Independent Projects"]',
-          '[]', '[]', 'Available for studio projects',
-          'Open to independent collaborations and cross-disciplinary projects.',
-          'public', 1, 1,
-          'verified', 'verified', 'approved', ?)
-      `).run(
-        userId,
-        name || 'Creative Practitioner',
-        handle,
-        avatar_url || null,
-        `Independent practitioner authenticated via ${provider === 'apple' ? 'Apple ID' : 'Google Identity'}.`,
-        now
-      );
-
-      // Record default legal acceptances
-      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'terms', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
-      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'privacy', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
-      db.prepare(`INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint) VALUES (?, ?, 'cookies', '2.0', ?, 'accepted', ?)`).run(generateId('acc'), userId, now, req.ip || '127.0.0.1');
-
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      // Practitioner is not registered yet.
+      // Only registered practitioners enter the map directly.
+      // New users must complete the admission application.
+      return res.json({
+        registered: false,
+        isNewUser: true,
+        email: cleanEmail,
+        name: name || '',
+        message: 'No registered account found for this email. Please complete the admission application.'
+      });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '7d' });

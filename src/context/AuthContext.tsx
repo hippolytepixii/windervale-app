@@ -9,7 +9,7 @@ interface AuthContextType {
   legalAcceptances: LegalAcceptance[];
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
-  oauthLogin: (provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }) => Promise<void>;
+  oauthLogin: (provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }) => Promise<{ isNewUser: boolean; email?: string; name?: string; message?: string }>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -67,15 +67,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const oauthLogin = async (provider: 'google' | 'apple', authData: { email: string; name?: string; avatar_url?: string }) => {
+  const oauthLogin = async (provider: 'google' | 'apple', authData: { email: string; name?: string; avatar_url?: string }): Promise<{ isNewUser: boolean; email?: string; name?: string; message?: string }> => {
     setIsLoading(true);
     try {
       const data = await api.oauthLogin(provider, authData);
-      localStorage.setItem('windervale_token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      setProfile(data.profile);
-      setLegalAcceptances(data.legal_acceptances || []);
+      if (data.isNewUser || data.registered === false) {
+        return {
+          isNewUser: true,
+          email: data.email || authData.email,
+          name: data.name || authData.name,
+          message: data.message,
+        };
+      }
+      if (data.token && data.user && data.profile) {
+        localStorage.setItem('windervale_token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        setProfile(data.profile);
+        setLegalAcceptances(data.legal_acceptances || []);
+      }
+      return { isNewUser: false };
     } finally {
       setIsLoading(false);
     }

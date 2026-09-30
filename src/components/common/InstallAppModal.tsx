@@ -9,17 +9,42 @@ declare global {
 
 export const usePwaInstall = () => {
   const [canPrompt, setCanPrompt] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+  });
+  const [isInstalled, setIsInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      localStorage.getItem('windervale_pwa_installed') === 'true' ||
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+  });
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  });
 
   useEffect(() => {
     // Check if running in standalone mode (already installed as an app)
     const checkStandalone = () => {
       const isStandaloneMode = 
         window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as any).standalone === true;
-      setIsStandalone(isStandaloneMode);
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://');
+      if (isStandaloneMode) {
+        setIsStandalone(true);
+        setIsInstalled(true);
+        localStorage.setItem('windervale_pwa_installed', 'true');
+      }
     };
 
     checkStandalone();
@@ -29,6 +54,7 @@ export const usePwaInstall = () => {
     const androidDevice = /Android/.test(ua);
     setIsIOS(iosDevice);
     setIsAndroid(androidDevice);
+    setIsMobile(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua));
 
     const checkPrompt = () => {
       if (window.deferredInstallPrompt) {
@@ -48,12 +74,21 @@ export const usePwaInstall = () => {
       setCanPrompt(true);
     };
 
+    const handleAppInstalled = () => {
+      localStorage.setItem('windervale_pwa_installed', 'true');
+      setIsInstalled(true);
+      setIsStandalone(true);
+      setCanPrompt(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handlePromptEvent);
     window.addEventListener('pwa_prompt_available', handleCustomPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handlePromptEvent);
       window.removeEventListener('pwa_prompt_available', handleCustomPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -64,6 +99,9 @@ export const usePwaInstall = () => {
         promptEvent.prompt();
         const choice = await promptEvent.userChoice;
         if (choice.outcome === 'accepted') {
+          localStorage.setItem('windervale_pwa_installed', 'true');
+          setIsInstalled(true);
+          setIsStandalone(true);
           window.deferredInstallPrompt = null;
           setCanPrompt(false);
           return 'prompted';
@@ -78,8 +116,10 @@ export const usePwaInstall = () => {
   return {
     canPrompt,
     isStandalone,
+    isInstalled,
     isIOS,
     isAndroid,
+    isMobile,
     promptInstall,
   };
 };
@@ -261,10 +301,10 @@ export const InstallAppButton: React.FC<{
   variant?: 'masthead' | 'hero' | 'floating' | 'card';
 }> = ({ className = '', variant = 'masthead' }) => {
   const [showModal, setShowModal] = useState(false);
-  const { isStandalone, canPrompt, promptInstall } = usePwaInstall();
+  const { isStandalone, isInstalled, canPrompt, promptInstall } = usePwaInstall();
 
-  // If already opened as installed standalone app, don't show
-  if (isStandalone) {
+  // If already opened as installed standalone app or downloaded, don't show ANY install button
+  if (isStandalone || isInstalled) {
     return null;
   }
 
@@ -330,12 +370,16 @@ export const InstallAppButton: React.FC<{
 
 export const MobileInstallTopBanner: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
+  const { isStandalone, isInstalled, isMobile, canPrompt, promptInstall } = usePwaInstall();
   const [dismissed, setDismissed] = useState(() => {
-    return sessionStorage.getItem('windervale_install_banner_dismissed') === 'true';
+    return (
+      (typeof window !== 'undefined' && sessionStorage.getItem('windervale_install_banner_dismissed') === 'true') ||
+      (typeof window !== 'undefined' && localStorage.getItem('windervale_pwa_installed') === 'true')
+    );
   });
-  const { isStandalone, canPrompt, promptInstall } = usePwaInstall();
 
-  if (isStandalone || dismissed) {
+  // Remove completely if already downloaded, installed, running standalone, on desktop, or dismissed
+  if (isStandalone || isInstalled || dismissed || !isMobile) {
     return null;
   }
 
@@ -396,5 +440,57 @@ export const MobileInstallTopBanner: React.FC = () => {
       </div>
       <InstallAppModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
+  );
+};
+
+export const StandaloneAppPlaque: React.FC = () => {
+  const { isStandalone, isInstalled, isMobile } = usePwaInstall();
+  const [dismissed, setDismissed] = useState(() => {
+    return typeof window !== 'undefined' && localStorage.getItem('windervale_pwa_installed') === 'true';
+  });
+
+  // REMOVE completely if:
+  // 1. App is already installed or downloaded
+  // 2. App is running in standalone mode
+  // 3. User is on desktop (user was on desktop in screenshot)
+  // 4. User dismissed the card
+  if (isStandalone || isInstalled || dismissed || !isMobile) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    localStorage.setItem('windervale_pwa_installed', 'true');
+    setDismissed(true);
+  };
+
+  return (
+    <div className="pt-6 max-w-2xl mx-auto">
+      <div className="bg-[#FFFDF9] rounded-3xl border-[2.5px] border-black p-6 sm:p-7 space-y-4 shadow-[7px_7px_0px_#000000] text-black relative">
+        <div className="flex items-center justify-between border-b-[2px] border-black pb-2.5">
+          <span className="font-mono text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
+            <span className="p-1 bg-[#6A1A4C] text-white">
+              <Smartphone className="w-3.5 h-3.5" />
+            </span>
+            <span>STANDALONE MOBILE APPLICATION</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wider bg-black text-white px-2.5 py-0.5 font-bold">
+              DIRECT INSTALL
+            </span>
+            <button
+              onClick={handleDismiss}
+              className="p-1 text-black/60 hover:text-black cursor-pointer"
+              title="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <p className="font-fun text-xs sm:text-sm text-black/85 leading-relaxed">
+          Launch Windervale unmediated from your home screen in full screen without browser tabs or address bars. Instant access to your studio and the Human Map.
+        </p>
+        <InstallAppButton variant="card" />
+      </div>
+    </div>
   );
 };

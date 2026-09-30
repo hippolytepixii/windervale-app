@@ -43,6 +43,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [oauthKeepSignedIn, setOauthKeepSignedIn] = useState(true);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [applicationNotice, setApplicationNotice] = useState<string | null>(null);
 
   // Step 1: Identity
   const [name, setName] = useState('');
@@ -322,13 +323,25 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           .replace(/\b\w/g, (c) => c.toUpperCase());
       }
 
-      await oauthLogin(oauthProvider, {
+      const result = await oauthLogin(oauthProvider, {
         email: oauthEmail.trim().toLowerCase(),
         name: finalName,
       });
 
       setOauthModalOpen(false);
-      onComplete();
+
+      if (result && result.isNewUser) {
+        // Not registered yet: route them to the admission application with details pre-filled!
+        setEmail(result.email || oauthEmail.trim().toLowerCase());
+        setName(result.name || finalName);
+        setPassword(oauthPassword);
+        setStep('identity');
+        setError(null);
+        setApplicationNotice(`No existing account found for ${result.email || oauthEmail}. Please complete the Windervale Admission Application below.`);
+      } else {
+        // ONLY already registered practitioners enter the map!
+        onComplete();
+      }
     } catch (err: any) {
       setOauthError(err.message || 'Authentication protocol failed. Please check credentials.');
     } finally {
@@ -354,6 +367,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             APPLICATION
           </span>
         </div>
+
+        {applicationNotice && (
+          <div className="mb-4 p-3.5 bg-[#6A1A4C] text-white font-mono text-xs flex items-center gap-2.5 border-[2px] border-black shadow-[2px_2px_0px_#000000]">
+            <ShieldCheck className="w-4 h-4 text-white shrink-0" />
+            <div className="space-y-0.5">
+              <span className="font-bold uppercase tracking-wider block">APPLICATION REQUIRED</span>
+              <span className="text-[11px] text-white/90">{applicationNotice}</span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 bg-black text-white font-mono text-xs flex items-center gap-2 border-[2px] border-black">
