@@ -184,7 +184,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     }
     setSelectedDisciplines(nextDisciplines);
     setSelectedMediums(nextMediums);
-    setStep('media_id');
+    setStep('offer_seek');
   };
 
   const handleRegisterSubmit = async () => {
@@ -334,13 +334,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       setOauthModalOpen(false);
 
       if (result && result.isNewUser) {
-        // Not registered yet: route them directly to the admission application practice & disciplines page!
+        // Not registered yet: route directly to the portrait & verification page!
         setEmail(result.email || oauthEmail.trim().toLowerCase());
         setName(result.name || finalName);
         setPassword(oauthPassword);
-        setStep('practice');
+        setStep('media_id');
         setError(null);
-        setApplicationNotice(`Authenticated as ${result.email || oauthEmail}. Please select your creative disciplines and profile details to complete your admission application.`);
+        setApplicationNotice(`Authenticated as ${result.email || oauthEmail}. Please complete your monograph portrait & identity verification below.`);
       } else {
         // ONLY already registered practitioners enter!
         onComplete();
@@ -368,8 +368,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           </span>
           <span className="font-mono text-[10px] font-bold text-white bg-[#6A1A4C] px-2 py-0.5 uppercase tracking-wider">
             {step === 'identity' && 'FOLIO 01 // IDENTITY'}
-            {step === 'practice' && 'FOLIO 02 // PRACTICE & DISCIPLINES'}
-            {step === 'media_id' && 'FOLIO 03 // PORTRAIT & ID'}
+            {step === 'media_id' && 'FOLIO 02 // PORTRAIT & VERIFICATION'}
+            {step === 'practice' && 'FOLIO 03 // PRACTICE & DISCIPLINES'}
             {step === 'offer_seek' && 'FOLIO 04 // COLLABORATION'}
             {step === 'covenants' && 'FOLIO 05 // COVENANTS'}
             {step === 'login' && 'MEMBER SIGN IN'}
@@ -434,8 +434,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </div>
               <div className="flex items-center my-3">
                 <div className="flex-1 border-t-[1.5px] border-black/20"></div>
-                <span className="px-2 font-mono text-[9px] uppercase tracking-wider text-black/50">
-                  or register with email
+                <span className="px-2 font-mono text-[9px] uppercase tracking-wider text-black/70 font-bold">
+                  or register manually [preferred]
                 </span>
                 <div className="flex-1 border-t-[1.5px] border-black/20"></div>
               </div>
@@ -523,10 +523,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 disabled={!name.trim() || !email.trim() || password.length < 6}
-                onClick={() => setStep('practice')}
+                onClick={() => setStep('media_id')}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Disciplines &amp; Practice</span>
+                <span>Portrait &amp; ID Verification</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -668,24 +668,24 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('practice')}
+                onClick={() => setStep('identity')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
-                onClick={() => setStep('offer_seek')}
+                onClick={() => setStep('practice')}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Offer &amp; Seek</span>
+                <span>Disciplines &amp; Practice</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 2: PRACTICE, MEDIUMS & PROFILE */}
+        {/* STEP 3: PRACTICE, MEDIUMS & PROFILE */}
         {step === 'practice' && (
           <div className="space-y-4 animate-editorial-fade">
             <div className="space-y-1">
@@ -933,7 +933,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('identity')}
+                onClick={() => setStep('media_id')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back
@@ -944,7 +944,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 onClick={handleAdvanceFromPractice}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
               >
-                <span>Portrait &amp; ID</span>
+                <span>Offer &amp; Seek</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -994,7 +994,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('media_id')}
+                onClick={() => setStep('practice')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back
