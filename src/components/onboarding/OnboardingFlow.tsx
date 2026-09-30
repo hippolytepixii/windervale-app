@@ -60,8 +60,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [idFileName, setIdFileName] = useState<string | null>(null);
 
   // Step 3: Practice & Portfolio
-  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>(['Filmmaker']);
-  const [selectedMediums, setSelectedMediums] = useState<string[]>(['16mm Film']);
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
+  const [selectedMediums, setSelectedMediums] = useState<string[]>([]);
   const [showOtherDiscipline, setShowOtherDiscipline] = useState(false);
   const [customDisciplineInput, setCustomDisciplineInput] = useState('');
   const [showOtherMedium, setShowOtherMedium] = useState(false);
@@ -118,9 +118,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const toggleDiscipline = (d: string) => {
     if (selectedDisciplines.includes(d)) {
-      if (selectedDisciplines.length > 1) {
-        setSelectedDisciplines(selectedDisciplines.filter(x => x !== d));
-      }
+      setSelectedDisciplines(selectedDisciplines.filter(x => x !== d));
     } else {
       setSelectedDisciplines([...selectedDisciplines, d]);
     }
@@ -136,9 +134,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   };
 
   const removeCustomDiscipline = (d: string) => {
-    if (selectedDisciplines.length > 1) {
-      setSelectedDisciplines(selectedDisciplines.filter((x) => x !== d));
-    }
+    setSelectedDisciplines(selectedDisciplines.filter((x) => x !== d));
   };
 
   const toggleMedium = (m: string) => {
@@ -171,6 +167,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       }
       setCustomDisciplineInput('');
     }
+
+    if (nextDisciplines.length === 0) {
+      setError('Please select at least one creative discipline to continue your application.');
+      return;
+    }
+    setError(null);
+
     let nextMediums = [...selectedMediums];
     if (customMediumInput.trim()) {
       const trimmed = customMediumInput.trim();
@@ -181,7 +184,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     }
     setSelectedDisciplines(nextDisciplines);
     setSelectedMediums(nextMediums);
-    setStep('offer_seek');
+    setStep('media_id');
   };
 
   const handleRegisterSubmit = async () => {
@@ -331,15 +334,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       setOauthModalOpen(false);
 
       if (result && result.isNewUser) {
-        // Not registered yet: route them to the admission application with details pre-filled!
+        // Not registered yet: route them directly to the admission application practice & disciplines page!
         setEmail(result.email || oauthEmail.trim().toLowerCase());
         setName(result.name || finalName);
         setPassword(oauthPassword);
-        setStep('identity');
+        setStep('practice');
         setError(null);
-        setApplicationNotice(`No existing account found for ${result.email || oauthEmail}. Please complete the Windervale Admission Application below.`);
+        setApplicationNotice(`Authenticated as ${result.email || oauthEmail}. Please select your creative disciplines and profile details to complete your admission application.`);
       } else {
-        // ONLY already registered practitioners enter the map!
+        // ONLY already registered practitioners enter!
         onComplete();
       }
     } catch (err: any) {
@@ -364,7 +367,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             WINDERVALE ADMISSION
           </span>
           <span className="font-mono text-[10px] font-bold text-white bg-[#6A1A4C] px-2 py-0.5 uppercase tracking-wider">
-            APPLICATION
+            {step === 'identity' && 'FOLIO 01 // IDENTITY'}
+            {step === 'practice' && 'FOLIO 02 // PRACTICE & DISCIPLINES'}
+            {step === 'media_id' && 'FOLIO 03 // PORTRAIT & ID'}
+            {step === 'offer_seek' && 'FOLIO 04 // COLLABORATION'}
+            {step === 'covenants' && 'FOLIO 05 // COVENANTS'}
+            {step === 'login' && 'MEMBER SIGN IN'}
           </span>
         </div>
 
@@ -515,10 +523,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 disabled={!name.trim() || !email.trim() || password.length < 6}
-                onClick={() => setStep('media_id')}
+                onClick={() => setStep('practice')}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Portrait &amp; ID</span>
+                <span>Disciplines &amp; Practice</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -660,40 +668,45 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('identity')}
+                onClick={() => setStep('practice')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
-                onClick={() => setStep('practice')}
+                onClick={() => setStep('offer_seek')}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Practice &amp; Reel</span>
+                <span>Offer &amp; Seek</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: PRACTICE, MEDIUMS & PORTFOLIO */}
+        {/* STEP 2: PRACTICE, MEDIUMS & PROFILE */}
         {step === 'practice' && (
           <div className="space-y-4 animate-editorial-fade">
             <div className="space-y-1">
               <h2 className="font-fun font-bold text-2xl text-black leading-tight lowercase">
-                practice &amp; portfolio
+                creative practice &amp; disciplines
               </h2>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
-                Select your artistic disciplines, physical mediums, and past archive link.
+                Select your artistic disciplines, physical mediums, and profile monograph.
               </p>
             </div>
 
             <div className="space-y-3 pt-1">
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1.5">
-                  Disciplines ({selectedDisciplines.length})
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    Disciplines ({selectedDisciplines.length}) <span className="text-[#6A1A4C] font-mono">*Mandatory</span>
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] uppercase font-bold">
+                    Required for Admission
+                  </span>
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {DISCIPLINES.map((d) => {
                     const isSel = selectedDisciplines.includes(d);
@@ -860,6 +873,33 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 )}
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
+                    City / Base
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g. Mumbai"
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-xs font-mono text-black focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g. India"
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-xs font-mono text-black focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
                   Portfolio / Reel Link
@@ -893,17 +933,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('media_id')}
+                onClick={() => setStep('identity')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
+                disabled={selectedDisciplines.length === 0}
                 onClick={handleAdvanceFromPractice}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
               >
-                <span>Offer &amp; Seek</span>
+                <span>Portrait &amp; ID</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -953,7 +994,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="pt-4 border-t-[2px] border-black flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep('practice')}
+                onClick={() => setStep('media_id')}
                 className="font-mono text-xs text-black/70 hover:text-black font-bold"
               >
                 &larr; Back

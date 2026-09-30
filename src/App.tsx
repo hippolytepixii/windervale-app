@@ -175,8 +175,8 @@ const MainLayout: React.FC = () => {
   if (!user) {
     return (
       <OnboardingFlow
-        onComplete={() => setActiveTab('map')}
-        onLoginClick={() => setActiveTab('map')}
+        onComplete={() => setActiveTab('workspace')}
+        onLoginClick={() => setActiveTab('workspace')}
       />
     );
   }
@@ -187,7 +187,7 @@ const MainLayout: React.FC = () => {
       <CurationPendingView
         onApproved={() => {
           refreshProfile();
-          setActiveTab('map');
+          setActiveTab('workspace');
         }}
       />
     );

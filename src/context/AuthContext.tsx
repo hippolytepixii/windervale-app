@@ -12,7 +12,7 @@ interface AuthContextType {
   oauthLogin: (provider: 'google' | 'apple', data: { email: string; name?: string; avatar_url?: string }) => Promise<{ isNewUser: boolean; email?: string; name?: string; message?: string }>;
   register: (data: any) => Promise<void>;
   logout: () => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<Profile | null>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   updatePrivacy: (data: { visibility?: string; location_visibility?: boolean }) => Promise<void>;
   verifyEmail: () => Promise<void>;
@@ -118,15 +118,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLegalAcceptances([]);
   };
 
-  const refreshProfile = async () => {
-    if (!token) return;
+  const refreshProfile = async (): Promise<Profile | null> => {
+    if (!token) return null;
     try {
       const data = await api.getMe();
       setUser(data.user);
       setProfile(data.profile);
       setLegalAcceptances(data.legal_acceptances || []);
+      return data.profile;
     } catch (e) {
       console.error(e);
+      return null;
     }
   };
 

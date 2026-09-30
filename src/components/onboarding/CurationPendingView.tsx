@@ -15,9 +15,9 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
     setChecking(true);
     setMessage(null);
     try {
-      await refreshProfile();
+      const updated = await refreshProfile();
       // If refreshed profile is approved, call onApproved()
-      if (profile?.approval_status === 'approved') {
+      if (updated?.approval_status === 'approved') {
         onApproved();
       } else {
         setMessage('Your application is still under review by the Windervale review board. Approvals are completed within 2 days.');
