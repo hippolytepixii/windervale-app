@@ -111,7 +111,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 // MILESTONES</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 : MILESTONES</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">MAJOR GATES &amp; APPROVAL STATES</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">MILESTONES &amp; GATES</h2>
@@ -276,7 +276,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[6px_6px_0px_#000000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">07 // MILESTONES</span>
+                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">07 : MILESTONES</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">ESTABLISH MILESTONE</h3>
               </div>
               <button onClick={() => setCreateModal(false)} className="text-black/60 hover:text-black cursor-pointer">

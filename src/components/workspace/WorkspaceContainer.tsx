@@ -149,7 +149,7 @@ export const WorkspaceContainer: React.FC<WorkspaceContainerProps> = ({
                 FOCUS MODE ACTIVE
               </span>
               <span className="font-display font-black text-xl text-wv-paper uppercase">
-                {activeTool.toUpperCase()} // {project.title}
+                {activeTool.toUpperCase()} : {project.title}
               </span>
             </div>
 

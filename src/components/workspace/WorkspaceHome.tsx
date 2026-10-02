@@ -103,7 +103,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
             {project.location && (
               <p className="font-mono text-[11px] text-wv-dust mt-3">
                 BASE: <span className="text-wv-paper">{project.location}</span>
-                {project.target_date && ` • TARGET: ${project.target_date}`}
+                {project.target_date && ` - TARGET: ${project.target_date}`}
               </p>
             )}
           </div>
@@ -147,7 +147,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
               <div className="flex items-center gap-2">
                 <Hammer className="w-4 h-4 text-wv-dustyrose" />
                 <span className="font-display font-bold text-sm tracking-wider text-wv-paper">
-                  BUILD // ATTENTION ITEMS
+                  BUILD : ATTENTION ITEMS
                 </span>
               </div>
               <button

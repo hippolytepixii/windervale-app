@@ -81,7 +81,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 // DECISIONS</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 : DECISIONS</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">STRUCTURED CONSENSUS LOG</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">DECISION LOG</h2>

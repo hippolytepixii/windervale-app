@@ -367,11 +367,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             WINDERVALE ADMISSION
           </span>
           <span className="font-mono text-[10px] font-bold text-white bg-[#6A1A4C] px-2 py-0.5 uppercase tracking-wider">
-            {step === 'identity' && 'FOLIO 01 // IDENTITY'}
-            {step === 'media_id' && 'FOLIO 02 // PORTRAIT & VERIFICATION'}
-            {step === 'practice' && 'FOLIO 03 // PRACTICE & DISCIPLINES'}
-            {step === 'offer_seek' && 'FOLIO 04 // COLLABORATION'}
-            {step === 'covenants' && 'FOLIO 05 // COVENANTS'}
+            {step === 'identity' && 'FOLIO 01 : IDENTITY'}
+            {step === 'media_id' && 'FOLIO 02 : PORTRAIT & VERIFICATION'}
+            {step === 'practice' && 'FOLIO 03 : PRACTICE & DISCIPLINES'}
+            {step === 'offer_seek' && 'FOLIO 04 : COLLABORATION'}
+            {step === 'covenants' && 'FOLIO 05 : COVENANTS'}
             {step === 'login' && 'MEMBER SIGN IN'}
           </span>
         </div>
@@ -548,7 +548,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             {/* Profile Picture Upload */}
             <div className="p-3.5 bg-white border-[2px] border-black space-y-3">
               <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider block">
-                01 &middot; Monograph Portrait
+                01 : Monograph Portrait
               </span>
               <div className="flex items-center gap-3.5">
                 <div
@@ -607,7 +607,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div className="p-3.5 bg-white border-[2px] border-black space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider">
-                  02 &middot; Government ID Document
+                  02 : Government ID Document
                 </span>
                 <span className="font-mono text-[9px] bg-[#6A1A4C] text-white px-1.5 py-0.5 uppercase font-bold">
                   ENCRYPTED

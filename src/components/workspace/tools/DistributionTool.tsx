@@ -218,7 +218,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">09 // DISTRIBUTION</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">09 : DISTRIBUTION</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">RELEASE, FESTIVALS, LICENSING &amp; AUDIENCE</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">DISTRIBUTION &amp; OUTREACH</h2>
@@ -478,7 +478,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
                 <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
-                  09 // DISTRIBUTION &middot; DIRECT CURATION INTAKE
+                  09 : DISTRIBUTION : DIRECT CURATION INTAKE
                 </span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">
                   SUBMIT WORK TO WINDERVALE

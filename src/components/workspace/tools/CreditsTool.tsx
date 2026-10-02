@@ -95,7 +95,7 @@ export const CreditsTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">10 // CREDITS</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">10 : CREDITS</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">PERMANENT CONTRIBUTOR RECORD</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">PROJECT CREDITS &amp; COLOPHON</h2>
@@ -179,7 +179,7 @@ export const CreditsTool: React.FC<ToolProps> = ({
           {/* Film Edge Registration */}
           <div className="flex justify-between font-mono text-[9px] text-black/40 border-b border-black/20 pb-2">
             <span>START OF MASTER TITLES</span>
-            <span>ROLL 01 // AUDIO &amp; OPTICAL TRACK</span>
+            <span>ROLL 01 : AUDIO &amp; OPTICAL TRACK</span>
           </div>
 
           <div className="space-y-10">
@@ -224,7 +224,7 @@ export const CreditsTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[6px_6px_0px_#000000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">10 // CREDITS</span>
+                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">10 : CREDITS</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">RECORD CREDIT ATTRIBUTION</h3>
               </div>
               <button onClick={() => setCreateModal(false)} className="text-black/60 hover:text-black cursor-pointer">

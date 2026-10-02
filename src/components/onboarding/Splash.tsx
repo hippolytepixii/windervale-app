@@ -94,29 +94,21 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             ==================================================================== */}
         <section className="min-h-[90vh] flex flex-col justify-between pb-8">
           {/* Chic Art Magazine Folio Masthead */}
-          <header className="pt-2 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-[2px] border-white/20 gap-3">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-xs md:text-sm font-black uppercase tracking-[0.25em] text-[#FAF7F2] bg-white/10 px-2.5 py-1 rounded-md border border-white/20">
-                WINDERVALE &middot; VOL. I
-              </span>
-              <span className="font-mono text-[10px] md:text-xs text-white/70 tracking-widest uppercase font-bold">
-                EDITION 2026 &middot; INDEPENDENT ART QUARTERLY
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 self-end sm:self-auto">
-              <InstallAppButton variant="masthead" />
-              <span className="font-mono text-[10px] tracking-widest uppercase bg-[#FFFDF9] text-black px-3.5 py-1 rounded-full font-black border border-black shadow-[2px_2px_0px_#000000]">
-                STUDIO DIRECTORY
-              </span>
-            </div>
+          <header className="pt-2 pb-5 flex items-center justify-end border-b-[2px] border-white/20 gap-3">
+            <InstallAppButton variant="masthead" />
+            <button
+              type="button"
+              onClick={handleEnter}
+              className="font-mono text-[10px] tracking-widest uppercase bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] px-4 py-1.5 rounded-full font-black border border-black shadow-[2px_2px_0px_#000000] cursor-pointer transition-colors"
+            >
+              STUDIO DIRECTORY
+            </button>
           </header>
 
           {/* Hero Core */}
           <div className="my-auto py-10 md:py-14 space-y-7 md:space-y-9">
             {/* Minimalist Sub-header Tag */}
             <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
               <span className="font-mono text-[10px] md:text-xs tracking-[0.22em] uppercase text-white/80 font-bold">
                 AN AUTONOMOUS ATELIER FOR INDEPENDENT PRACTITIONERS
               </span>
@@ -140,7 +132,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             <div className="max-w-3xl rounded-3xl border-[2.5px] border-black bg-[#FFFDF9] text-black p-6 sm:p-8 space-y-4 shadow-[8px_8px_0px_#000000] relative">
               <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
                 <span className="font-mono text-xs font-black uppercase tracking-[0.2em] text-black">
-                  COLOPHON &middot; STUDIO PRINCIPLES
+                  COLOPHON : STUDIO PRINCIPLES
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-black/60 font-bold">
                   UNMEDIATED CRAFT
@@ -156,14 +148,10 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             <div className="pt-2 flex flex-wrap items-center gap-4">
               <button
                 onClick={handleEnter}
-                className="group inline-flex items-center gap-4 bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] border-[2.5px] border-black px-7 sm:px-9 py-3.5 sm:py-4 rounded-full shadow-[6px_6px_0px_#000000] hover:shadow-[2px_2px_0px_#000000] hover:translate-x-1 hover:translate-y-1 transition-all duration-200 cursor-pointer select-none"
+                className="group inline-flex items-center bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] border-[2.5px] border-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-full shadow-[6px_6px_0px_#000000] hover:shadow-[2px_2px_0px_#000000] hover:translate-x-1 hover:translate-y-1 transition-all duration-200 cursor-pointer select-none"
               >
                 <span className="font-mono text-xs font-black uppercase tracking-[0.25em]">
-                  ENTER WINDERVALE
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-black group-hover:bg-white transition-colors" />
-                <span className="font-fun italic text-sm group-hover:translate-x-1 transition-transform">
-                  [ open workspace &rarr; ]
+                  WINDERVALE
                 </span>
               </button>
               <InstallAppButton variant="hero" />
@@ -201,7 +189,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
                 STUDIO OPERATING PROTOCOL
               </span>
               <h2 className="font-arthouse font-normal text-2xl sm:text-3xl tracking-[0.05em] uppercase">
-                HOW WINDERVALE WORKS &middot; THE 8 MOVEMENTS
+                HOW WINDERVALE WORKS : THE 8 MOVEMENTS
               </h2>
             </div>
 
@@ -223,12 +211,11 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
                 className="rounded-3xl border-[2.5px] border-black bg-[#F2CBD2] hover:bg-[#F7D6DC] text-black p-6 space-y-4 transition-all duration-200 hover:-translate-y-2 hover:shadow-[8px_8px_0px_#000000] shadow-[4px_4px_0px_#000000] relative group flex flex-col justify-between"
               >
                 <div>
-                  {/* Top Bar with Big Bold Number & Minimal Dot */}
+                  {/* Top Bar with Big Bold Number */}
                   <div className="flex items-center justify-between border-b-[2px] border-black/20 pb-3">
                     <span className="font-shrikhand text-3xl sm:text-4xl text-black leading-none font-bold">
                       {art.num}
                     </span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-black" />
                   </div>
 
                   {/* Title in Rare Artistic Serif (Instrument Serif) - Bold Black */}
@@ -244,7 +231,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
 
                 <div className="pt-3 border-t-[1.5px] border-black/20">
                   <span className="font-mono text-[10px] text-black/80 font-bold uppercase tracking-wider block">
-                    // {art.scribble}
+                    {art.scribble}
                   </span>
                 </div>
               </div>
@@ -261,9 +248,8 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             >
               {/* Top Sub-Bar with Live Status */}
               <div className="flex items-center justify-between border-b-[2px] border-black group-hover:border-white/20 pb-3 mb-4 font-mono text-[10px] uppercase tracking-widest transition-colors">
-                <span className="flex items-center gap-2 font-black">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>STUDIO ACCESS PASS &middot; EDITION 2026</span>
+                <span className="font-black">
+                  STUDIO ACCESS PASS : EDITION 2026
                 </span>
                 <span className="border border-black group-hover:border-white px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase transition-colors">
                   UNMEDIATED
@@ -281,13 +267,13 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
                   </span>
                 </div>
                 <p className="font-fun italic text-sm sm:text-base opacity-80 leading-normal">
-                  open human map &middot; verified creative dossiers &middot; 12 workspace modules
+                  open human map : verified creative dossiers : 12 workspace modules
                 </p>
               </div>
 
               {/* Bottom Discipline Ticker Bar */}
               <div className="pt-4 mt-2 border-t-[1.5px] border-black/15 group-hover:border-white/15 flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] tracking-wider uppercase opacity-70 transition-colors">
-                <span>CINEMA &middot; SOUND &middot; TYPOGRAPHY &middot; ARCHITECTURE</span>
+                <span>CINEMA, SOUND, TYPOGRAPHY, ARCHITECTURE</span>
                 <span className="font-bold underline underline-offset-2">CLICK TO ENTER &rarr;</span>
               </div>
             </button>
@@ -298,7 +284,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
 
           {/* Colophon Footer */}
           <footer className="pt-8 mt-12 border-t-[2px] border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[10px] text-white/60 uppercase tracking-widest text-center sm:text-left">
-            <span>PUBLISHED BY WINDERVALE PRESS &middot; BROADSHEET</span>
+            <span>PUBLISHED BY WINDERVALE PRESS : BROADSHEET</span>
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('windervale_open_cookies'))}
@@ -306,7 +292,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             >
               COOKIES &amp; PRIVACY PROTOCOL
             </button>
-            <span>COPYRIGHT &copy; 2026 &middot; ALL RIGHTS RESERVED</span>
+            <span>COPYRIGHT &copy; 2026 : ALL RIGHTS RESERVED</span>
           </footer>
         </section>
       </div>

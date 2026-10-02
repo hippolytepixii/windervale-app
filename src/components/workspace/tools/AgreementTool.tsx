@@ -149,7 +149,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">03 // AGREEMENT</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">03 : AGREEMENT</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               COVENANTS &amp; DIGITAL CONFIRMATIONS
             </span>
@@ -308,7 +308,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
                           : 'bg-[#C84B31] text-white'
                       }`}
                     >
-                      {isRatified ? 'RATIFIED // EFFECTIVE' : 'PENDING COLLABORATOR SIGNATURES'}
+                      {isRatified ? 'RATIFIED : EFFECTIVE' : 'PENDING COLLABORATOR SIGNATURES'}
                     </span>
                   </div>
                   <h3 className="font-fun font-bold text-xl text-black mt-1">

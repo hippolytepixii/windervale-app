@@ -127,7 +127,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">00 // PROJECT</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">00 : PROJECT</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               PROJECT IDENTITY, INTENT &amp; STATUS
             </span>
@@ -546,7 +546,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
             <span>
               LAST UPDATED: {new Date(project.updated_at).toLocaleDateString()}
             </span>
-            <span>WINDERVALE CREATIVE OS // THE PROJECT IS THE UNIT</span>
+            <span>WINDERVALE CREATIVE OS : THE PROJECT IS THE UNIT</span>
           </div>
         </div>
       )}

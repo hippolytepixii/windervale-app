@@ -59,7 +59,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }
         {/* Status ticker */}
         <div className="hidden lg:flex items-center gap-2 pl-4 font-mono text-[10px] text-wv-dust uppercase tracking-wider">
           <span className="w-2 h-2 rounded-none bg-wv-dustyrose animate-pulse" />
-          <span>AUTONOMOUS NETWORK // ONLINE</span>
+          <span>AUTONOMOUS NETWORK : ONLINE</span>
         </div>
       </div>
     </nav>

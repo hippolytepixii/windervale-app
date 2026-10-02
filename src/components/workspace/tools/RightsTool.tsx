@@ -189,7 +189,7 @@ export const RightsTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">02 // RIGHTS</span>
+            <span className="font-mono text-xs text-[#6A1A4C] font-bold">02 : RIGHTS</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               OWNERSHIP, PERMISSIONS, LICENSING &amp; REVENUE ALLOCATIONS
             </span>
