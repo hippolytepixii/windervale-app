@@ -74,6 +74,10 @@ export const CrewTool: React.FC<ToolProps> = ({
   const [editRole, setEditRole] = useState<'owner' | 'member' | 'viewer'>('member');
   const [editProjectRole, setEditProjectRole] = useState('');
   const [editContribution, setEditContribution] = useState('');
+  const [editResponsibilities, setEditResponsibilities] = useState('');
+  const [editOwnership, setEditOwnership] = useState('');
+  const [editDistribution, setEditDistribution] = useState('');
+  const [editStatus, setEditStatus] = useState('active');
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Friend invite form per friend
@@ -167,6 +171,10 @@ export const CrewTool: React.FC<ToolProps> = ({
     setEditRole(m.role);
     setEditProjectRole(m.project_role || m.contribution_area || 'Creative Collaborator');
     setEditContribution(m.contribution || m.contribution_area || '');
+    setEditResponsibilities(m.responsibilities || '');
+    setEditOwnership(m.ownership_percentage !== undefined ? String(m.ownership_percentage) : '');
+    setEditDistribution(m.distribution_percentage !== undefined ? String(m.distribution_percentage) : '');
+    setEditStatus(m.status || 'active');
   };
 
   const handleSaveMemberEdit = async (e: React.FormEvent) => {
@@ -178,7 +186,11 @@ export const CrewTool: React.FC<ToolProps> = ({
         role: editRole,
         project_role: editProjectRole,
         contribution_area: editProjectRole,
-        contribution: editContribution
+        contribution: editContribution,
+        responsibilities: editResponsibilities,
+        ownership_percentage: editOwnership ? parseFloat(editOwnership) : 0,
+        distribution_percentage: editDistribution ? parseFloat(editDistribution) : 0,
+        status: editStatus
       });
       setEditingMember(null);
       if (onRefreshProject) onRefreshProject();
@@ -186,6 +198,20 @@ export const CrewTool: React.FC<ToolProps> = ({
       alert(err.message || 'Failed to update crew member');
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleArchiveMember = async (memberId: string, memberName: string) => {
+    const ok = confirm(
+      `Archive ${memberName} from active project crew?\n\nNOTE: While active permissions will be revoked, their historical colophon credits in 10 CREDITS and past ledger history will remain permanently preserved.`
+    );
+    if (!ok) return;
+
+    try {
+      await api.archiveMember(projectId, memberId);
+      if (onRefreshProject) onRefreshProject();
+    } catch (err: any) {
+      alert(err.message || 'Failed to archive collaborator');
     }
   };
 
@@ -291,14 +317,23 @@ export const CrewTool: React.FC<ToolProps> = ({
                         {m.role}
                       </span>
                       {userRole === 'owner' && (
-                        <button
-                          onClick={() => startEditMember(m)}
-                          className="font-mono text-[10px] text-black/60 hover:text-black flex items-center gap-0.5 cursor-pointer"
-                          title="Edit role and contribution"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                          <span>Edit</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => startEditMember(m)}
+                            className="font-mono text-[10px] text-black/60 hover:text-black flex items-center gap-0.5 cursor-pointer"
+                            title="Edit role and contribution"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleArchiveMember(m.id, m.name)}
+                            className="font-mono text-[10px] text-black/40 hover:text-[#C84B31] flex items-center gap-0.5 cursor-pointer"
+                            title="Archive member (Colophon credits preserved)"
+                          >
+                            <span>Archive</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                     <h4 className="font-fun font-bold text-lg text-black truncate mt-1">
@@ -437,7 +472,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                   Actual Contribution (What was specifically contributed) *
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   required
                   value={editContribution}
                   onChange={(e) => setEditContribution(e.target.value)}
@@ -446,21 +481,95 @@ export const CrewTool: React.FC<ToolProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-black/15">
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  Responsibilities
+                </label>
+                <input
+                  type="text"
+                  value={editResponsibilities}
+                  onChange={(e) => setEditResponsibilities(e.target.value)}
+                  className="w-full p-2.5 bg-white border-[2px] border-black font-fun text-sm text-black focus:outline-none"
+                  placeholder="e.g. Creative direction, casting, principal photography"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    IP Ownership %
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={editOwnership}
+                    onChange={(e) => setEditOwnership(e.target.value)}
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-sm text-black focus:outline-none"
+                    placeholder="e.g. 20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    Revenue Distribution %
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={editDistribution}
+                    onChange={(e) => setEditDistribution(e.target.value)}
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-sm text-black focus:outline-none"
+                    placeholder="e.g. 20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  Collaborator Status
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                >
+                  <option value="active">Active</option>
+                  <option value="archived">Archived (Credits Preserved)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-black/15">
                 <button
                   type="button"
-                  onClick={() => setEditingMember(null)}
-                  className="px-4 py-2 border-[2px] border-black font-mono text-xs uppercase font-bold text-black hover:bg-white cursor-pointer"
+                  onClick={() => {
+                    if (editingMember) {
+                      handleArchiveMember(editingMember.id, editingMember.name);
+                      setEditingMember(null);
+                    }
+                  }}
+                  className="px-3 py-2 border border-black/40 text-black/70 hover:text-[#C84B31] hover:border-black font-mono text-xs uppercase cursor-pointer"
                 >
-                  Cancel
+                  Archive Collaborator
                 </button>
-                <button
-                  type="submit"
-                  disabled={savingEdit}
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
-                >
-                  {savingEdit ? 'SAVING...' : 'SAVE RECORD'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMember(null)}
+                    className="px-4 py-2 border-[2px] border-black font-mono text-xs uppercase font-bold text-black hover:bg-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingEdit}
+                    className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  >
+                    {savingEdit ? 'SAVING...' : 'SAVE RECORD'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

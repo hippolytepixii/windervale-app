@@ -67,6 +67,8 @@ export const MoneyTool: React.FC<ToolProps> = ({
   const [isRecoupable, setIsRecoupable] = useState(false);
   const [deductionAmount, setDeductionAmount] = useState('');
   const [recipientName, setRecipientName] = useState('');
+  const [collaboratorId, setCollaboratorId] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState('');
 
   useEffect(() => {
     loadMoney();
@@ -103,11 +105,15 @@ export const MoneyTool: React.FC<ToolProps> = ({
         is_recoupable: isRecoupable ? 1 : 0,
         deduction_amount: deductionAmount ? parseFloat(deductionAmount) : 0,
         recipient_name: recipientName,
+        collaborator_id: collaboratorId || undefined,
+        receipt_url: receiptUrl || undefined,
         status: 'approved'
       });
       setAmount('');
       setDescription('');
       setRecipientName('');
+      setCollaboratorId('');
+      setReceiptUrl('');
       setDeductionAmount('');
       setIsRecoupable(false);
       setCreateModal(false);
@@ -582,6 +588,43 @@ export const MoneyTool: React.FC<ToolProps> = ({
                   className="w-full p-2.5 bg-white border-[2px] border-black font-fun text-sm text-black focus:outline-none"
                   placeholder="e.g. 5 Rolls 16mm Vision3 250D from Kodak"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    Link Collaborator Recipient
+                  </label>
+                  <select
+                    value={collaboratorId}
+                    onChange={(e) => {
+                      setCollaboratorId(e.target.value);
+                      const m = members.find(x => x.user_id === e.target.value);
+                      if (m) setRecipientName(m.name);
+                    }}
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                  >
+                    <option value="">-- Non-crew / External vendor --</option>
+                    {members.map(m => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.name} ({m.project_role || m.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    Receipt / Invoice Document URL
+                  </label>
+                  <input
+                    type="url"
+                    value={receiptUrl}
+                    onChange={(e) => setReceiptUrl(e.target.value)}
+                    placeholder="https://... or invoice link"
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

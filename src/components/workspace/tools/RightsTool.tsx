@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RightRecord, ProjectMember } from '../../../types';
+import { RightRecord, ProjectMember, RightsHistoryItem } from '../../../types';
 import { api } from '../../../services/api';
 import {
   Shield,
@@ -16,7 +16,11 @@ import {
   Globe,
   Clock,
   Lock,
-  FileCheck
+  FileCheck,
+  Edit2,
+  History,
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 
 interface ToolProps {
@@ -68,6 +72,10 @@ export const RightsTool: React.FC<ToolProps> = ({
   const [loading, setLoading] = useState(true);
   const [activeAssetFilter, setActiveAssetFilter] = useState('ALL');
   const [createModal, setCreateModal] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [rightsHistory, setRightsHistory] = useState<RightsHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [editingRight, setEditingRight] = useState<RightRecord | null>(null);
 
   // Form states
   const [contributorName, setContributorName] = useState('');
@@ -159,6 +167,38 @@ export const RightsTool: React.FC<ToolProps> = ({
     }
   };
 
+  const loadHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const data = await api.getRightsHistory(projectId);
+      setRightsHistory(data.history || []);
+    } catch (err) {
+      console.error('Failed to load rights audit history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRight) return;
+    try {
+      await api.updateRight(projectId, editingRight.id, {
+        ownership_percentage: Number(editingRight.ownership_percentage),
+        role: editingRight.role,
+        territory: editingRight.territory,
+        duration: editingRight.duration,
+        exclusivity: editingRight.exclusivity,
+        revenue_splits: editingRight.revenue_splits,
+        notes: editingRight.notes
+      });
+      setEditingRight(null);
+      loadRights();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update rights record');
+    }
+  };
+
   const togglePermission = (permId: string) => {
     if (permissions.includes(permId)) {
       setPermissions(permissions.filter((p) => p !== permId));
@@ -199,7 +239,18 @@ export const RightsTool: React.FC<ToolProps> = ({
           </h2>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setHistoryModalOpen(true);
+              loadHistory();
+            }}
+            className="py-2 px-3 bg-white hover:bg-black hover:text-white border-[2px] border-black text-black font-mono text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>AUDIT TRAIL</span>
+          </button>
+
           {userRole === 'owner' && (
             <button
               onClick={() => setCreateModal(true)}
@@ -259,6 +310,27 @@ export const RightsTool: React.FC<ToolProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Calculation & Allocation Validation Banner */}
+      {totalPercentage > 100 ? (
+        <div className="p-3 bg-black border-2 border-black text-[#F2CBD2] font-mono text-xs font-bold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+          <span>ERROR: TOTAL IP OWNERSHIP ALLOCATION EXCEEDS 100% ({totalPercentage}%). REVISE LEDGER TO VALIDATE.</span>
+        </div>
+      ) : totalPercentage < 100 ? (
+        <div className="p-3 bg-[#fbf6f0] border-2 border-black text-black font-mono text-xs flex items-center justify-between shadow-[2px_2px_0px_#000]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#6A1A4C]" />
+            <span className="font-bold">ALLOCATION INCOMPLETE : {(100 - totalPercentage).toFixed(1)}% REMAINS UNASSIGNED.</span>
+          </div>
+          <span className="text-[10px] text-black/60 font-bold uppercase">ALLOCATED: {totalPercentage}% / 100%</span>
+        </div>
+      ) : (
+        <div className="p-3 bg-[#2D7A4C]/15 border-2 border-[#2D7A4C] text-[#2D7A4C] font-mono text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>EQUITY FULLY ALLOCATED (100.0%) : ALL PARTICIPATING OWNERSHIP CONFIRMED.</span>
+        </div>
+      )}
 
       {/* Asset Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b-[2px] border-black pb-2">
@@ -344,13 +416,22 @@ export const RightsTool: React.FC<ToolProps> = ({
                     </div>
 
                     {userRole === 'owner' && (
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="p-1.5 text-black/40 hover:text-[#C84B31] border border-black/20 hover:border-black cursor-pointer"
-                        title="Delete Rights Entry"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => setEditingRight(r)}
+                          className="p-1.5 text-black/60 hover:text-black hover:bg-black hover:text-white border border-black/30 hover:border-black cursor-pointer transition-colors"
+                          title="Edit Rights Entry"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="p-1.5 text-black/40 hover:text-[#C84B31] border border-black/20 hover:border-black cursor-pointer transition-colors"
+                          title="Delete Rights Entry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -710,6 +791,183 @@ export const RightsTool: React.FC<ToolProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT RIGHTS RECORD MODAL */}
+      {editingRight && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-[4px_4px_0px_#000]">
+            <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
+              <div>
+                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                  EDIT RIGHTS LEDGER ENTRY
+                </span>
+                <h3 className="font-fun font-bold text-xl text-black">
+                  {editingRight.contributor_name} : {editingRight.asset_name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingRight(null)}
+                className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3">
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  IP Ownership % *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  required
+                  value={editingRight.ownership_percentage}
+                  onChange={(e) => setEditingRight({ ...editingRight, ownership_percentage: parseFloat(e.target.value) || 0 })}
+                  className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-sm text-black focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  Contributor Role *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingRight.role}
+                  onChange={(e) => setEditingRight({ ...editingRight, role: e.target.value })}
+                  className="w-full p-2 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    Territory
+                  </label>
+                  <input
+                    type="text"
+                    value={editingRight.territory || 'Worldwide'}
+                    onChange={(e) => setEditingRight({ ...editingRight, territory: e.target.value })}
+                    className="w-full p-2 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={editingRight.duration || 'Perpetual'}
+                    onChange={(e) => setEditingRight({ ...editingRight, duration: e.target.value })}
+                    className="w-full p-2 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  Exclusivity
+                </label>
+                <select
+                  value={editingRight.exclusivity || 'non-exclusive'}
+                  onChange={(e) => setEditingRight({ ...editingRight, exclusivity: e.target.value as any })}
+                  className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                >
+                  <option value="non-exclusive">Non-Exclusive</option>
+                  <option value="exclusive">Exclusive</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-mono text-xs uppercase font-bold text-black mb-1">
+                  Notes / Terms
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingRight.notes || ''}
+                  onChange={(e) => setEditingRight({ ...editingRight, notes: e.target.value })}
+                  className="w-full p-2 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-black/15">
+                <button
+                  type="button"
+                  onClick={() => setEditingRight(null)}
+                  className="px-4 py-2 border-[2px] border-black font-mono text-xs uppercase font-bold text-black hover:bg-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                >
+                  SAVE CHANGES \u2197
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* RIGHTS AUDIT TRAIL MODAL */}
+      {historyModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 max-h-[85vh] flex flex-col shadow-[5px_5px_0px_#000]">
+            <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
+              <div>
+                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase tracking-widest">
+                  IMMUTABLE AUDIT TRAIL
+                </span>
+                <h3 className="font-fun font-bold text-xl text-black">
+                  rights ledger revision history
+                </h3>
+              </div>
+              <button
+                onClick={() => setHistoryModalOpen(false)}
+                className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y divide-black/15 min-h-[200px] max-h-[400px]">
+              {loadingHistory ? (
+                <div className="p-8 text-center font-mono text-xs text-black/60 animate-pulse">
+                  FETCHING RIGHTS AUDIT TRAIL...
+                </div>
+              ) : rightsHistory.length === 0 ? (
+                <div className="p-8 text-center font-fun italic text-xs text-black/60">
+                  No previous revisions logged for this project's rights ledger.
+                </div>
+              ) : (
+                rightsHistory.map((h) => (
+                  <div key={h.id} className="p-3 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-mono">
+                      <span className="px-1.5 py-0.5 bg-black text-white font-bold uppercase">
+                        REV #{h.version}
+                      </span>
+                      <span className="text-black/50">
+                        {new Date(h.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="font-fun text-xs text-black font-bold">
+                      {h.changes_summary}
+                    </p>
+                    <span className="font-mono text-[10px] text-black/60 block">
+                      Recorded by: {h.changed_by}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

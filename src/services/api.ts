@@ -4,7 +4,8 @@ import {
   ProjectMemoryItem, DecisionItem, RightRecord, AgreementItem,
   FinancialTransaction, MoneySummary, OutcomeItem, CreditItem,
   LibraryArticle, FundGrant, NotificationItem, DistributionRecord,
-  WaterfallReport, PendingActionItem
+  WaterfallReport, PendingActionItem, Workspace, WorkspaceMember,
+  RightsHistoryItem, WorkspaceActivityItem, WorkspaceSearchResult
 } from '../types';
 
 const API_BASE = '/api';
@@ -232,8 +233,9 @@ export const api = {
   },
 
   // Projects
-  async getProjects(): Promise<{ projects: Project[] }> {
-    const res = await fetch(`${API_BASE}/projects`, {
+  async getProjects(workspaceId?: string): Promise<{ projects: Project[] }> {
+    const query = workspaceId ? `?workspace_id=${encodeURIComponent(workspaceId)}` : '';
+    const res = await fetch(`${API_BASE}/projects${query}`, {
       headers: getHeaders(true),
     });
     return handleResponse(res);
@@ -294,6 +296,100 @@ export const api = {
       method: 'PUT',
       headers: getHeaders(true),
       body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async archiveMember(projectId: string, memberId: string): Promise<{ success: boolean; creditPreserved: boolean }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  async removeMember(projectId: string, memberId: string): Promise<{ success: boolean; creditPreserved: boolean }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  // Workspaces
+  async getWorkspaces(): Promise<{ workspaces: Workspace[] }> {
+    const res = await fetch(`${API_BASE}/workspaces`, {
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  async createWorkspace(data: { name: string; description?: string; pin?: string }): Promise<{ workspace: Workspace }> {
+    const res = await fetch(`${API_BASE}/workspaces`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async getWorkspace(id: string): Promise<{ workspace: Workspace; members: WorkspaceMember[]; userRole: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}`, {
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  async updateWorkspace(id: string, data: Partial<Workspace>): Promise<{ workspace: Workspace }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async setWorkspaceLock(id: string, data: { action: 'set' | 'remove' | 'change'; current_pin?: string; new_pin?: string }): Promise<{ success: boolean; is_locked: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}/lock`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async unlockWorkspace(id: string, pin: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}/unlock`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify({ pin }),
+    });
+    return handleResponse(res);
+  },
+
+  async recoverWorkspacePin(id: string, account_password: string, new_pin: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}/recover-pin`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify({ account_password, new_pin }),
+    });
+    return handleResponse(res);
+  },
+
+  async setSensitiveLock(id: string, data: { enabled: boolean; pin?: string; current_pin?: string }): Promise<{ success: boolean; sensitive_lock_enabled: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}/sensitive-lock`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async unlockSensitive(id: string, pin: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/workspaces/${id}/unlock-sensitive`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify({ pin }),
     });
     return handleResponse(res);
   },
@@ -361,6 +457,15 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateCapture(projectId: string, id: string, data: Partial<CaptureItem>): Promise<{ capture: CaptureItem }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/captures/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async deleteCapture(projectId: string, id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/captures/${id}`, {
       method: 'DELETE',
@@ -389,6 +494,15 @@ export const api = {
   async createStudioAsset(projectId: string, data: Partial<StudioAsset>): Promise<{ asset: StudioAsset }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/studio`, {
       method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async updateStudioAsset(projectId: string, id: string, data: Partial<StudioAsset>): Promise<{ asset: StudioAsset }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/studio/${id}`, {
+      method: 'PUT',
       headers: getHeaders(true),
       body: JSON.stringify(data),
     });
@@ -454,6 +568,15 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateMemory(projectId: string, id: string, data: Partial<ProjectMemoryItem>): Promise<{ memory: ProjectMemoryItem }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/memory/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async deleteMemory(projectId: string, id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/memory/${id}`, {
       method: 'DELETE',
@@ -513,6 +636,13 @@ export const api = {
     return handleResponse(res);
   },
 
+  async getRightsHistory(projectId: string): Promise<{ history: RightsHistoryItem[] }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/rights/history`, {
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
   async deleteRight(projectId: string, id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/rights/${id}`, {
       method: 'DELETE',
@@ -532,6 +662,15 @@ export const api = {
   async createAgreement(projectId: string, data: Partial<AgreementItem>): Promise<{ agreement: AgreementItem }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/agreements`, {
       method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async updateAgreement(projectId: string, id: string, data: Partial<AgreementItem>): Promise<{ agreement: AgreementItem }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/agreements/${id}`, {
+      method: 'PUT',
       headers: getHeaders(true),
       body: JSON.stringify(data),
     });
@@ -576,6 +715,15 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateTransaction(projectId: string, id: string, data: Partial<FinancialTransaction>): Promise<{ transaction: FinancialTransaction }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/money/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async approveTransaction(projectId: string, id: string): Promise<{ transaction: FinancialTransaction }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/money/${id}/approve`, {
       method: 'PUT',
@@ -609,6 +757,15 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateOutcome(projectId: string, id: string, data: Partial<OutcomeItem>): Promise<{ outcome: OutcomeItem }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/outcomes/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async deleteOutcome(projectId: string, id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/outcomes/${id}`, {
       method: 'DELETE',
@@ -628,6 +785,15 @@ export const api = {
   async createDistribution(projectId: string, data: Partial<DistributionRecord>): Promise<{ record: DistributionRecord }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/distribution`, {
       method: 'POST',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async updateDistribution(projectId: string, id: string, data: Partial<DistributionRecord>): Promise<{ record: DistributionRecord }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/distribution/${id}`, {
+      method: 'PUT',
       headers: getHeaders(true),
       body: JSON.stringify(data),
     });
@@ -691,6 +857,15 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateCredit(projectId: string, id: string, data: Partial<CreditItem>): Promise<{ credit: CreditItem }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/credits/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async syncCrewCredits(projectId: string): Promise<{ success: boolean; addedCount: number; credits: CreditItem[] }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/credits/sync-crew`, {
       method: 'POST',
@@ -702,6 +877,21 @@ export const api = {
   async deleteCredit(projectId: string, id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/credits/${id}`, {
       method: 'DELETE',
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  // Workspace Cross-Module Search & Activity
+  async searchWorkspace(projectId: string, query: string): Promise<{ query: string; totalMatches: number; results: WorkspaceSearchResult[] }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/search?q=${encodeURIComponent(query)}`, {
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
+  async getWorkspaceActivity(projectId: string): Promise<{ activity: WorkspaceActivityItem[] }> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/workspace/activity`, {
       headers: getHeaders(true),
     });
     return handleResponse(res);

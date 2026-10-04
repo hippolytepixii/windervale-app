@@ -359,6 +359,55 @@ export function initializeDatabase() {
       FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
       FOREIGN KEY (applicant_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      owner_id TEXT NOT NULL,
+      pin_hash TEXT,
+      is_locked INTEGER DEFAULT 0,
+      sensitive_lock_enabled INTEGER DEFAULT 0,
+      sensitive_pin_hash TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS workspace_members (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member', -- 'owner', 'admin', 'editor', 'member', 'viewer'
+      joined_at TEXT NOT NULL,
+      FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(workspace_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS rights_history (
+      id TEXT PRIMARY KEY,
+      right_id TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      version INTEGER DEFAULT 1,
+      changes_summary TEXT NOT NULL,
+      changed_by TEXT NOT NULL,
+      timestamp TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS workspace_activities (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT,
+      project_id TEXT,
+      user_id TEXT NOT NULL,
+      user_name TEXT NOT NULL,
+      module_key TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      details TEXT,
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Safe incremental migrations for existing databases
@@ -446,6 +495,105 @@ export function initializeDatabase() {
   // 07. MILESTONES Approvals & Responsibles Migrations
   try { db.exec("ALTER TABLE milestones ADD COLUMN responsible_person TEXT"); } catch {}
   try { db.exec("ALTER TABLE milestones ADD COLUMN approval_state TEXT"); } catch {}
+
+  // Workspaces & Projects
+  try { db.exec("ALTER TABLE workspaces ADD COLUMN description TEXT"); } catch {}
+  try { db.exec("ALTER TABLE workspaces ADD COLUMN pin_hash TEXT"); } catch {}
+  try { db.exec("ALTER TABLE workspaces ADD COLUMN is_locked INTEGER DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE workspaces ADD COLUMN sensitive_lock_enabled INTEGER DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE workspaces ADD COLUMN sensitive_pin_hash TEXT"); } catch {}
+  try { db.exec("ALTER TABLE projects ADD COLUMN workspace_id TEXT"); } catch {}
+
+  // Rights History
+  try { db.exec("ALTER TABLE rights_history ADD COLUMN version INTEGER DEFAULT 1"); } catch {}
+  try { db.exec("ALTER TABLE rights_history ADD COLUMN changes_summary TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights_history ADD COLUMN timestamp TEXT"); } catch {}
+
+  // 01. CREW
+  try { db.exec("ALTER TABLE project_members ADD COLUMN responsibilities TEXT"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN status TEXT DEFAULT 'active'"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN notes TEXT"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN ownership_percentage REAL DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN distribution_percentage REAL DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN agreement_status TEXT DEFAULT 'pending'"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN credit_title TEXT"); } catch {}
+  try { db.exec("ALTER TABLE project_members ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 02. RIGHTS
+  try { db.exec("ALTER TABLE rights ADD COLUMN work_title TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN contribution_type TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN creator TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN rights_holder TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN revenue_share_percentage REAL DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN license_type TEXT DEFAULT 'Project-exclusive'"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN license_duration TEXT DEFAULT 'Perpetual'"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN usage_rights TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN effective_date TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN expiration_date TEXT"); } catch {}
+  try { db.exec("ALTER TABLE rights ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 03. AGREEMENT
+  try { db.exec("ALTER TABLE agreements ADD COLUMN parties TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN rights_covered TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN ownership_terms TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN revenue_terms TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN expiry_date TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN attached_document_url TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN notes TEXT"); } catch {}
+  try { db.exec("ALTER TABLE agreements ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 04. BUILD
+  try { db.exec("ALTER TABLE workspace_tasks ADD COLUMN milestone_id TEXT"); } catch {}
+  try { db.exec("ALTER TABLE workspace_tasks ADD COLUMN category TEXT"); } catch {}
+  try { db.exec("ALTER TABLE workspace_tasks ADD COLUMN notes TEXT"); } catch {}
+  try { db.exec("ALTER TABLE workspace_tasks ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 05. CAPTURE
+  try { db.exec("ALTER TABLE captures ADD COLUMN attachments TEXT"); } catch {}
+  try { db.exec("ALTER TABLE captures ADD COLUMN references_list TEXT"); } catch {}
+  try { db.exec("ALTER TABLE captures ADD COLUMN last_edited_at TEXT"); } catch {}
+  try { db.exec("ALTER TABLE captures ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 06. STUDIO
+  try { db.exec("ALTER TABLE studio_assets ADD COLUMN tags TEXT"); } catch {}
+  try { db.exec("ALTER TABLE studio_assets ADD COLUMN version TEXT DEFAULT 'v1.0'"); } catch {}
+  try { db.exec("ALTER TABLE studio_assets ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 07. MILESTONES
+  try { db.exec("ALTER TABLE milestones ADD COLUMN deliverable TEXT"); } catch {}
+  try { db.exec("ALTER TABLE milestones ADD COLUMN assigned_to TEXT"); } catch {}
+  try { db.exec("ALTER TABLE milestones ADD COLUMN notes TEXT"); } catch {}
+  try { db.exec("ALTER TABLE milestones ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 08. MONEY
+  try { db.exec("ALTER TABLE financial_transactions ADD COLUMN recipient_user_id TEXT"); } catch {}
+  try { db.exec("ALTER TABLE financial_transactions ADD COLUMN receipt_url TEXT"); } catch {}
+  try { db.exec("ALTER TABLE financial_transactions ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 09. DISTRIBUTION
+  try { db.exec("ALTER TABLE distribution_records ADD COLUMN license_type TEXT"); } catch {}
+  try { db.exec("ALTER TABLE distribution_records ADD COLUMN license_duration TEXT"); } catch {}
+  try { db.exec("ALTER TABLE distribution_records ADD COLUMN audience_reach TEXT"); } catch {}
+  try { db.exec("ALTER TABLE distribution_records ADD COLUMN revenue_generated REAL DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE distribution_records ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 10. CREDITS
+  try { db.exec("ALTER TABLE credits ADD COLUMN credit_type TEXT DEFAULT 'Core Contributor'"); } catch {}
+  try { db.exec("ALTER TABLE credits ADD COLUMN display_name TEXT"); } catch {}
+  try { db.exec("ALTER TABLE credits ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 11. OUTCOME
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN audience_reach TEXT"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN revenue_generated REAL DEFAULT 0"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN awards TEXT"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN festival_selections TEXT"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN press_mentions TEXT"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN lessons_learned TEXT"); } catch {}
+  try { db.exec("ALTER TABLE outcomes ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
+
+  // 12. MEMORY
+  try { db.exec("ALTER TABLE project_memory ADD COLUMN source_module TEXT"); } catch {}
+  try { db.exec("ALTER TABLE project_memory ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
 
   // In production database, purge all fake demo data so only real registered users & projects exist
   if (!isTestRun) {
@@ -715,15 +863,28 @@ export function seedTestFixtures() {
       now
     );
 
+    // Default Workspace for Maya
+    const wsId = 'ws-maya';
+    db.prepare(`
+      INSERT OR IGNORE INTO workspaces (id, name, description, owner_id, pin_hash, is_locked, sensitive_lock_enabled, sensitive_pin_hash, created_at, updated_at)
+      VALUES (?, ?, ?, ?, NULL, 0, 0, NULL, ?, ?)
+    `).run(wsId, 'Maya Rao Atelier', 'Independent cinema & moving-image production studio', 'u-maya', now, now);
+
+    db.prepare(`
+      INSERT OR IGNORE INTO workspace_members (id, workspace_id, user_id, role, joined_at)
+      VALUES (?, ?, ?, 'owner', ?)
+    `).run('wm-ws-maya-u-maya', wsId, 'u-maya', now);
+
     // Sample Project: THE DISSOLVE
     const projId = 'proj-dissolve';
     db.prepare(`
       INSERT INTO projects (
-        id, title, project_type, status, description, cover_image,
+        id, workspace_id, title, project_type, status, description, cover_image,
         location, target_date, visibility, created_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       projId,
+      wsId,
       'THE DISSOLVE',
       'film',
       'in progress',
@@ -985,3 +1146,60 @@ export function seedTestFixtures() {
     insertNotif.run('notif-3', 'u-maya', 'workspace', 'Decision Recorded', 'New decision logged: Keep Final Color Grade Monochrome.', '/workspace/proj-dissolve?tool=decisions', 1, now);
   }
 }
+
+export function ensureUserWorkspace(userId: string, userName?: string): string {
+  const membership = db.prepare(`
+    SELECT workspace_id FROM workspace_members WHERE user_id = ? ORDER BY CASE role WHEN 'owner' THEN 1 WHEN 'admin' THEN 2 ELSE 3 END LIMIT 1
+  `).get(userId) as { workspace_id: string } | undefined;
+
+  if (membership?.workspace_id) {
+    db.prepare('UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = "")').run(membership.workspace_id, userId);
+    return membership.workspace_id;
+  }
+
+  const wsId = `ws-${userId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const now = new Date().toISOString();
+  const name = userName ? `${userName}'s Atelier` : 'Creative Atelier';
+
+  const existingWs = db.prepare('SELECT id FROM workspaces WHERE id = ?').get(wsId) as any;
+  if (!existingWs) {
+    db.prepare(`
+      INSERT INTO workspaces (id, name, owner_id, password_hash, sensitive_lock_enabled, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, 0, ?, ?)
+    `).run(wsId, name, userId, now, now);
+  }
+
+  const existingMember = db.prepare('SELECT id FROM workspace_members WHERE workspace_id = ? AND user_id = ?').get(wsId, userId) as any;
+  if (!existingMember) {
+    db.prepare(`
+      INSERT INTO workspace_members (id, workspace_id, user_id, role, joined_at)
+      VALUES (?, ?, ?, 'owner', ?)
+    `).run(`wm-${wsId}-${userId}`, wsId, userId, now);
+  }
+
+  db.prepare('UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = "")').run(wsId, userId);
+  return wsId;
+}
+
+export function logWorkspaceActivity(
+  workspaceId: string,
+  projectId: string | null,
+  userId: string,
+  userName: string,
+  moduleKey: string,
+  actionType: string,
+  title: string,
+  details?: string
+): void {
+  try {
+    const id = `act-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO workspace_activities (id, workspace_id, project_id, user_id, user_name, module_key, action_type, title, details, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, workspaceId, projectId, userId, userName, moduleKey, actionType, title, details || null, now);
+  } catch (err) {
+    console.error('Error logging workspace activity:', err);
+  }
+}
+

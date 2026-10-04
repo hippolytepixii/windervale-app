@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CaptureItem, ProjectMember } from '../../../types';
 import { api } from '../../../services/api';
-import { Bookmark, Pin, Plus, Trash2, Tag, Maximize2, X, ExternalLink, ArrowRight, CheckCircle2, FileText, CheckSquare, Layers } from 'lucide-react';
+import { Bookmark, Pin, Plus, Trash2, Tag, Maximize2, X, ExternalLink, ArrowRight, CheckCircle2, FileText, CheckSquare, Layers, Clock } from 'lucide-react';
 
 interface ToolProps {
   projectId: string;
@@ -21,6 +21,13 @@ export const CaptureTool: React.FC<ToolProps> = ({
   const [activeType, setActiveType] = useState('ALL');
   const [createModal, setCreateModal] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+
+  // Autosave scratchpad state
+  const [quickNote, setQuickNote] = useState('');
+  const [quickNoteId, setQuickNoteId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const debounceTimerRef = useRef<any>(null);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -43,6 +50,42 @@ export const CaptureTool: React.FC<ToolProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setQuickNote(val);
+    if (!val.trim()) return;
+
+    setSaveStatus('saving');
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        if (!quickNoteId) {
+          const res = await api.createCapture(projectId, {
+            title: val.slice(0, 30) + '...',
+            content: val,
+            capture_type: 'fragment',
+            is_pinned: 0
+          });
+          if (res.capture?.id) {
+            setQuickNoteId(res.capture.id);
+          }
+        } else {
+          await api.updateCapture(projectId, quickNoteId, {
+            content: val,
+            title: val.slice(0, 30) + '...'
+          });
+        }
+        setSaveStatus('saved');
+        setLastSavedTime(new Date().toLocaleTimeString());
+        loadCaptures();
+      } catch (err) {
+        console.error('Autosave failed:', err);
+        setSaveStatus('idle');
+      }
+    }, 750);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -128,6 +171,38 @@ export const CaptureTool: React.FC<ToolProps> = ({
             </button>
           )}
         </div>
+      </div>
+
+      {/* Live Autosave Scratchpad Banner */}
+      <div className="border-[2px] border-black bg-[#FFFDF9] p-4 shadow-[2px_2px_0px_#000] space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#6A1A4C] font-black">
+              AUTOSAVING SCRATCHPAD
+            </span>
+            <span className="font-mono text-[10px] text-black/50">
+              (Live debounced persistence)
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 font-mono text-[10px]">
+            {saveStatus === 'saving' ? (
+              <span className="text-[#C84B31] animate-pulse font-bold">Saving...</span>
+            ) : saveStatus === 'saved' ? (
+              <span className="text-[#2D7A4C] font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Saved {lastSavedTime ? `at ${lastSavedTime}` : ''}
+              </span>
+            ) : (
+              <span className="text-black/40">Ready</span>
+            )}
+          </div>
+        </div>
+        <textarea
+          rows={2}
+          value={quickNote}
+          onChange={handleQuickNoteChange}
+          placeholder="Capture an immediate idea, fleeting dialogue, reference or note... (autosaves as you type)"
+          className="w-full bg-white border border-black p-2.5 font-fun text-xs text-black focus:outline-none resize-none"
+        />
       </div>
 
       {/* Type Filters */}

@@ -87,8 +87,61 @@ export interface Connection {
   created_at: string;
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  owner_id: string;
+  is_locked: number;
+  has_pin: boolean;
+  sensitive_lock_enabled: number;
+  has_sensitive_pin: boolean;
+  created_at: string;
+  updated_at: string;
+  user_role?: 'owner' | 'admin' | 'editor' | 'member' | 'viewer';
+  project_count?: number;
+  member_count?: number;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  workspace_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'editor' | 'member' | 'viewer';
+  name: string;
+  email: string;
+  avatar_url?: string;
+  joined_at: string;
+}
+
+export interface RightsHistoryItem {
+  id: string;
+  right_id: string;
+  project_id: string;
+  version: number;
+  changes_summary: string;
+  changed_by: string;
+  contributor_name?: string;
+  role?: string;
+  timestamp: string;
+}
+
+export interface WorkspaceActivityItem {
+  id: string;
+  workspace_id?: string;
+  project_id?: string;
+  user_id: string;
+  user_name: string;
+  module_key: string;
+  action_type: string;
+  title: string;
+  details?: string;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
+  workspace_id?: string;
   title: string;
   project_type: string;
   status: 'idea' | 'forming' | 'planning' | 'in progress' | 'in production' | 'completed' | 'released' | 'archived';
@@ -116,8 +169,16 @@ export interface ProjectMember {
   user_id: string;
   role: 'owner' | 'member' | 'viewer';
   project_role?: string;
+  responsibilities?: string;
   contribution_area: string;
   contribution?: string;
+  status?: 'active' | 'invited' | 'archived';
+  agreement_status?: 'unsigned' | 'pending' | 'signed';
+  ownership_percentage?: number;
+  distribution_percentage?: number;
+  credit_title?: string;
+  notes?: string;
+  is_archived?: number;
   joined_at: string;
   name: string;
   email: string;
@@ -126,7 +187,7 @@ export interface ProjectMember {
   location?: string;
 }
 
-// 01. BUILD
+// 04. BUILD
 export interface WorkspaceTask {
   id: string;
   project_id: string;
@@ -136,12 +197,17 @@ export interface WorkspaceTask {
   priority: 'urgent' | 'normal' | 'low';
   assignee_id?: string;
   assignee_name?: string;
+  milestone_id?: string;
+  milestone_title?: string;
+  category?: string;
+  notes?: string;
   deadline?: string;
+  is_archived?: number;
   created_at: string;
   updated_at: string;
 }
 
-// 06. CAPTURE
+// 05. CAPTURE
 export interface CaptureItem {
   id: string;
   project_id: string;
@@ -149,7 +215,11 @@ export interface CaptureItem {
   content: string;
   capture_type: 'idea' | 'thought' | 'note' | 'reference' | 'link' | 'fragment';
   tags: string[];
+  attachments?: any[];
+  references_list?: any[];
   is_pinned: number;
+  is_archived?: number;
+  last_edited_at?: string;
   created_by: string;
   author_name?: string;
   converted_to?: 'task' | 'asset' | 'deliverable' | 'note' | string;
@@ -157,7 +227,7 @@ export interface CaptureItem {
   created_at: string;
 }
 
-// 05. STUDIO
+// 06. STUDIO
 export interface StudioAsset {
   id: string;
   project_id: string;
@@ -165,6 +235,8 @@ export interface StudioAsset {
   asset_type: 'script' | 'moodboard' | 'audio' | 'video' | 'reference' | 'document' | 'master';
   file_url: string;
   file_size?: string;
+  tags?: string[];
+  version?: string;
   notes?: string;
   uploaded_by: string;
   uploader_name?: string;
@@ -173,6 +245,7 @@ export interface StudioAsset {
   version_number?: string;
   is_master?: number;
   approval_status?: 'pending' | 'approved' | 'in_review';
+  is_archived?: number;
   created_at: string;
 }
 
@@ -185,8 +258,14 @@ export interface Milestone {
   status: 'upcoming' | 'in_progress' | 'completed';
   progress: number;
   deliverables?: string;
+  deliverable?: string;
+  assigned_to?: string;
+  notes?: string;
   responsible_person?: string;
   approval_state?: string;
+  linked_tasks_count?: number;
+  completed_tasks_count?: number;
+  is_archived?: number;
   created_at: string;
 }
 
@@ -196,11 +275,13 @@ export interface ProjectMemoryItem {
   project_id: string;
   title: string;
   event_date: string;
-  event_type: 'milestone' | 'change' | 'pivot' | 'insight' | 'archival';
+  event_type: 'milestone' | 'change' | 'pivot' | 'insight' | 'archival' | string;
   summary: string;
   full_context?: string;
+  source_module?: string;
   recorded_by: string;
   recorder_name?: string;
+  is_archived?: number;
   created_at: string;
 }
 
@@ -225,12 +306,22 @@ export interface RightRecord {
   user_id?: string;
   role: string;
   ownership_percentage: number;
+  work_title?: string;
+  contribution_type?: string;
+  creator?: string;
+  rights_holder?: string;
+  license_type?: string;
+  license_duration?: string;
+  territory?: string;
+  exclusivity?: 'exclusive' | 'non-exclusive';
+  usage_rights?: string;
+  revenue_share_percentage?: number;
+  effective_date?: string;
+  expiration_date?: string;
   asset_name?: string;
   asset_type?: string;
-  permissions?: string[]; // 'reproduce', 'distribute', 'license', 'adapt', 'publish', 'exhibit', 'sync', 'sublicense', 'monetize'
-  territory?: string;
+  permissions?: string[];
   duration?: string;
-  exclusivity?: 'exclusive' | 'non-exclusive';
   restrictions?: string;
   approval_requirements?: string;
   revenue_splits?: {
@@ -244,6 +335,7 @@ export interface RightRecord {
   rights_details?: string;
   notes?: string;
   status?: string;
+  is_archived?: number;
   created_at: string;
 }
 
@@ -255,8 +347,16 @@ export interface AgreementItem {
   terms: string;
   status: 'draft' | 'open' | 'agreed' | 'archived';
   participants: string[];
+  parties?: string;
+  rights_covered?: string;
+  ownership_terms?: string;
+  revenue_terms?: string;
   signed_by: { user_id: string; name: string; signed_at: string }[];
   effective_date?: string;
+  expiry_date?: string;
+  attached_document_url?: string;
+  notes?: string;
+  is_archived?: number;
   clauses?: {
     parties?: string[];
     contributions?: string;
@@ -285,6 +385,9 @@ export interface FinancialTransaction {
   category: string;
   description?: string;
   transaction_date: string;
+  recipient_user_id?: string;
+  recipient_collaborator_name?: string;
+  receipt_url?: string;
   recorded_by: string;
   recorder_name?: string;
   is_approved?: number;
@@ -293,6 +396,7 @@ export interface FinancialTransaction {
   deduction_amount?: number;
   recipient_name?: string;
   status?: 'pending' | 'approved' | 'paid';
+  is_archived?: number;
   created_at: string;
 }
 
@@ -347,11 +451,16 @@ export interface DistributionRecord {
   external_url?: string;
   asset_id?: string;
   licensee?: string;
+  license_type?: string;
+  license_duration?: string;
+  audience_reach?: number;
+  revenue_generated?: number;
   duration?: string;
   fee?: number;
   exclusivity?: 'exclusive' | 'non-exclusive';
   approval_status?: 'pending' | 'approved' | 'declined';
   agreement_ref?: string;
+  is_archived?: number;
   created_at: string;
   is_legacy?: boolean;
 }
@@ -376,21 +485,49 @@ export interface OutcomeItem {
   venue_or_channel?: string;
   impact_notes?: string;
   external_url?: string;
+  audience_reach?: number;
+  revenue_generated?: number;
+  awards?: string;
+  festival_selections?: string;
+  press_mentions?: string;
+  lessons_learned?: string;
+  is_archived?: number;
   created_at: string;
 }
 
-// 12. CREDITS
+// 10. CREDITS
 export interface CreditItem {
   id: string;
   project_id: string;
   role_title: string;
   contributor_name: string;
+  credit_type?: 'principal' | 'head_of_dept' | 'crew' | 'cast' | 'special_thanks';
+  display_name?: string;
   user_id?: string;
   linked_user_name?: string;
   avatar_url?: string;
   notes?: string;
   display_order: number;
+  is_archived?: number;
   created_at: string;
+}
+
+export interface WorkspaceSearchResult {
+  query: string;
+  results: {
+    tasks: any[];
+    captures: any[];
+    assets: any[];
+    milestones: any[];
+    crew: any[];
+    rights: any[];
+    agreements: any[];
+    money: any[];
+    distribution: any[];
+    credits: any[];
+    outcomes: any[];
+    memory: any[];
+  };
 }
 
 export interface LibraryArticle {

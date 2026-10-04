@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { db, initializeDatabase } from './db.js';
-import { authenticate, optionalAuthenticate, requireProjectAccess, JWT_SECRET, AuthRequest } from './authMiddleware.js';
+import { db, initializeDatabase, ensureUserWorkspace, logWorkspaceActivity } from './db.js';
+import { authenticate, optionalAuthenticate, requireProjectAccess, requireWorkspaceAccess, roleHierarchy, JWT_SECRET, AuthRequest } from './authMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -857,30 +857,318 @@ app.post('/api/auth/submit-verification', authenticate, (req: AuthRequest, res: 
 });
 
 // -------------------------------------------------------------
+// STANDARD COVENANT TERMS
+// -------------------------------------------------------------
+const STANDARD_COVENANT_TERMS = `1. CREATIVE INTEGRITY & AUTONOMY
+The creative vision, source materials, and moral rights remain attributed to the contributing practitioners. No unilateral commercial exploitation without mutual consensus.
+
+2. RIGHTS, SPLITS & OWNERSHIP
+All intellectual property created within this workspace is held in transparent proportion as recorded in the Rights Registry. Revenue and residuals follow agreed split sheets before project masters leave the studio.
+
+3. CREDITS & HISTORICAL ARCHIVE
+Every collaborator who contributes work to this project shall receive formal, immutable cinema-grade credit in the colophon archive.
+
+4. COLLABORATIVE COMMITMENT
+All participants agree to maintain open communication, document key milestones and decisions within this Workspace, and conduct production with mutual respect.`;
+
+// -------------------------------------------------------------
+// WORKSPACES (The Creative Organization & Privacy Environment)
+// -------------------------------------------------------------
+
+app.get('/api/workspaces', authenticate, (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  ensureUserWorkspace(userId, req.user!.name);
+
+  const workspaces = db.prepare(`
+    SELECT w.id, w.name, w.description, w.owner_id, w.is_locked,
+           w.sensitive_lock_enabled, w.created_at, w.updated_at,
+           wm.role as user_role,
+           (w.pin_hash IS NOT NULL AND w.pin_hash != '') as has_pin,
+           (w.sensitive_pin_hash IS NOT NULL AND w.sensitive_pin_hash != '') as has_sensitive_pin,
+           (SELECT count(*) FROM projects WHERE workspace_id = w.id) as project_count,
+           (SELECT count(*) FROM workspace_members WHERE workspace_id = w.id) as member_count
+    FROM workspaces w
+    JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.user_id = ?
+    ORDER BY w.created_at ASC
+  `).all(userId);
+
+  return res.json({ workspaces });
+});
+
+app.post('/api/workspaces', authenticate, (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { name, description, pin, sensitive_pin } = req.body;
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Workspace name is required' });
+  }
+
+  const id = generateId('ws');
+  const now = new Date().toISOString();
+  const pinHash = pin && pin.trim().length >= 4 ? bcrypt.hashSync(pin.trim(), 10) : null;
+  const sensPinHash = sensitive_pin && sensitive_pin.trim().length >= 4 ? bcrypt.hashSync(sensitive_pin.trim(), 10) : null;
+  const isLocked = pinHash ? 1 : 0;
+  const sensitiveEnabled = sensPinHash ? 1 : 0;
+
+  const tx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO workspaces (id, name, description, owner_id, pin_hash, is_locked, sensitive_lock_enabled, sensitive_pin_hash, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name.trim(), description || '', userId, pinHash, isLocked, sensitiveEnabled, sensPinHash, now, now);
+
+    db.prepare(`
+      INSERT INTO workspace_members (id, workspace_id, user_id, role, joined_at)
+      VALUES (?, ?, ?, 'owner', ?)
+    `).run(generateId('wm'), id, userId, now);
+  });
+  tx();
+
+  logWorkspaceActivity(id, null, req.user!.id, req.user!.name, 'workspace_created', `Workspace "${name.trim()}" established`);
+
+  const created = db.prepare(`
+    SELECT id, name, description, owner_id, is_locked, sensitive_lock_enabled, created_at, updated_at,
+           'owner' as user_role,
+           (pin_hash IS NOT NULL AND pin_hash != '') as has_pin,
+           (sensitive_pin_hash IS NOT NULL AND sensitive_pin_hash != '') as has_sensitive_pin,
+           0 as project_count, 1 as member_count
+    FROM workspaces WHERE id = ?
+  `).get(id);
+
+  return res.status(201).json({ workspace: created });
+});
+
+app.get('/api/workspaces/:id', authenticate, requireWorkspaceAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const ws = db.prepare(`
+    SELECT id, name, description, owner_id, is_locked, sensitive_lock_enabled, created_at, updated_at,
+           (pin_hash IS NOT NULL AND pin_hash != '') as has_pin,
+           (sensitive_pin_hash IS NOT NULL AND sensitive_pin_hash != '') as has_sensitive_pin
+    FROM workspaces WHERE id = ?
+  `).get(req.params.id) as any;
+
+  if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+
+  const members = db.prepare(`
+    SELECT wm.*, u.name, u.email, p.avatar_url
+    FROM workspace_members wm
+    JOIN users u ON u.id = wm.user_id
+    LEFT JOIN profiles p ON p.user_id = wm.user_id
+    WHERE wm.workspace_id = ?
+  `).all(req.params.id);
+
+  const projects = db.prepare(`
+    SELECT p.*,
+           (SELECT count(*) FROM project_members WHERE project_id = p.id AND (is_archived = 0 OR is_archived IS NULL)) as member_count,
+           (SELECT count(*) FROM workspace_tasks WHERE project_id = p.id AND status != 'completed' AND (is_archived = 0 OR is_archived IS NULL)) as pending_tasks_count
+    FROM projects p
+    WHERE p.workspace_id = ?
+    ORDER BY p.updated_at DESC
+  `).all(req.params.id);
+
+  return res.json({ workspace: ws, members, projects });
+});
+
+app.put('/api/workspaces/:id', authenticate, requireWorkspaceAccess('admin'), (req: AuthRequest, res: Response) => {
+  const { name, description } = req.body;
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE workspaces SET
+      name = COALESCE(?, name),
+      description = COALESCE(?, description),
+      updated_at = ?
+    WHERE id = ?
+  `).run(name ? name.trim() : null, description !== undefined ? description : null, now, req.params.id);
+
+  const updated = db.prepare(`
+    SELECT id, name, description, owner_id, is_locked, sensitive_lock_enabled, created_at, updated_at,
+           (pin_hash IS NOT NULL AND pin_hash != '') as has_pin,
+           (sensitive_pin_hash IS NOT NULL AND sensitive_pin_hash != '') as has_sensitive_pin
+    FROM workspaces WHERE id = ?
+  `).get(req.params.id);
+
+  return res.json({ workspace: updated });
+});
+
+app.put('/api/workspaces/:id/lock', authenticate, requireWorkspaceAccess('admin'), (req: AuthRequest, res: Response) => {
+  const { action, current_pin, new_pin, account_password } = req.body;
+  const ws = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(req.params.id) as any;
+  if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+
+  const now = new Date().toISOString();
+
+  if (action === 'set') {
+    if (!new_pin || new_pin.trim().length < 4) {
+      return res.status(400).json({ error: 'PIN must be at least 4 characters or digits' });
+    }
+    const hash = bcrypt.hashSync(new_pin.trim(), 10);
+    db.prepare('UPDATE workspaces SET pin_hash = ?, is_locked = 1, updated_at = ? WHERE id = ?').run(hash, now, ws.id);
+    logWorkspaceActivity(ws.id, null, req.user!.id, req.user!.name, 'security_updated', 'Workspace lock enabled');
+    return res.json({ success: true, is_locked: 1, has_pin: true });
+  }
+
+  if (action === 'remove') {
+    let authorized = false;
+    if (current_pin && ws.pin_hash && bcrypt.compareSync(current_pin.trim(), ws.pin_hash)) {
+      authorized = true;
+    } else if (account_password) {
+      const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user!.id) as any;
+      if (user && bcrypt.compareSync(account_password, user.password_hash)) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) {
+      return res.status(401).json({ error: 'Current PIN or account password verification failed' });
+    }
+
+    db.prepare('UPDATE workspaces SET pin_hash = NULL, is_locked = 0, updated_at = ? WHERE id = ?').run(now, ws.id);
+    logWorkspaceActivity(ws.id, null, req.user!.id, req.user!.name, 'security_updated', 'Workspace lock removed');
+    return res.json({ success: true, is_locked: 0, has_pin: false });
+  }
+
+  if (action === 'change') {
+    if (!new_pin || new_pin.trim().length < 4) {
+      return res.status(400).json({ error: 'New PIN must be at least 4 characters' });
+    }
+    let authorized = false;
+    if (current_pin && ws.pin_hash && bcrypt.compareSync(current_pin.trim(), ws.pin_hash)) {
+      authorized = true;
+    } else if (account_password) {
+      const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user!.id) as any;
+      if (user && bcrypt.compareSync(account_password, user.password_hash)) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) {
+      return res.status(401).json({ error: 'Current PIN or account password verification failed' });
+    }
+
+    const hash = bcrypt.hashSync(new_pin.trim(), 10);
+    db.prepare('UPDATE workspaces SET pin_hash = ?, is_locked = 1, updated_at = ? WHERE id = ?').run(hash, now, ws.id);
+    logWorkspaceActivity(ws.id, null, req.user!.id, req.user!.name, 'security_updated', 'Workspace PIN updated');
+    return res.json({ success: true, is_locked: 1, has_pin: true });
+  }
+
+  return res.status(400).json({ error: 'Invalid lock action' });
+});
+
+app.post('/api/workspaces/:id/unlock', authenticate, requireWorkspaceAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const { pin } = req.body;
+  const ws = db.prepare('SELECT pin_hash FROM workspaces WHERE id = ?').get(req.params.id) as any;
+  if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+
+  if (!ws.pin_hash) {
+    return res.json({ success: true, unlocked: true });
+  }
+
+  if (!pin || !bcrypt.compareSync(pin.trim(), ws.pin_hash)) {
+    return res.status(401).json({ error: 'Incorrect workspace PIN' });
+  }
+
+  return res.json({ success: true, unlocked: true });
+});
+
+app.post('/api/workspaces/:id/recover-pin', authenticate, requireWorkspaceAccess('admin'), (req: AuthRequest, res: Response) => {
+  const { account_password, new_pin } = req.body;
+  if (!account_password || !new_pin || new_pin.trim().length < 4) {
+    return res.status(400).json({ error: 'Account password and new 4+ character PIN required' });
+  }
+
+  const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user!.id) as any;
+  if (!user || !bcrypt.compareSync(account_password, user.password_hash)) {
+    return res.status(401).json({ error: 'Invalid account password' });
+  }
+
+  const hash = bcrypt.hashSync(new_pin.trim(), 10);
+  const now = new Date().toISOString();
+  db.prepare('UPDATE workspaces SET pin_hash = ?, is_locked = 1, updated_at = ? WHERE id = ?').run(hash, now, req.params.id);
+  logWorkspaceActivity(req.params.id, null, req.user!.id, req.user!.name, 'security_updated', 'Workspace PIN recovered via account password');
+
+  return res.json({ success: true, unlocked: true, message: 'Workspace PIN updated successfully' });
+});
+
+app.put('/api/workspaces/:id/sensitive-lock', authenticate, requireWorkspaceAccess('admin'), (req: AuthRequest, res: Response) => {
+  const { enabled, pin } = req.body;
+  const ws = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(req.params.id) as any;
+  if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+
+  const now = new Date().toISOString();
+  if (enabled) {
+    let sensHash = ws.sensitive_pin_hash;
+    if (pin && pin.trim().length >= 4) {
+      sensHash = bcrypt.hashSync(pin.trim(), 10);
+    } else if (!sensHash && ws.pin_hash) {
+      sensHash = ws.pin_hash;
+    }
+    db.prepare('UPDATE workspaces SET sensitive_lock_enabled = 1, sensitive_pin_hash = ?, updated_at = ? WHERE id = ?').run(sensHash, now, ws.id);
+    return res.json({ success: true, sensitive_lock_enabled: 1 });
+  } else {
+    db.prepare('UPDATE workspaces SET sensitive_lock_enabled = 0, updated_at = ? WHERE id = ?').run(now, ws.id);
+    return res.json({ success: true, sensitive_lock_enabled: 0 });
+  }
+});
+
+app.post('/api/workspaces/:id/unlock-sensitive', authenticate, requireWorkspaceAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const { pin } = req.body;
+  const ws = db.prepare('SELECT sensitive_lock_enabled, sensitive_pin_hash, pin_hash FROM workspaces WHERE id = ?').get(req.params.id) as any;
+  if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+
+  if (!ws.sensitive_lock_enabled) {
+    return res.json({ success: true, unlocked: true });
+  }
+
+  const targetHash = ws.sensitive_pin_hash || ws.pin_hash;
+  if (!targetHash) {
+    return res.json({ success: true, unlocked: true });
+  }
+
+  if (!pin || !bcrypt.compareSync(pin.trim(), targetHash)) {
+    return res.status(401).json({ error: 'Incorrect sensitive records PIN' });
+  }
+
+  return res.json({ success: true, unlocked: true });
+});
+
+// -------------------------------------------------------------
 // PROJECTS (The Central Creative Entity)
 // -------------------------------------------------------------
 
 app.get('/api/projects', authenticate, (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const projects = db.prepare(`
+  const workspaceId = req.query.workspace_id as string | undefined;
+
+  let query = `
     SELECT p.*, pm.role as user_role,
-           (SELECT count(*) FROM project_members WHERE project_id = p.id) as member_count,
-           (SELECT count(*) FROM workspace_tasks WHERE project_id = p.id AND status != 'completed') as pending_tasks_count
+           (SELECT count(*) FROM project_members WHERE project_id = p.id AND (is_archived = 0 OR is_archived IS NULL)) as member_count,
+           (SELECT count(*) FROM workspace_tasks WHERE project_id = p.id AND status != 'completed' AND (is_archived = 0 OR is_archived IS NULL)) as pending_tasks_count
     FROM projects p
     LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = ?
-    WHERE pm.user_id IS NOT NULL OR p.visibility = 'public'
-    ORDER BY p.updated_at DESC
-  `).all(userId);
+    WHERE (pm.user_id IS NOT NULL OR p.visibility = 'public')
+  `;
+  const params: any[] = [userId];
 
+  if (workspaceId) {
+    query += ' AND p.workspace_id = ?';
+    params.push(workspaceId);
+  }
+
+  query += ' ORDER BY p.updated_at DESC';
+
+  const projects = db.prepare(query).all(...params);
   return res.json({ projects });
 });
 
 app.post('/api/projects', authenticate, (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const { title, project_type, description, cover_image, location, target_date, visibility } = req.body;
+  let { title, project_type, description, cover_image, location, target_date, visibility, workspace_id } = req.body;
 
   if (!title || !project_type) {
     return res.status(400).json({ error: 'Project title and type are required' });
+  }
+
+  if (!workspace_id) {
+    const ws = ensureUserWorkspace(userId, req.user!.name);
+    workspace_id = ws.id;
   }
 
   const projId = generateId('proj');
@@ -888,19 +1176,20 @@ app.post('/api/projects', authenticate, (req: AuthRequest, res: Response) => {
 
   const insertProj = db.prepare(`
     INSERT INTO projects (
-      id, title, project_type, status, description, cover_image,
+      id, workspace_id, title, project_type, status, description, cover_image,
       location, target_date, visibility, created_by, created_at, updated_at
-    ) VALUES (?, ?, ?, 'idea', ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, 'idea', ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertMember = db.prepare(`
-    INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at)
-    VALUES (?, ?, ?, 'owner', 'Project Lead / Creator', ?)
+    INSERT INTO project_members (id, project_id, user_id, role, project_role, contribution_area, contribution, status, is_archived, joined_at)
+    VALUES (?, ?, ?, 'owner', 'Project Lead', 'Creative Direction', 'Project Lead & Initiator', 'active', 0, ?)
   `);
 
   const tx = db.transaction(() => {
     insertProj.run(
       projId,
+      workspace_id,
       title,
       project_type,
       description || '',
@@ -927,9 +1216,17 @@ app.post('/api/projects', authenticate, (req: AuthRequest, res: Response) => {
       now.split('T')[0],
       now
     );
+
+    // Auto-seed permanent credit for lead
+    db.prepare(`
+      INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, display_order, created_at)
+      VALUES (?, ?, 'PROJECT LEAD / DIRECTOR', ?, ?, 1, ?)
+    `).run(generateId('crd'), projId, req.user!.name || 'Practitioner', userId, now);
   });
 
   tx();
+
+  logWorkspaceActivity(workspace_id, projId, userId, req.user!.name, 'project_created', `Project "${title}" initiated`);
 
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(projId);
   return res.status(201).json({ project });
@@ -943,7 +1240,7 @@ app.get('/api/projects/:id', authenticate, requireProjectAccess('viewer'), (req:
     FROM project_members pm
     JOIN users u ON u.id = pm.user_id
     LEFT JOIN profiles p ON p.user_id = pm.user_id
-    WHERE pm.project_id = ?
+    WHERE pm.project_id = ? AND (pm.is_archived = 0 OR pm.is_archived IS NULL)
   `).all(projectId) as any[];
 
   const userRole = members.find(m => m.user_id === req.user!.id)?.role || 'viewer';
@@ -998,14 +1295,21 @@ app.delete('/api/projects/:id', authenticate, requireProjectAccess('owner'), (re
   return res.json({ success: true, message: 'Project deleted' });
 });
 
-// Project Members
+// -------------------------------------------------------------
+// MODULE 01: CREW (Collaborator Roster & Roles)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/members', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const includeArchived = req.query.include_archived === 'true';
+  const filterClause = includeArchived ? '' : 'AND (pm.is_archived = 0 OR pm.is_archived IS NULL)';
+
   const members = db.prepare(`
     SELECT pm.*, u.name, u.email, p.avatar_url, p.disciplines, p.location
     FROM project_members pm
     JOIN users u ON u.id = pm.user_id
     LEFT JOIN profiles p ON p.user_id = pm.user_id
-    WHERE pm.project_id = ?
+    WHERE pm.project_id = ? ${filterClause}
+    ORDER BY pm.joined_at ASC
   `).all(req.params.projectId) as any[];
 
   return res.json({
@@ -1014,35 +1318,95 @@ app.get('/api/projects/:projectId/members', authenticate, requireProjectAccess('
 });
 
 app.post('/api/projects/:projectId/members/invite', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
-  const { user_id, role, project_role, contribution_area, contribution } = req.body;
+  let {
+    user_id, email, name, role, project_role,
+    responsibilities, contribution_area, contribution,
+    ownership_percentage, distribution_percentage,
+    notes, status, credit_title
+  } = req.body;
   const projectId = req.params.projectId;
 
-  if (!user_id) {
-    return res.status(400).json({ error: 'User ID required' });
+  // Resolve user if email or name provided
+  if (!user_id && email) {
+    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase()) as any;
+    if (existingUser) user_id = existingUser.id;
+  }
+  if (!user_id && name) {
+    const existingUser = db.prepare('SELECT id FROM users WHERE name = ?').get(name.trim()) as any;
+    if (existingUser) user_id = existingUser.id;
   }
 
-  const existing = db.prepare('SELECT id FROM project_members WHERE project_id = ? AND user_id = ?').get(projectId, user_id);
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID or valid Windervale registered email/name required' });
+  }
+
+  const existing = db.prepare('SELECT id, is_archived FROM project_members WHERE project_id = ? AND user_id = ?').get(projectId, user_id) as any;
   if (existing) {
-    return res.status(409).json({ error: 'User is already a project member' });
+    if (existing.is_archived) {
+      // Re-activate previously archived member
+      db.prepare(`
+        UPDATE project_members SET
+          is_archived = 0,
+          status = 'active',
+          role = COALESCE(?, role),
+          project_role = COALESCE(?, project_role),
+          responsibilities = COALESCE(?, responsibilities),
+          contribution = COALESCE(?, contribution)
+        WHERE id = ?
+      `).run(role, project_role, responsibilities, contribution, existing.id);
+      return res.json({ success: true, memberId: existing.id, reactivated: true });
+    }
+    return res.status(409).json({ error: 'User is already an active project member' });
   }
 
   const id = generateId('pm');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO project_members (id, project_id, user_id, role, project_role, contribution_area, contribution, joined_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO project_members (
+      id, project_id, user_id, role, project_role, responsibilities,
+      contribution_area, contribution, ownership_percentage, distribution_percentage,
+      notes, status, agreement_status, credit_title, is_archived, joined_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
   `).run(
     id,
     projectId,
     user_id,
     role || 'member',
     project_role || 'Collaborator',
+    responsibilities || '',
     contribution_area || 'Creative Contributor',
     contribution || contribution_area || '',
+    ownership_percentage !== undefined ? parseFloat(ownership_percentage) : 0,
+    distribution_percentage !== undefined ? parseFloat(distribution_percentage) : 0,
+    notes || '',
+    status || 'active',
+    'unsigned',
+    credit_title || project_role || 'Collaborator',
     now
   );
 
   const project = db.prepare('SELECT title FROM projects WHERE id = ?').get(projectId) as any;
+  const user = db.prepare('SELECT name FROM users WHERE id = ?').get(user_id) as any;
+
+  // Auto-seed credit entry in permanent credits registry (historical guarantee)
+  const creditRole = (credit_title || project_role || 'COLLABORATOR').toUpperCase();
+  const existingCredit = db.prepare('SELECT id FROM credits WHERE project_id = ? AND user_id = ?').get(projectId, user_id);
+  if (!existingCredit && user) {
+    db.prepare(`
+      INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, (SELECT count(*) + 1 FROM credits WHERE project_id = ?), ?)
+    `).run(
+      generateId('crd'),
+      projectId,
+      creditRole,
+      user.name,
+      user_id,
+      contribution || '',
+      projectId,
+      now
+    );
+  }
+
   db.prepare(`
     INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
     VALUES (?, ?, 'project_invite', 'Project Invitation', ?, ?, 0, ?)
@@ -1054,24 +1418,61 @@ app.post('/api/projects/:projectId/members/invite', authenticate, requireProject
     now
   );
 
+  logWorkspaceActivity(null, projectId, req.user!.id, req.user!.name, 'crew_joined', `${user ? user.name : 'Collaborator'} joined crew as ${project_role || 'collaborator'}`);
+
   return res.status(201).json({ success: true, memberId: id });
 });
 
 app.put('/api/projects/:projectId/members/:memberId', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
   const { projectId, memberId } = req.params;
-  const { role, project_role, contribution_area, contribution } = req.body;
+  const {
+    role, project_role, responsibilities, contribution_area, contribution,
+    ownership_percentage, distribution_percentage, notes, status, agreement_status, credit_title
+  } = req.body;
 
   db.prepare(`
     UPDATE project_members SET
       role = COALESCE(?, role),
       project_role = COALESCE(?, project_role),
+      responsibilities = COALESCE(?, responsibilities),
       contribution_area = COALESCE(?, contribution_area),
-      contribution = COALESCE(?, contribution)
+      contribution = COALESCE(?, contribution),
+      ownership_percentage = COALESCE(?, ownership_percentage),
+      distribution_percentage = COALESCE(?, distribution_percentage),
+      notes = COALESCE(?, notes),
+      status = COALESCE(?, status),
+      agreement_status = COALESCE(?, agreement_status),
+      credit_title = COALESCE(?, credit_title)
     WHERE id = ? AND project_id = ?
-  `).run(role, project_role, contribution_area, contribution, memberId, projectId);
+  `).run(
+    role, project_role, responsibilities, contribution_area, contribution,
+    ownership_percentage !== undefined ? parseFloat(ownership_percentage) : null,
+    distribution_percentage !== undefined ? parseFloat(distribution_percentage) : null,
+    notes, status, agreement_status, credit_title,
+    memberId, projectId
+  );
 
   const updated = db.prepare('SELECT * FROM project_members WHERE id = ?').get(memberId);
   return res.json({ member: updated });
+});
+
+app.delete('/api/projects/:projectId/members/:memberId', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
+  const { projectId, memberId } = req.params;
+  const member = db.prepare('SELECT * FROM project_members WHERE id = ? AND project_id = ?').get(memberId, projectId) as any;
+  if (!member) return res.status(404).json({ error: 'Collaborator not found' });
+
+  // Soft archive collaborator from active roster
+  db.prepare(`
+    UPDATE project_members SET
+      is_archived = 1,
+      status = 'archived'
+    WHERE id = ? AND project_id = ?
+  `).run(memberId, projectId);
+
+  // NOTE: Historical credits in `credits` table remain permanently intact!
+  logWorkspaceActivity(null, projectId, req.user!.id, req.user!.name, 'crew_archived', `Collaborator archived from active roster (historical credit retained)`);
+
+  return res.json({ success: true, message: 'Collaborator archived. Historical credits remain permanently preserved.' });
 });
 
 // -------------------------------------------------------------
@@ -1140,36 +1541,57 @@ app.get('/api/projects/:projectId/workspace/summary', authenticate, requireProje
   });
 });
 
-// 01. BUILD
+// -------------------------------------------------------------
+// MODULE 04: BUILD (Pipeline, Tasks & Execution)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/tasks', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const tasks = db.prepare(`
-    SELECT t.*, u.name as assignee_name
+    SELECT t.*, u.name as assignee_name, m.title as milestone_title
     FROM workspace_tasks t
     LEFT JOIN users u ON u.id = t.assignee_id
-    WHERE t.project_id = ?
+    LEFT JOIN milestones m ON m.id = t.milestone_id
+    WHERE t.project_id = ? AND (t.is_archived = 0 OR t.is_archived IS NULL)
     ORDER BY t.created_at DESC
   `).all(req.params.projectId);
   return res.json({ tasks });
 });
 
 app.post('/api/projects/:projectId/workspace/tasks', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, description, status, priority, assignee_id, deadline } = req.body;
-  if (!title) return res.status(400).json({ error: 'Title required' });
+  const { title, description, status, priority, assignee_id, milestone_id, category, deadline, notes } = req.body;
+  if (!title) return res.status(400).json({ error: 'Task title is required' });
 
   const id = generateId('t');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO workspace_tasks (id, project_id, title, description, status, priority, assignee_id, deadline, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title, description || '', status || 'todo', priority || 'normal', assignee_id || null, deadline || null, now, now);
+    INSERT INTO workspace_tasks (
+      id, project_id, title, description, status, priority,
+      assignee_id, milestone_id, category, deadline, notes, is_archived, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+  `).run(
+    id, req.params.projectId, title.trim(), description || '',
+    status || 'todo', priority || 'normal',
+    assignee_id || null, milestone_id || null, category || 'Production',
+    deadline || null, notes || '', now, now
+  );
 
-  const created = db.prepare('SELECT * FROM workspace_tasks WHERE id = ?').get(id);
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'task_created', `Task created: "${title.trim()}"`);
+
+  const created = db.prepare(`
+    SELECT t.*, u.name as assignee_name, m.title as milestone_title
+    FROM workspace_tasks t
+    LEFT JOIN users u ON u.id = t.assignee_id
+    LEFT JOIN milestones m ON m.id = t.milestone_id
+    WHERE t.id = ?
+  `).get(id);
+
   return res.status(201).json({ task: created });
 });
 
 app.put('/api/projects/:projectId/workspace/tasks/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, description, status, priority, assignee_id, deadline } = req.body;
+  const { title, description, status, priority, assignee_id, milestone_id, category, deadline, notes } = req.body;
   const now = new Date().toISOString();
+
   db.prepare(`
     UPDATE workspace_tasks SET
       title = COALESCE(?, title),
@@ -1177,164 +1599,340 @@ app.put('/api/projects/:projectId/workspace/tasks/:id', authenticate, requirePro
       status = COALESCE(?, status),
       priority = COALESCE(?, priority),
       assignee_id = COALESCE(?, assignee_id),
+      milestone_id = COALESCE(?, milestone_id),
+      category = COALESCE(?, category),
       deadline = COALESCE(?, deadline),
+      notes = COALESCE(?, notes),
       updated_at = ?
     WHERE id = ? AND project_id = ?
-  `).run(title, description, status, priority, assignee_id, deadline, now, req.params.id, req.params.projectId);
+  `).run(
+    title, description, status, priority,
+    assignee_id, milestone_id, category,
+    deadline, notes, now, req.params.id, req.params.projectId
+  );
 
-  const updated = db.prepare('SELECT * FROM workspace_tasks WHERE id = ?').get(req.params.id);
+  const updated = db.prepare(`
+    SELECT t.*, u.name as assignee_name, m.title as milestone_title
+    FROM workspace_tasks t
+    LEFT JOIN users u ON u.id = t.assignee_id
+    LEFT JOIN milestones m ON m.id = t.milestone_id
+    WHERE t.id = ?
+  `).get(req.params.id);
+
   return res.json({ task: updated });
 });
 
 app.delete('/api/projects/:projectId/workspace/tasks/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM workspace_tasks WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE workspace_tasks SET is_archived = 1, updated_at = ? WHERE id = ? AND project_id = ?').run(
+    new Date().toISOString(), req.params.id, req.params.projectId
+  );
+  return res.json({ success: true, message: 'Task archived' });
 });
 
-// 03. CAPTURE
+// -------------------------------------------------------------
+// MODULE 05: CAPTURE (Fragments, Notes, Voice & References)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/captures', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const captures = db.prepare(`
     SELECT c.*, u.name as author_name
     FROM captures c
     JOIN users u ON u.id = c.created_by
-    WHERE c.project_id = ?
+    WHERE c.project_id = ? AND (c.is_archived = 0 OR c.is_archived IS NULL)
     ORDER BY c.is_pinned DESC, c.created_at DESC
   `).all(req.params.projectId) as any[];
 
   return res.json({
-    captures: captures.map(c => ({ ...c, tags: safeParseJson(c.tags, []) }))
+    captures: captures.map(c => ({
+      ...c,
+      tags: safeParseJson(c.tags, []),
+      attachments: safeParseJson(c.attachments, []),
+      references_list: safeParseJson(c.references_list, [])
+    }))
   });
 });
 
 app.post('/api/projects/:projectId/workspace/captures', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, content, capture_type, tags, is_pinned } = req.body;
-  if (!content) return res.status(400).json({ error: 'Content required' });
+  const { title, content, capture_type, tags, attachments, references_list, is_pinned } = req.body;
+  if (!content) return res.status(400).json({ error: 'Content required for capture' });
 
   const id = generateId('cap');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO captures (id, project_id, title, content, capture_type, tags, is_pinned, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title || 'Fragment', content, capture_type || 'note', JSON.stringify(tags || []), is_pinned ? 1 : 0, req.user!.id, now);
+    INSERT INTO captures (
+      id, project_id, title, content, capture_type, tags,
+      attachments, references_list, is_pinned, is_archived, last_edited_at, created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
+  `).run(
+    id, req.params.projectId, title || 'Fragment', content,
+    capture_type || 'note', JSON.stringify(tags || []),
+    JSON.stringify(attachments || []), JSON.stringify(references_list || []),
+    is_pinned ? 1 : 0, now, req.user!.id, now
+  );
 
   const created = db.prepare('SELECT * FROM captures WHERE id = ?').get(id) as any;
-  return res.status(201).json({ capture: { ...created, tags: safeParseJson(created.tags, []) } });
+  return res.status(201).json({
+    capture: {
+      ...created,
+      tags: safeParseJson(created.tags, []),
+      attachments: safeParseJson(created.attachments, []),
+      references_list: safeParseJson(created.references_list, [])
+    }
+  });
+});
+
+app.put('/api/projects/:projectId/workspace/captures/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const { title, content, capture_type, tags, attachments, references_list, is_pinned } = req.body;
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE captures SET
+      title = COALESCE(?, title),
+      content = COALESCE(?, content),
+      capture_type = COALESCE(?, capture_type),
+      tags = COALESCE(?, tags),
+      attachments = COALESCE(?, attachments),
+      references_list = COALESCE(?, references_list),
+      is_pinned = COALESCE(?, is_pinned),
+      last_edited_at = ?
+    WHERE id = ? AND project_id = ?
+  `).run(
+    title, content, capture_type,
+    tags ? JSON.stringify(tags) : null,
+    attachments ? JSON.stringify(attachments) : null,
+    references_list ? JSON.stringify(references_list) : null,
+    is_pinned !== undefined ? (is_pinned ? 1 : 0) : null,
+    now,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM captures WHERE id = ?').get(req.params.id) as any;
+  if (!updated) return res.status(404).json({ error: 'Capture record not found' });
+
+  return res.json({
+    capture: {
+      ...updated,
+      tags: safeParseJson(updated.tags, []),
+      attachments: safeParseJson(updated.attachments, []),
+      references_list: safeParseJson(updated.references_list, [])
+    },
+    last_edited_at: now
+  });
 });
 
 app.delete('/api/projects/:projectId/workspace/captures/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM captures WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE captures SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Capture archived' });
 });
 
-// 04. STUDIO
+// -------------------------------------------------------------
+// MODULE 06: STUDIO (Assets, Scripts & Media)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/studio', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const assets = db.prepare(`
     SELECT s.*, u.name as uploader_name
     FROM studio_assets s
     JOIN users u ON u.id = s.uploaded_by
-    WHERE s.project_id = ?
+    WHERE s.project_id = ? AND (s.is_archived = 0 OR s.is_archived IS NULL)
     ORDER BY s.created_at DESC
-  `).all(req.params.projectId);
-  return res.json({ assets });
+  `).all(req.params.projectId) as any[];
+
+  return res.json({
+    assets: assets.map(a => ({
+      ...a,
+      tags: safeParseJson(a.tags, [])
+    }))
+  });
 });
 
 app.post('/api/projects/:projectId/workspace/studio', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { name, asset_type, file_url, file_size, notes } = req.body;
-  if (!name || !file_url) return res.status(400).json({ error: 'Name and file URL required' });
+  const { name, asset_type, file_url, file_size, tags, version, notes } = req.body;
+  if (!name || !file_url) return res.status(400).json({ error: 'Asset name and file URL are required' });
 
   const id = generateId('sa');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO studio_assets (id, project_id, name, asset_type, file_url, file_size, notes, uploaded_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, name, asset_type || 'document', file_url, file_size || '1.0 MB', notes || '', req.user!.id, now);
+    INSERT INTO studio_assets (
+      id, project_id, name, asset_type, file_url, file_size, tags, version, notes, is_archived, uploaded_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+  `).run(
+    id, req.params.projectId, name.trim(), asset_type || 'document',
+    file_url, file_size || '1.0 MB', JSON.stringify(tags || []),
+    version || 'v1.0', notes || '', req.user!.id, now
+  );
 
-  const created = db.prepare('SELECT * FROM studio_assets WHERE id = ?').get(id);
-  return res.status(201).json({ asset: created });
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'asset_uploaded', `Studio asset deposited: "${name.trim()}" (${version || 'v1.0'})`);
+
+  const created = db.prepare('SELECT * FROM studio_assets WHERE id = ?').get(id) as any;
+  return res.status(201).json({
+    asset: {
+      ...created,
+      tags: safeParseJson(created.tags, [])
+    }
+  });
+});
+
+app.put('/api/projects/:projectId/workspace/studio/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const { name, asset_type, file_url, file_size, tags, version, notes } = req.body;
+  db.prepare(`
+    UPDATE studio_assets SET
+      name = COALESCE(?, name),
+      asset_type = COALESCE(?, asset_type),
+      file_url = COALESCE(?, file_url),
+      file_size = COALESCE(?, file_size),
+      tags = COALESCE(?, tags),
+      version = COALESCE(?, version),
+      notes = COALESCE(?, notes)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    name, asset_type, file_url, file_size,
+    tags ? JSON.stringify(tags) : null,
+    version, notes, req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM studio_assets WHERE id = ?').get(req.params.id) as any;
+  return res.json({
+    asset: {
+      ...updated,
+      tags: safeParseJson(updated.tags, [])
+    }
+  });
 });
 
 app.delete('/api/projects/:projectId/workspace/studio/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM studio_assets WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE studio_assets SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Asset archived' });
 });
 
-// 05. MILESTONES
+// -------------------------------------------------------------
+// MODULE 07: MILESTONES (Timeline & Deliverable Stages)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/milestones', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const milestones = db.prepare(`
-    SELECT * FROM milestones WHERE project_id = ? ORDER BY due_date ASC
+    SELECT m.*,
+           (SELECT count(*) FROM workspace_tasks WHERE milestone_id = m.id AND (is_archived = 0 OR is_archived IS NULL)) as linked_tasks_count,
+           (SELECT count(*) FROM workspace_tasks WHERE milestone_id = m.id AND status = 'completed' AND (is_archived = 0 OR is_archived IS NULL)) as completed_tasks_count
+    FROM milestones m
+    WHERE m.project_id = ? AND (m.is_archived = 0 OR m.is_archived IS NULL)
+    ORDER BY m.due_date ASC
   `).all(req.params.projectId);
+
   return res.json({ milestones });
 });
 
 app.post('/api/projects/:projectId/workspace/milestones', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, due_date, status, progress, deliverables } = req.body;
-  if (!title || !due_date) return res.status(400).json({ error: 'Title and due date required' });
+  const { title, due_date, status, progress, deliverables, deliverable, assigned_to, notes } = req.body;
+  if (!title || !due_date) return res.status(400).json({ error: 'Title and target due date required' });
 
   const id = generateId('ms');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO milestones (id, project_id, title, due_date, status, progress, deliverables, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title, due_date, status || 'upcoming', progress || 0, deliverables || '', now);
+    INSERT INTO milestones (
+      id, project_id, title, due_date, status, progress, deliverables, deliverable, assigned_to, notes, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(
+    id, req.params.projectId, title.trim(), due_date,
+    status || 'upcoming', progress || 0,
+    deliverables || deliverable || '', deliverable || deliverables || '',
+    assigned_to || '', notes || '', now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'milestone_created', `Milestone scheduled: "${title.trim()}" (Target: ${due_date})`);
 
   const created = db.prepare('SELECT * FROM milestones WHERE id = ?').get(id);
   return res.status(201).json({ milestone: created });
 });
 
 app.put('/api/projects/:projectId/workspace/milestones/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, due_date, status, progress, deliverables } = req.body;
+  const { title, due_date, status, progress, deliverables, deliverable, assigned_to, notes } = req.body;
   db.prepare(`
     UPDATE milestones SET
       title = COALESCE(?, title),
       due_date = COALESCE(?, due_date),
       status = COALESCE(?, status),
       progress = COALESCE(?, progress),
-      deliverables = COALESCE(?, deliverables)
+      deliverables = COALESCE(?, deliverables),
+      deliverable = COALESCE(?, deliverable),
+      assigned_to = COALESCE(?, assigned_to),
+      notes = COALESCE(?, notes)
     WHERE id = ? AND project_id = ?
-  `).run(title, due_date, status, progress, deliverables, req.params.id, req.params.projectId);
+  `).run(
+    title, due_date, status, progress,
+    deliverables, deliverable, assigned_to, notes,
+    req.params.id, req.params.projectId
+  );
 
   const updated = db.prepare('SELECT * FROM milestones WHERE id = ?').get(req.params.id);
   return res.json({ milestone: updated });
 });
 
 app.delete('/api/projects/:projectId/workspace/milestones/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM milestones WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE milestones SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Milestone archived' });
 });
 
-// 06. PROJECT MEMORY
+// -------------------------------------------------------------
+// MODULE 12: MEMORY (Archive & Project History)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/memory', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const memories = db.prepare(`
     SELECT m.*, u.name as recorder_name
     FROM project_memory m
     JOIN users u ON u.id = m.recorded_by
-    WHERE m.project_id = ?
+    WHERE m.project_id = ? AND (m.is_archived = 0 OR m.is_archived IS NULL)
     ORDER BY m.event_date DESC, m.created_at DESC
   `).all(req.params.projectId);
   return res.json({ memories });
 });
 
 app.post('/api/projects/:projectId/workspace/memory', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, event_date, event_type, summary, full_context } = req.body;
-  if (!title || !summary) return res.status(400).json({ error: 'Title and summary required' });
+  const { title, event_date, event_type, summary, full_context, source_module } = req.body;
+  if (!title || !summary) return res.status(400).json({ error: 'Memory title and summary are required' });
 
   const id = generateId('mem');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO project_memory (id, project_id, title, event_date, event_type, summary, full_context, recorded_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title, event_date || now.split('T')[0], event_type || 'milestone', summary, full_context || '', req.user!.id, now);
+    INSERT INTO project_memory (
+      id, project_id, title, event_date, event_type, summary, full_context, source_module, is_archived, recorded_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+  `).run(
+    id, req.params.projectId, title.trim(), event_date || now.split('T')[0],
+    event_type || 'milestone', summary, full_context || '',
+    source_module || 'memory', req.user!.id, now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'memory_logged', `Memory inscribed: "${title.trim()}"`);
 
   const created = db.prepare('SELECT * FROM project_memory WHERE id = ?').get(id);
   return res.status(201).json({ memory: created });
 });
 
-app.delete('/api/projects/:projectId/workspace/memory/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM project_memory WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+app.put('/api/projects/:projectId/workspace/memory/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const { title, event_date, event_type, summary, full_context, source_module } = req.body;
+  db.prepare(`
+    UPDATE project_memory SET
+      title = COALESCE(?, title),
+      event_date = COALESCE(?, event_date),
+      event_type = COALESCE(?, event_type),
+      summary = COALESCE(?, summary),
+      full_context = COALESCE(?, full_context),
+      source_module = COALESCE(?, source_module)
+    WHERE id = ? AND project_id = ?
+  `).run(title, event_date, event_type, summary, full_context, source_module, req.params.id, req.params.projectId);
+
+  const updated = db.prepare('SELECT * FROM project_memory WHERE id = ?').get(req.params.id);
+  return res.json({ memory: updated });
 });
 
-// 07. DECISIONS
+app.delete('/api/projects/:projectId/workspace/memory/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  db.prepare('UPDATE project_memory SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Memory archived' });
+});
+
+// DECISIONS (Integrated Decision History)
 app.get('/api/projects/:projectId/workspace/decisions', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const decisions = db.prepare(`
     SELECT * FROM decisions WHERE project_id = ? ORDER BY decision_date DESC, created_at DESC
@@ -1362,10 +1960,15 @@ app.delete('/api/projects/:projectId/workspace/decisions/:id', authenticate, req
   return res.json({ success: true });
 });
 
-// 02. RIGHTS (Structured Rights Ledger)
+// -------------------------------------------------------------
+// MODULE 02: RIGHTS (Ownership, Licensing & Revenue Allocations)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/rights', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`
-    SELECT * FROM rights WHERE project_id = ? ORDER BY ownership_percentage DESC
+    SELECT * FROM rights
+    WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)
+    ORDER BY ownership_percentage DESC
   `).all(req.params.projectId) as any[];
 
   const rights = rows.map(r => ({
@@ -1375,9 +1978,16 @@ app.get('/api/projects/:projectId/workspace/rights', authenticate, requireProjec
   }));
 
   const totalPercentage = rights.reduce((acc: number, r: any) => acc + (r.ownership_percentage || 0), 0);
+  const totalRevenueShare = rights.reduce((acc: number, r: any) => acc + (r.revenue_share_percentage || r.ownership_percentage || 0), 0);
+  const unallocatedPercentage = Math.max(0, 100 - totalPercentage);
+
   return res.json({
     rights,
     totalPercentage,
+    totalRevenueShare,
+    unallocatedPercentage,
+    isComplete: Math.abs(totalPercentage - 100) < 0.01,
+    hasOverflow: totalPercentage > 100.01,
     disclaimer: 'Windervale Rights is an autonomous internal record-keeping tool to establish creative consensus among collaborators. It does not constitute formal legal counsel.'
   });
 });
@@ -1385,8 +1995,11 @@ app.get('/api/projects/:projectId/workspace/rights', authenticate, requireProjec
 app.post('/api/projects/:projectId/workspace/rights', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
   const {
     contributor_name, user_id, role, ownership_percentage,
-    asset_name, asset_type, permissions, territory, duration,
-    exclusivity, restrictions, approval_requirements, revenue_splits,
+    work_title, contribution_type, creator, rights_holder,
+    license_type, license_duration, territory, exclusivity, usage_rights,
+    revenue_share_percentage, effective_date, expiration_date,
+    asset_name, asset_type, permissions, duration,
+    restrictions, approval_requirements, revenue_splits,
     rights_details, notes, status
   } = req.body;
 
@@ -1394,24 +2007,63 @@ app.post('/api/projects/:projectId/workspace/rights', authenticate, requireProje
     return res.status(400).json({ error: 'Contributor name, role, and percentage required' });
   }
 
+  const newPct = parseFloat(ownership_percentage);
+  const currentTotal = (db.prepare(`
+    SELECT COALESCE(SUM(ownership_percentage), 0) as total FROM rights
+    WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)
+  `).get(req.params.projectId) as any)?.total || 0;
+
+  if (currentTotal + newPct > 100.01) {
+    return res.status(400).json({
+      error: `Allocation exceeds 100%: current total is ${currentTotal}%, adding ${newPct}% would reach ${(currentTotal + newPct).toFixed(1)}%`
+    });
+  }
+
   const id = generateId('r');
   const now = new Date().toISOString();
   db.prepare(`
     INSERT INTO rights (
       id, project_id, contributor_name, user_id, role, ownership_percentage,
-      asset_name, asset_type, permissions, territory, duration,
-      exclusivity, restrictions, approval_requirements, revenue_splits,
-      rights_details, notes, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      work_title, contribution_type, creator, rights_holder, license_type, license_duration,
+      territory, exclusivity, usage_rights, revenue_share_percentage, effective_date, expiration_date,
+      asset_name, asset_type, permissions, duration, restrictions, approval_requirements, revenue_splits,
+      rights_details, notes, status, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
   `).run(
-    id, req.params.projectId, contributor_name, user_id || null, role, parseFloat(ownership_percentage),
-    asset_name || 'Project IP', asset_type || 'Creative Asset',
+    id, req.params.projectId, contributor_name, user_id || null, role, newPct,
+    work_title || asset_name || 'Project IP',
+    contribution_type || 'Original Creation',
+    creator || contributor_name,
+    rights_holder || contributor_name,
+    license_type || 'Project Exclusive',
+    license_duration || duration || 'Perpetual',
+    territory || 'Worldwide',
+    exclusivity || 'exclusive',
+    usage_rights || 'reproduce, distribute, adapt, monetize',
+    revenue_share_percentage !== undefined ? parseFloat(revenue_share_percentage) : newPct,
+    effective_date || now.split('T')[0],
+    expiration_date || null,
+    asset_name || work_title || 'Project IP',
+    asset_type || 'Creative Asset',
     JSON.stringify(permissions || ['reproduce', 'distribute']),
-    territory || 'Worldwide', duration || 'Perpetual',
-    exclusivity || 'non-exclusive', restrictions || '', approval_requirements || '',
-    JSON.stringify(revenue_splits || { streaming: parseFloat(ownership_percentage), sync: parseFloat(ownership_percentage), licensing: parseFloat(ownership_percentage) }),
+    duration || license_duration || 'Perpetual',
+    restrictions || '',
+    approval_requirements || '',
+    JSON.stringify(revenue_splits || { streaming: newPct, sync: newPct, licensing: newPct }),
     rights_details || '', notes || '', status || 'active', now
   );
+
+  // Log to rights_history
+  db.prepare(`
+    INSERT INTO rights_history (id, right_id, project_id, version, changes_summary, changed_by, timestamp)
+    VALUES (?, ?, ?, 1, ?, ?, ?)
+  `).run(
+    generateId('rh'), id, req.params.projectId,
+    `Initial grant: ${newPct}% ownership allocated to ${contributor_name} (${role})`,
+    req.user!.name, now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'rights_allocated', `${newPct}% ownership granted to ${contributor_name}`);
 
   const created = db.prepare('SELECT * FROM rights WHERE id = ?').get(id) as any;
   return res.status(201).json({
@@ -1426,22 +2078,53 @@ app.post('/api/projects/:projectId/workspace/rights', authenticate, requireProje
 app.put('/api/projects/:projectId/workspace/rights/:id', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
   const {
     contributor_name, role, ownership_percentage,
-    asset_name, asset_type, permissions, territory, duration,
-    exclusivity, restrictions, approval_requirements, revenue_splits,
+    work_title, contribution_type, creator, rights_holder,
+    license_type, license_duration, territory, exclusivity, usage_rights,
+    revenue_share_percentage, effective_date, expiration_date,
+    asset_name, asset_type, permissions, duration,
+    restrictions, approval_requirements, revenue_splits,
     rights_details, notes, status
   } = req.body;
 
+  const currentRight = db.prepare('SELECT * FROM rights WHERE id = ? AND project_id = ?').get(req.params.id, req.params.projectId) as any;
+  if (!currentRight) return res.status(404).json({ error: 'Rights allocation not found' });
+
+  if (ownership_percentage !== undefined) {
+    const newPct = parseFloat(ownership_percentage);
+    const otherTotal = (db.prepare(`
+      SELECT COALESCE(SUM(ownership_percentage), 0) as total FROM rights
+      WHERE project_id = ? AND id != ? AND (is_archived = 0 OR is_archived IS NULL)
+    `).get(req.params.projectId, req.params.id) as any)?.total || 0;
+
+    if (otherTotal + newPct > 100.01) {
+      return res.status(400).json({
+        error: `Allocation exceeds 100%: other allocations sum to ${otherTotal}%, adding ${newPct}% would reach ${(otherTotal + newPct).toFixed(1)}%`
+      });
+    }
+  }
+
+  const now = new Date().toISOString();
   db.prepare(`
     UPDATE rights SET
       contributor_name = COALESCE(?, contributor_name),
       role = COALESCE(?, role),
       ownership_percentage = COALESCE(?, ownership_percentage),
+      work_title = COALESCE(?, work_title),
+      contribution_type = COALESCE(?, contribution_type),
+      creator = COALESCE(?, creator),
+      rights_holder = COALESCE(?, rights_holder),
+      license_type = COALESCE(?, license_type),
+      license_duration = COALESCE(?, license_duration),
+      territory = COALESCE(?, territory),
+      exclusivity = COALESCE(?, exclusivity),
+      usage_rights = COALESCE(?, usage_rights),
+      revenue_share_percentage = COALESCE(?, revenue_share_percentage),
+      effective_date = COALESCE(?, effective_date),
+      expiration_date = COALESCE(?, expiration_date),
       asset_name = COALESCE(?, asset_name),
       asset_type = COALESCE(?, asset_type),
       permissions = COALESCE(?, permissions),
-      territory = COALESCE(?, territory),
       duration = COALESCE(?, duration),
-      exclusivity = COALESCE(?, exclusivity),
       restrictions = COALESCE(?, restrictions),
       approval_requirements = COALESCE(?, approval_requirements),
       revenue_splits = COALESCE(?, revenue_splits),
@@ -1451,11 +2134,27 @@ app.put('/api/projects/:projectId/workspace/rights/:id', authenticate, requirePr
     WHERE id = ? AND project_id = ?
   `).run(
     contributor_name, role, ownership_percentage !== undefined ? parseFloat(ownership_percentage) : null,
+    work_title, contribution_type, creator, rights_holder,
+    license_type, license_duration, territory, exclusivity, usage_rights,
+    revenue_share_percentage !== undefined ? parseFloat(revenue_share_percentage) : null,
+    effective_date, expiration_date,
     asset_name, asset_type, permissions ? JSON.stringify(permissions) : null,
-    territory, duration, exclusivity, restrictions, approval_requirements,
+    duration, restrictions, approval_requirements,
     revenue_splits ? JSON.stringify(revenue_splits) : null,
     rights_details, notes, status,
     req.params.id, req.params.projectId
+  );
+
+  // Record history
+  const latestVersion = (db.prepare('SELECT count(*) as c FROM rights_history WHERE right_id = ?').get(req.params.id) as any)?.c || 1;
+  db.prepare(`
+    INSERT INTO rights_history (id, right_id, project_id, version, changes_summary, changed_by, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    generateId('rh'), req.params.id, req.params.projectId,
+    latestVersion + 1,
+    `Updated rights: ${contributor_name || currentRight.contributor_name} (${ownership_percentage ?? currentRight.ownership_percentage}%)`,
+    req.user!.name, now
   );
 
   const updated = db.prepare('SELECT * FROM rights WHERE id = ?').get(req.params.id) as any;
@@ -1468,27 +2167,30 @@ app.put('/api/projects/:projectId/workspace/rights/:id', authenticate, requirePr
   });
 });
 
-app.delete('/api/projects/:projectId/workspace/rights/:id', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM rights WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+app.get('/api/projects/:projectId/workspace/rights/history', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const history = db.prepare(`
+    SELECT rh.*, r.contributor_name, r.role
+    FROM rights_history rh
+    LEFT JOIN rights r ON r.id = rh.right_id
+    WHERE rh.project_id = ?
+    ORDER BY rh.timestamp DESC
+  `).all(req.params.projectId);
+
+  return res.json({ history });
 });
 
-// 09. AGREEMENTS
-const STANDARD_COVENANT_TERMS = `1. CREATIVE INTEGRITY & AUTONOMY
-The creative vision, source materials, and moral rights remain attributed to the contributing practitioners. No unilateral commercial exploitation without mutual consensus.
+app.delete('/api/projects/:projectId/workspace/rights/:id', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
+  db.prepare('UPDATE rights SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Rights record archived' });
+});
 
-2. RIGHTS, SPLITS & OWNERSHIP
-All intellectual property created within this workspace is held in transparent proportion as recorded in the Rights Registry. Revenue and residuals follow agreed split sheets before project masters leave the studio.
-
-3. CREDITS & HISTORICAL ARCHIVE
-Every collaborator who contributes work to this project shall receive formal, immutable cinema-grade credit in the colophon archive.
-
-4. COLLABORATIVE COMMITMENT
-All participants agree to maintain open communication, document key milestones and decisions within this Workspace, and conduct production with mutual respect.`;
+// -------------------------------------------------------------
+// MODULE 03: AGREEMENT (Covenants & Digital Confirmations)
+// -------------------------------------------------------------
 
 app.get('/api/projects/:projectId/workspace/agreements', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   let agreements = db.prepare(`
-    SELECT * FROM agreements WHERE project_id = ? ORDER BY created_at DESC
+    SELECT * FROM agreements WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) ORDER BY created_at DESC
   `).all(req.params.projectId) as any[];
 
   // Auto-seed Standard Studio Covenant if project currently has no agreements
@@ -1498,7 +2200,7 @@ app.get('/api/projects/:projectId/workspace/agreements', authenticate, requirePr
     const members = db.prepare(`
       SELECT pm.*, u.name FROM project_members pm
       JOIN users u ON u.id = pm.user_id
-      WHERE pm.project_id = ?
+      WHERE pm.project_id = ? AND (pm.is_archived = 0 OR pm.is_archived IS NULL)
     `).all(req.params.projectId) as any[];
 
     const participantNames = members.map(m => m.name || 'Practitioner');
@@ -1531,15 +2233,24 @@ app.get('/api/projects/:projectId/workspace/agreements', authenticate, requirePr
 });
 
 app.post('/api/projects/:projectId/workspace/agreements', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
-  const { title, terms, participants, effective_date } = req.body;
-  if (!title || !terms) return res.status(400).json({ error: 'Title and terms required' });
+  const { title, terms, participants, effective_date, expiry_date, notes, rights_covered, ownership_terms, revenue_terms } = req.body;
+  if (!title || !terms) return res.status(400).json({ error: 'Title and covenant terms required' });
 
   const id = generateId('agr');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO agreements (id, project_id, title, terms, status, participants, signed_by, effective_date, created_at)
-    VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title, terms, JSON.stringify(participants || []), JSON.stringify([]), effective_date || null, now);
+    INSERT INTO agreements (
+      id, project_id, title, terms, status, participants, signed_by,
+      effective_date, expiry_date, notes, rights_covered, ownership_terms, revenue_terms, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(
+    id, req.params.projectId, title.trim(), terms,
+    JSON.stringify(participants || []), JSON.stringify([]),
+    effective_date || null, expiry_date || null, notes || '',
+    rights_covered || '', ownership_terms || '', revenue_terms || '', now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'agreement_created', `Covenant draft formulated: "${title.trim()}"`);
 
   const created = db.prepare('SELECT * FROM agreements WHERE id = ?').get(id) as any;
   return res.status(201).json({
@@ -1551,41 +2262,86 @@ app.post('/api/projects/:projectId/workspace/agreements', authenticate, requireP
   });
 });
 
+app.put('/api/projects/:projectId/workspace/agreements/:id', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
+  const { title, terms, participants, status, effective_date, expiry_date, notes, rights_covered, ownership_terms, revenue_terms } = req.body;
+  db.prepare(`
+    UPDATE agreements SET
+      title = COALESCE(?, title),
+      terms = COALESCE(?, terms),
+      participants = COALESCE(?, participants),
+      status = COALESCE(?, status),
+      effective_date = COALESCE(?, effective_date),
+      expiry_date = COALESCE(?, expiry_date),
+      notes = COALESCE(?, notes),
+      rights_covered = COALESCE(?, rights_covered),
+      ownership_terms = COALESCE(?, ownership_terms),
+      revenue_terms = COALESCE(?, revenue_terms)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    title, terms, participants ? JSON.stringify(participants) : null,
+    status, effective_date, expiry_date, notes,
+    rights_covered, ownership_terms, revenue_terms,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM agreements WHERE id = ?').get(req.params.id) as any;
+  return res.json({
+    agreement: {
+      ...updated,
+      participants: safeParseJson(updated.participants, []),
+      signed_by: safeParseJson(updated.signed_by, [])
+    }
+  });
+});
+
 app.put('/api/projects/:projectId/workspace/agreements/:id/sign', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
   const agreement = db.prepare('SELECT * FROM agreements WHERE id = ? AND project_id = ?').get(req.params.id, req.params.projectId) as any;
   if (!agreement) return res.status(404).json({ error: 'Agreement not found' });
 
   const signatures = safeParseJson(agreement.signed_by, []);
   if (signatures.some((s: any) => s.user_id === req.user!.id)) {
-    return res.status(400).json({ error: 'You have already confirmed this agreement' });
+    return res.status(400).json({ error: 'You have already confirmed this covenant' });
   }
 
+  const now = new Date().toISOString();
   signatures.push({
     user_id: req.user!.id,
     name: req.user!.name,
-    signed_at: new Date().toISOString()
+    signed_at: now
   });
 
-  const memberCount = (db.prepare('SELECT count(*) as c FROM project_members WHERE project_id = ?').get(req.params.projectId) as any)?.c || 1;
-  // Ratified when all members have signed, or if at least 1 member signs in single-person projects
+  const memberCount = (db.prepare('SELECT count(*) as c FROM project_members WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)').get(req.params.projectId) as any)?.c || 1;
   const status = signatures.length >= memberCount ? 'agreed' : 'open';
+
   db.prepare('UPDATE agreements SET signed_by = ?, status = ? WHERE id = ?').run(JSON.stringify(signatures), status, req.params.id);
+
+  // Sync member agreement status in project_members
+  db.prepare(`
+    UPDATE project_members SET agreement_status = 'signed'
+    WHERE project_id = ? AND user_id = ?
+  `).run(req.params.projectId, req.user!.id);
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'agreement_signed', `Covenant "${agreement.title}" confirmed by ${req.user!.name}`);
 
   return res.json({ success: true, signed_by: signatures, status });
 });
 
 app.delete('/api/projects/:projectId/workspace/agreements/:id', authenticate, requireProjectAccess('owner'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM agreements WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE agreements SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Agreement archived' });
 });
 
-// 08. MONEY & WATERFALL (Transparent Creative Project Economics)
+// -------------------------------------------------------------
+// MODULE 08: MONEY (Funding, Budgets, Revenue & Payouts)
+// -------------------------------------------------------------
+
 app.get('/api/projects/:projectId/workspace/money', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const transactions = db.prepare(`
-    SELECT m.*, u.name as recorder_name
+    SELECT m.*, u.name as recorder_name, ru.name as recipient_collaborator_name
     FROM financial_transactions m
     JOIN users u ON u.id = m.recorded_by
-    WHERE m.project_id = ?
+    LEFT JOIN users ru ON ru.id = m.recipient_user_id
+    WHERE m.project_id = ? AND (m.is_archived = 0 OR m.is_archived IS NULL)
     ORDER BY m.transaction_date DESC, m.created_at DESC
   `).all(req.params.projectId) as any[];
 
@@ -1618,14 +2374,14 @@ app.get('/api/projects/:projectId/workspace/money', authenticate, requireProject
   const remaining = totalFunding + totalRevenue - totalExpenses;
   const currency = transactions[0]?.currency || 'INR';
 
-  // Fetch rights splits for live contractual allocation
+  // Rights splits for contractual allocation
   const rightsRows = db.prepare(`
-    SELECT * FROM rights WHERE project_id = ? ORDER BY ownership_percentage DESC
+    SELECT * FROM rights WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) ORDER BY ownership_percentage DESC
   `).all(req.params.projectId) as any[];
 
   const distributableRevenue = Math.max(0, totalRevenue - totalDeductions - totalApprovedExpenses);
 
-  // Compute transparent payouts per contributor with exact visible math
+  // Compute payouts
   const payouts = rightsRows.map(r => {
     const splits = safeParseJson(r.revenue_splits, {});
     const splitPct = splits.streaming !== undefined ? Number(splits.streaming) : (r.ownership_percentage || 0);
@@ -1701,7 +2457,7 @@ app.get('/api/projects/:projectId/workspace/money', authenticate, requireProject
 app.post('/api/projects/:projectId/workspace/money', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
   const {
     type, amount, currency, category, description, transaction_date,
-    is_approved, is_recoupable, deduction_amount, recipient_name, status
+    recipient_user_id, receipt_url, is_approved, is_recoupable, deduction_amount, recipient_name, status
   } = req.body;
 
   if (!type || !amount || !category) return res.status(400).json({ error: 'Type, amount, and category required' });
@@ -1711,12 +2467,12 @@ app.post('/api/projects/:projectId/workspace/money', authenticate, requireProjec
   db.prepare(`
     INSERT INTO financial_transactions (
       id, project_id, type, amount, currency, category, description,
-      transaction_date, recorded_by, is_approved, is_recoupable,
-      recouped_amount, deduction_amount, recipient_name, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      transaction_date, recipient_user_id, receipt_url, recorded_by, is_approved, is_recoupable,
+      recouped_amount, deduction_amount, recipient_name, status, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
   `).run(
     id, req.params.projectId, type, parseFloat(amount), currency || 'INR', category, description || '',
-    transaction_date || now.split('T')[0], req.user!.id,
+    transaction_date || now.split('T')[0], recipient_user_id || null, receipt_url || '', req.user!.id,
     is_approved !== undefined ? Number(is_approved) : 1,
     is_recoupable !== undefined ? Number(is_recoupable) : 0,
     0,
@@ -1726,8 +2482,47 @@ app.post('/api/projects/:projectId/workspace/money', authenticate, requireProjec
     now
   );
 
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'financial_recorded', `${type.toUpperCase()} recorded: ${currency || 'INR'} ${parseFloat(amount).toLocaleString()} (${category})`);
+
   const created = db.prepare('SELECT * FROM financial_transactions WHERE id = ?').get(id);
   return res.status(201).json({ transaction: created });
+});
+
+app.put('/api/projects/:projectId/workspace/money/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const {
+    type, amount, currency, category, description, transaction_date,
+    recipient_user_id, receipt_url, is_approved, is_recoupable, deduction_amount, recipient_name, status
+  } = req.body;
+
+  db.prepare(`
+    UPDATE financial_transactions SET
+      type = COALESCE(?, type),
+      amount = COALESCE(?, amount),
+      currency = COALESCE(?, currency),
+      category = COALESCE(?, category),
+      description = COALESCE(?, description),
+      transaction_date = COALESCE(?, transaction_date),
+      recipient_user_id = COALESCE(?, recipient_user_id),
+      receipt_url = COALESCE(?, receipt_url),
+      is_approved = COALESCE(?, is_approved),
+      is_recoupable = COALESCE(?, is_recoupable),
+      deduction_amount = COALESCE(?, deduction_amount),
+      recipient_name = COALESCE(?, recipient_name),
+      status = COALESCE(?, status)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    type, amount !== undefined ? parseFloat(amount) : null,
+    currency, category, description, transaction_date,
+    recipient_user_id, receipt_url,
+    is_approved !== undefined ? Number(is_approved) : null,
+    is_recoupable !== undefined ? Number(is_recoupable) : null,
+    deduction_amount !== undefined ? parseFloat(deduction_amount) : null,
+    recipient_name, status,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM financial_transactions WHERE id = ?').get(req.params.id);
+  return res.json({ transaction: updated });
 });
 
 app.put('/api/projects/:projectId/workspace/money/:id/approve', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
@@ -1741,42 +2536,19 @@ app.put('/api/projects/:projectId/workspace/money/:id/approve', authenticate, re
 });
 
 app.delete('/api/projects/:projectId/workspace/money/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM financial_transactions WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  db.prepare('UPDATE financial_transactions SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Transaction archived' });
 });
 
-// 11. OUTCOME
-app.get('/api/projects/:projectId/workspace/outcomes', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
-  const outcomes = db.prepare(`
-    SELECT * FROM outcomes WHERE project_id = ? ORDER BY event_date DESC
-  `).all(req.params.projectId);
-  return res.json({ outcomes });
-});
+// -------------------------------------------------------------
+// MODULE 09: DISTRIBUTION (Releases, Festivals, Licensing & Audience)
+// -------------------------------------------------------------
 
-app.post('/api/projects/:projectId/workspace/outcomes', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { title, outcome_type, event_date, venue_or_channel, impact_notes, external_url } = req.body;
-  if (!title || !outcome_type || !event_date) return res.status(400).json({ error: 'Title, type, and date required' });
-
-  const id = generateId('out');
-  const now = new Date().toISOString();
-  db.prepare(`
-    INSERT INTO outcomes (id, project_id, title, outcome_type, event_date, venue_or_channel, impact_notes, external_url, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, title, outcome_type, event_date, venue_or_channel || '', impact_notes || '', external_url || '', now);
-
-  const created = db.prepare('SELECT * FROM outcomes WHERE id = ?').get(id);
-  return res.status(201).json({ outcome: created });
-});
-
-app.delete('/api/projects/:projectId/workspace/outcomes/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  db.prepare('DELETE FROM outcomes WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
-});
-
-// 09. DISTRIBUTION
 app.get('/api/projects/:projectId/workspace/distribution', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const records = db.prepare(`
-    SELECT * FROM distribution_records WHERE project_id = ? ORDER BY created_at DESC
+    SELECT * FROM distribution_records
+    WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)
+    ORDER BY created_at DESC
   `).all(req.params.projectId) as any[];
 
   const legacyOutcomes = db.prepare(`
@@ -1806,7 +2578,8 @@ app.get('/api/projects/:projectId/workspace/distribution', authenticate, require
 app.post('/api/projects/:projectId/workspace/distribution', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
   const {
     title, category, status, target_date, platform_or_partner, territory_or_details,
-    notes, external_url, asset_id, licensee, duration, fee, exclusivity, approval_status, agreement_ref
+    notes, external_url, asset_id, licensee, duration, fee, exclusivity, approval_status, agreement_ref,
+    license_type, license_duration, audience_reach, revenue_generated
   } = req.body;
   if (!title || !category) return res.status(400).json({ error: 'Title and category required' });
 
@@ -1816,18 +2589,67 @@ app.post('/api/projects/:projectId/workspace/distribution', authenticate, requir
     INSERT INTO distribution_records (
       id, project_id, title, category, status, target_date, platform_or_partner,
       territory_or_details, notes, external_url, asset_id, licensee, duration,
-      fee, exclusivity, approval_status, agreement_ref, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      fee, exclusivity, approval_status, agreement_ref,
+      license_type, license_duration, audience_reach, revenue_generated, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
   `).run(
     id, req.params.projectId, title, category, status || 'planned',
     target_date || null, platform_or_partner || '', territory_or_details || '',
     notes || '', external_url || '', asset_id || null, licensee || null,
     duration || null, fee ? parseFloat(fee) : 0, exclusivity || 'non-exclusive',
-    approval_status || 'approved', agreement_ref || null, now
+    approval_status || 'approved', agreement_ref || null,
+    license_type || 'standard', license_duration || duration || '',
+    audience_reach ? parseInt(audience_reach) : 0,
+    revenue_generated ? parseFloat(revenue_generated) : 0,
+    now
   );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'distribution_created', `Distribution event scheduled: "${title}" (${category})`);
 
   const created = db.prepare('SELECT * FROM distribution_records WHERE id = ?').get(id);
   return res.status(201).json({ record: created });
+});
+
+app.put('/api/projects/:projectId/workspace/distribution/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const {
+    title, category, status, target_date, platform_or_partner, territory_or_details,
+    notes, external_url, asset_id, licensee, duration, fee, exclusivity, approval_status,
+    license_type, license_duration, audience_reach, revenue_generated
+  } = req.body;
+
+  db.prepare(`
+    UPDATE distribution_records SET
+      title = COALESCE(?, title),
+      category = COALESCE(?, category),
+      status = COALESCE(?, status),
+      target_date = COALESCE(?, target_date),
+      platform_or_partner = COALESCE(?, platform_or_partner),
+      territory_or_details = COALESCE(?, territory_or_details),
+      notes = COALESCE(?, notes),
+      external_url = COALESCE(?, external_url),
+      asset_id = COALESCE(?, asset_id),
+      licensee = COALESCE(?, licensee),
+      duration = COALESCE(?, duration),
+      fee = COALESCE(?, fee),
+      exclusivity = COALESCE(?, exclusivity),
+      approval_status = COALESCE(?, approval_status),
+      license_type = COALESCE(?, license_type),
+      license_duration = COALESCE(?, license_duration),
+      audience_reach = COALESCE(?, audience_reach),
+      revenue_generated = COALESCE(?, revenue_generated)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    title, category, status, target_date, platform_or_partner, territory_or_details,
+    notes, external_url, asset_id, licensee, duration,
+    fee !== undefined ? parseFloat(fee) : null, exclusivity, approval_status,
+    license_type, license_duration,
+    audience_reach !== undefined ? parseInt(audience_reach) : null,
+    revenue_generated !== undefined ? parseFloat(revenue_generated) : null,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM distribution_records WHERE id = ?').get(req.params.id);
+  return res.json({ record: updated });
 });
 
 app.put('/api/projects/:projectId/workspace/distribution/:id/approve', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
@@ -1852,33 +2674,22 @@ app.post('/api/projects/:projectId/workspace/distribution/submit-windervale', au
   ].filter(Boolean).join('\n\n');
 
   db.prepare(`
-    INSERT INTO distribution_records (id, project_id, title, category, status, target_date, platform_or_partner, territory_or_details, notes, external_url, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO distribution_records (id, project_id, title, category, status, target_date, platform_or_partner, territory_or_details, notes, external_url, is_archived, created_at)
+    VALUES (?, ?, ?, 'windervale', 'submitted', ?, 'Windervale Editorial Board & Archive', ?, ?, ?, 0, ?)
   `).run(
-    id,
-    req.params.projectId,
-    title,
-    'windervale',
-    'submitted',
+    id, req.params.projectId, title,
     target_date || now.split('T')[0],
-    'Windervale Editorial Board & Archive',
-    `Program: ${program}`,
-    fullNotes,
-    external_url || '',
-    now
+    `Program: ${program}`, fullNotes, external_url || '', now
   );
 
-  // Notify submitting user
   const notifId = generateId('ntf');
   db.prepare(`
     INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
     VALUES (?, ?, 'system', 'Work Submitted to Windervale', ?, ?, 0, ?)
   `).run(
-    notifId,
-    req.user!.id,
+    notifId, req.user!.id,
     `Work "${title}" was submitted to the Windervale Editorial Board (${program}).`,
-    `/workspace/${req.params.projectId}`,
-    now
+    `/workspace/${req.params.projectId}`, now
   );
 
   const created = db.prepare('SELECT * FROM distribution_records WHERE id = ?').get(id);
@@ -1890,135 +2701,69 @@ app.delete('/api/projects/:projectId/workspace/distribution/:id', authenticate, 
     const rawId = req.params.id.replace('legacy-', '');
     db.prepare('DELETE FROM outcomes WHERE id = ? AND project_id = ?').run(rawId, req.params.projectId);
   } else {
-    db.prepare('DELETE FROM distribution_records WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+    db.prepare('UPDATE distribution_records SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
   }
-  return res.json({ success: true });
+  return res.json({ success: true, message: 'Distribution record archived' });
 });
 
-// 06. CAPTURE CONVERSION
-app.post('/api/projects/:projectId/workspace/captures/:id/convert', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { projectId, id } = req.params;
-  const { targetType, title } = req.body;
-  const capture = db.prepare('SELECT * FROM captures WHERE id = ? AND project_id = ?').get(id, projectId) as any;
-  if (!capture) return res.status(404).json({ error: 'Capture fragment not found' });
+// -------------------------------------------------------------
+// MODULE 10: CREDITS (Permanent Contributor Record)
+// -------------------------------------------------------------
 
-  const now = new Date().toISOString();
-  let createdRecord: any = null;
-
-  if (targetType === 'task') {
-    const taskId = generateId('tsk');
-    db.prepare(`
-      INSERT INTO workspace_tasks (id, project_id, title, description, status, priority, created_at, updated_at)
-      VALUES (?, ?, ?, ?, 'todo', 'normal', ?, ?)
-    `).run(taskId, projectId, title || capture.title, capture.content, now, now);
-    createdRecord = { id: taskId, type: 'task' };
-  } else if (targetType === 'asset') {
-    const assetId = generateId('ast');
-    db.prepare(`
-      INSERT INTO studio_assets (id, project_id, name, asset_type, file_url, notes, uploaded_by, created_at)
-      VALUES (?, ?, ?, 'reference', '', ?, ?, ?)
-    `).run(assetId, projectId, title || capture.title, capture.content, req.user!.id, now);
-    createdRecord = { id: assetId, type: 'asset' };
-  } else if (targetType === 'milestone') {
-    const milestoneId = generateId('mls');
-    db.prepare(`
-      INSERT INTO milestones (id, project_id, title, due_date, status, progress, deliverables, created_at)
-      VALUES (?, ?, ?, ?, 'upcoming', 0, ?, ?)
-    `).run(milestoneId, projectId, title || capture.title, now.split('T')[0], capture.content, now);
-    createdRecord = { id: milestoneId, type: 'milestone' };
-  }
-
-  db.prepare('UPDATE captures SET converted_to = ?, converted_id = ? WHERE id = ?').run(
-    targetType, createdRecord?.id || 'converted', id
-  );
-
-  return res.json({ success: true, converted_to: targetType, record: createdRecord });
-});
-
-// CROSS-PROJECT PENDING ACTIONS
-app.get('/api/projects/:projectId/workspace/pending-actions', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
-  const { projectId } = req.params;
-  const pendingActions: any[] = [];
-
-  // 1. Unsigned agreements
-  const agreements = db.prepare('SELECT * FROM agreements WHERE project_id = ?').all(projectId) as any[];
-  const members = db.prepare('SELECT * FROM project_members WHERE project_id = ?').all(projectId) as any[];
-  for (const agr of agreements) {
-    const signed = safeParseJson(agr.signed_by, []);
-    const unsignedCount = Math.max(0, members.length - signed.length);
-    if (agr.status !== 'agreed' || unsignedCount > 0) {
-      pendingActions.push({
-        id: `pending-agr-${agr.id}`,
-        moduleKey: '03_AGREEMENT',
-        title: 'Covenant Signature Required',
-        description: `${signed.length}/${members.length} collaborators have signed "${agr.title}"`,
-        urgency: 'high',
-        linkModule: '03_AGREEMENT'
-      });
-    }
-  }
-
-  // 2. Unapproved expenses
-  const pendingExpenses = db.prepare(`
-    SELECT * FROM financial_transactions 
-    WHERE project_id = ? AND (type = 'expense' OR type = 'payment') AND (is_approved = 0 OR status = 'pending')
-  `).all(projectId) as any[];
-  for (const exp of pendingExpenses) {
-    pendingActions.push({
-      id: `pending-exp-${exp.id}`,
-      moduleKey: '08_MONEY',
-      title: 'Expense Awaiting Approval',
-      description: `${exp.currency} ${exp.amount.toLocaleString()} for "${exp.category} : ${exp.description || 'Production'}"`,
-      urgency: 'high',
-      linkModule: '08_MONEY'
-    });
-  }
-
-  // 3. Pending Licenses or Distribution records
-  const pendingDist = db.prepare(`
-    SELECT * FROM distribution_records
-    WHERE project_id = ? AND (status = 'submitted' OR approval_status = 'pending')
-  `).all(projectId) as any[];
-  for (const dst of pendingDist) {
-    pendingActions.push({
-      id: `pending-dst-${dst.id}`,
-      moduleKey: '09_DISTRIBUTION',
-      title: 'License / Release Review Pending',
-      description: `"${dst.title}" (${dst.category}) awaiting confirmation`,
-      urgency: 'normal',
-      linkModule: '09_DISTRIBUTION'
-    });
-  }
-
-  return res.json({ pendingActions });
-});
-
-// 10. CREDITS
 app.get('/api/projects/:projectId/workspace/credits', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
   const credits = db.prepare(`
     SELECT c.*, u.name as linked_user_name, p.avatar_url
     FROM credits c
     LEFT JOIN users u ON u.id = c.user_id
     LEFT JOIN profiles p ON p.user_id = c.user_id
-    WHERE c.project_id = ?
+    WHERE c.project_id = ? AND (c.is_archived = 0 OR c.is_archived IS NULL)
     ORDER BY c.display_order ASC, c.created_at ASC
   `).all(req.params.projectId);
   return res.json({ credits });
 });
 
 app.post('/api/projects/:projectId/workspace/credits', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
-  const { role_title, contributor_name, user_id, notes, display_order } = req.body;
+  const { role_title, contributor_name, user_id, notes, display_order, credit_type, display_name } = req.body;
   if (!role_title || !contributor_name) return res.status(400).json({ error: 'Role title and contributor name required' });
 
   const id = generateId('crd');
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.params.projectId, role_title.toUpperCase(), contributor_name, user_id || null, notes || '', display_order || 0, now);
+    INSERT INTO credits (
+      id, project_id, role_title, contributor_name, user_id,
+      notes, display_order, credit_type, display_name, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(
+    id, req.params.projectId, role_title.toUpperCase(), contributor_name, user_id || null,
+    notes || '', display_order || 0, credit_type || 'principal', display_name || contributor_name, now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'credit_inscribed', `Credit inscribed: ${contributor_name} (${role_title.toUpperCase()})`);
 
   const created = db.prepare('SELECT * FROM credits WHERE id = ?').get(id);
   return res.status(201).json({ credit: created });
+});
+
+app.put('/api/projects/:projectId/workspace/credits/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const { role_title, contributor_name, notes, display_order, credit_type, display_name } = req.body;
+
+  db.prepare(`
+    UPDATE credits SET
+      role_title = COALESCE(?, role_title),
+      contributor_name = COALESCE(?, contributor_name),
+      notes = COALESCE(?, notes),
+      display_order = COALESCE(?, display_order),
+      credit_type = COALESCE(?, credit_type),
+      display_name = COALESCE(?, display_name)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    role_title ? role_title.toUpperCase() : null,
+    contributor_name, notes, display_order, credit_type, display_name,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM credits WHERE id = ?').get(req.params.id);
+  return res.json({ credit: updated });
 });
 
 app.post('/api/projects/:projectId/workspace/credits/sync-crew', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
@@ -2027,7 +2772,7 @@ app.post('/api/projects/:projectId/workspace/credits/sync-crew', authenticate, r
     SELECT pm.*, u.name 
     FROM project_members pm
     JOIN users u ON u.id = pm.user_id
-    WHERE pm.project_id = ?
+    WHERE pm.project_id = ? AND (pm.is_archived = 0 OR pm.is_archived IS NULL)
   `).all(projectId) as any[];
 
   const existingCredits = db.prepare('SELECT contributor_name, role_title FROM credits WHERE project_id = ?').all(projectId) as any[];
@@ -2035,13 +2780,13 @@ app.post('/api/projects/:projectId/workspace/credits/sync-crew', authenticate, r
 
   for (let i = 0; i < members.length; i++) {
     const m = members[i];
-    const roleTitle = (m.project_role || m.contribution_area || 'CREATIVE COLLABORATOR').toUpperCase();
+    const roleTitle = (m.credit_title || m.project_role || m.contribution_area || 'CREATIVE COLLABORATOR').toUpperCase();
     const alreadyExists = existingCredits.some(c => c.contributor_name === m.name && c.role_title === roleTitle);
 
     if (!alreadyExists) {
       db.prepare(`
-        INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, credit_type, is_archived, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'principal', 0, ?)
       `).run(
         generateId('crd'),
         projectId,
@@ -2061,7 +2806,7 @@ app.post('/api/projects/:projectId/workspace/credits/sync-crew', authenticate, r
     FROM credits c
     LEFT JOIN users u ON u.id = c.user_id
     LEFT JOIN profiles p ON p.user_id = c.user_id
-    WHERE c.project_id = ?
+    WHERE c.project_id = ? AND (c.is_archived = 0 OR c.is_archived IS NULL)
     ORDER BY c.display_order ASC, c.created_at ASC
   `).all(projectId);
 
@@ -2070,7 +2815,148 @@ app.post('/api/projects/:projectId/workspace/credits/sync-crew', authenticate, r
 
 app.delete('/api/projects/:projectId/workspace/credits/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
   db.prepare('DELETE FROM credits WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
-  return res.json({ success: true });
+  return res.json({ success: true, message: 'Credit record removed' });
+});
+
+// -------------------------------------------------------------
+// MODULE 11: OUTCOME (What Happened After the Project)
+// -------------------------------------------------------------
+
+app.get('/api/projects/:projectId/workspace/outcomes', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const outcomes = db.prepare(`
+    SELECT * FROM outcomes
+    WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)
+    ORDER BY event_date DESC
+  `).all(req.params.projectId);
+  return res.json({ outcomes });
+});
+
+app.post('/api/projects/:projectId/workspace/outcomes', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const {
+    title, outcome_type, event_date, venue_or_channel, impact_notes, external_url,
+    audience_reach, revenue_generated, awards, festival_selections, press_mentions, lessons_learned
+  } = req.body;
+  if (!title || !outcome_type || !event_date) return res.status(400).json({ error: 'Title, type, and date required' });
+
+  const id = generateId('out');
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO outcomes (
+      id, project_id, title, outcome_type, event_date, venue_or_channel,
+      impact_notes, external_url, audience_reach, revenue_generated,
+      awards, festival_selections, press_mentions, lessons_learned, is_archived, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(
+    id, req.params.projectId, title, outcome_type, event_date, venue_or_channel || '',
+    impact_notes || '', external_url || '',
+    audience_reach ? parseInt(audience_reach) : 0,
+    revenue_generated ? parseFloat(revenue_generated) : 0,
+    awards || '', festival_selections || '', press_mentions || '', lessons_learned || '', now
+  );
+
+  // Auto-record major outcomes to Project Memory
+  db.prepare(`
+    INSERT INTO project_memory (id, project_id, title, event_date, event_type, summary, full_context, source_module, is_archived, recorded_by, created_at)
+    VALUES (?, ?, ?, ?, 'outcome', ?, ?, 'outcome', 0, ?, ?)
+  `).run(
+    generateId('mem'), req.params.projectId,
+    `Outcome: ${title}`, event_date,
+    `${outcome_type.toUpperCase()} recorded at ${venue_or_channel || 'publication'}. ${impact_notes || ''}`,
+    `Awards: ${awards || 'None'}\nPress: ${press_mentions || 'None'}\nLessons: ${lessons_learned || 'None'}`,
+    req.user!.id, now
+  );
+
+  logWorkspaceActivity(null, req.params.projectId, req.user!.id, req.user!.name, 'outcome_recorded', `Outcome recorded: "${title}" (${outcome_type})`);
+
+  const created = db.prepare('SELECT * FROM outcomes WHERE id = ?').get(id);
+  return res.status(201).json({ outcome: created });
+});
+
+app.put('/api/projects/:projectId/workspace/outcomes/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  const {
+    title, outcome_type, event_date, venue_or_channel, impact_notes, external_url,
+    audience_reach, revenue_generated, awards, festival_selections, press_mentions, lessons_learned
+  } = req.body;
+
+  db.prepare(`
+    UPDATE outcomes SET
+      title = COALESCE(?, title),
+      outcome_type = COALESCE(?, outcome_type),
+      event_date = COALESCE(?, event_date),
+      venue_or_channel = COALESCE(?, venue_or_channel),
+      impact_notes = COALESCE(?, impact_notes),
+      external_url = COALESCE(?, external_url),
+      audience_reach = COALESCE(?, audience_reach),
+      revenue_generated = COALESCE(?, revenue_generated),
+      awards = COALESCE(?, awards),
+      festival_selections = COALESCE(?, festival_selections),
+      press_mentions = COALESCE(?, press_mentions),
+      lessons_learned = COALESCE(?, lessons_learned)
+    WHERE id = ? AND project_id = ?
+  `).run(
+    title, outcome_type, event_date, venue_or_channel, impact_notes, external_url,
+    audience_reach !== undefined ? parseInt(audience_reach) : null,
+    revenue_generated !== undefined ? parseFloat(revenue_generated) : null,
+    awards, festival_selections, press_mentions, lessons_learned,
+    req.params.id, req.params.projectId
+  );
+
+  const updated = db.prepare('SELECT * FROM outcomes WHERE id = ?').get(req.params.id);
+  return res.json({ outcome: updated });
+});
+
+app.delete('/api/projects/:projectId/workspace/outcomes/:id', authenticate, requireProjectAccess('member'), (req: AuthRequest, res: Response) => {
+  db.prepare('UPDATE outcomes SET is_archived = 1 WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
+  return res.json({ success: true, message: 'Outcome archived' });
+});
+
+// -------------------------------------------------------------
+// CROSS-MODULE SEARCH & ACTIVITY LOG (Global Workspace Tools)
+// -------------------------------------------------------------
+
+app.get('/api/projects/:projectId/workspace/search', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const { projectId } = req.params;
+  const q = ((req.query.q as string) || '').trim();
+
+  if (!q) {
+    return res.json({
+      query: '',
+      results: { tasks: [], captures: [], assets: [], milestones: [], crew: [], rights: [], agreements: [], money: [], distribution: [], credits: [], outcomes: [], memory: [] }
+    });
+  }
+
+  const likeQ = `%${q}%`;
+
+  const tasks = db.prepare(`SELECT id, title, description, status, priority, 'build' as module FROM workspace_tasks WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR description LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const captures = db.prepare(`SELECT id, title, content, capture_type, 'capture' as module FROM captures WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR content LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const assets = db.prepare(`SELECT id, name as title, asset_type, notes, 'studio' as module FROM studio_assets WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (name LIKE ? OR notes LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const milestones = db.prepare(`SELECT id, title, due_date, status, deliverables, 'milestones' as module FROM milestones WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR deliverables LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const crew = db.prepare(`SELECT pm.id, pm.project_role, u.name as title, pm.contribution_area, 'crew' as module FROM project_members pm JOIN users u ON u.id = pm.user_id WHERE pm.project_id = ? AND (pm.is_archived = 0 OR pm.is_archived IS NULL) AND (u.name LIKE ? OR pm.project_role LIKE ? OR pm.contribution_area LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ, likeQ);
+  const rights = db.prepare(`SELECT id, contributor_name as title, role, ownership_percentage, work_title, 'rights' as module FROM rights WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (contributor_name LIKE ? OR role LIKE ? OR work_title LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ, likeQ);
+  const agreements = db.prepare(`SELECT id, title, status, terms, 'agreement' as module FROM agreements WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR terms LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const money = db.prepare(`SELECT id, category as title, type, amount, currency, description, 'money' as module FROM financial_transactions WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (category LIKE ? OR description LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const distribution = db.prepare(`SELECT id, title, category, status, platform_or_partner, 'distribution' as module FROM distribution_records WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR platform_or_partner LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const credits = db.prepare(`SELECT id, role_title, contributor_name as title, credit_type, 'credits' as module FROM credits WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (contributor_name LIKE ? OR role_title LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const outcomes = db.prepare(`SELECT id, title, outcome_type, venue_or_channel, 'outcome' as module FROM outcomes WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR venue_or_channel LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+  const memory = db.prepare(`SELECT id, title, summary, event_type, 'memory' as module FROM project_memory WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL) AND (title LIKE ? OR summary LIKE ?) LIMIT 5`).all(projectId, likeQ, likeQ);
+
+  return res.json({
+    query: q,
+    results: {
+      tasks, captures, assets, milestones, crew, rights, agreements, money, distribution, credits, outcomes, memory
+    }
+  });
+});
+
+app.get('/api/projects/:projectId/workspace/activity', authenticate, requireProjectAccess('viewer'), (req: AuthRequest, res: Response) => {
+  const activities = db.prepare(`
+    SELECT * FROM workspace_activities
+    WHERE project_id = ?
+    ORDER BY created_at DESC
+    LIMIT 40
+  `).all(req.params.projectId);
+
+  return res.json({ activities });
 });
 
 // -------------------------------------------------------------

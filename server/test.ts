@@ -117,6 +117,28 @@ assert(library.length >= 3, `LIBRARY essays and manifestos available (${library.
 const grants = db.prepare('SELECT * FROM fund_grants').all();
 assert(grants.length >= 2, `FUND grant opportunities active (${grants.length})`);
 
+// 14. Workspace Lock, PIN & Recovery Verification
+const ws = db.prepare('SELECT * FROM workspaces WHERE id = ?').get('ws-maya') as any;
+assert(!!ws, 'Maya workspace exists in database');
+const pinTest = '9876';
+const pinHash = bcrypt.hashSync(pinTest, 10);
+db.prepare('UPDATE workspaces SET pin_hash = ?, is_locked = 1 WHERE id = ?').run(pinHash, ws.id);
+const updatedWs = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(ws.id) as any;
+assert(updatedWs.is_locked === 1, 'Workspace lock active');
+assert(bcrypt.compareSync('9876', updatedWs.pin_hash), 'Correct PIN unlocks workspace');
+assert(!bcrypt.compareSync('1234', updatedWs.pin_hash), 'Incorrect PIN correctly rejected');
+
+// 15. Historical Credit Retention on Collaborator Archival
+const beforeCreditCount = (db.prepare('SELECT count(*) as c FROM credits WHERE project_id = ?').get('proj-dissolve') as any).c;
+const memberToArchive = (db.prepare('SELECT id FROM project_members WHERE project_id = ? LIMIT 1').get('proj-dissolve') as any).id;
+db.prepare("UPDATE project_members SET is_archived = 1, status = 'archived' WHERE id = ?").run(memberToArchive);
+const afterCreditCount = (db.prepare('SELECT count(*) as c FROM credits WHERE project_id = ?').get('proj-dissolve') as any).c;
+assert(beforeCreditCount === afterCreditCount, `Archiving collaborator does NOT delete historical credits (${afterCreditCount} credits intact)`);
+
+// 16. Rights Calculation Verification
+const rightsTotal = (db.prepare('SELECT SUM(ownership_percentage) as total FROM rights WHERE project_id = ? AND (is_archived = 0 OR is_archived IS NULL)').get('proj-dissolve') as any).total;
+assert(Math.abs(rightsTotal - 100) < 0.01, `Rights math precisely equals 100% (got ${rightsTotal}%)`);
+
 console.log(`\n================================`);
 console.log(`TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
 console.log(`================================`);

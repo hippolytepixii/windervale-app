@@ -54,11 +54,19 @@ export function optionalAuthenticate(req: AuthRequest, res: Response, next: Next
   next();
 }
 
+export const roleHierarchy: Record<string, number> = {
+  viewer: 1,
+  member: 2,
+  editor: 3,
+  admin: 4,
+  owner: 5,
+};
+
 /**
  * Enforces strict project membership and authorization.
  * Non-members are completely prevented from accessing private workspaces.
  */
-export function requireProjectAccess(minRole: 'viewer' | 'member' | 'owner' = 'viewer') {
+export function requireProjectAccess(minRole: 'viewer' | 'member' | 'editor' | 'admin' | 'owner' = 'viewer') {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -75,9 +83,20 @@ export function requireProjectAccess(minRole: 'viewer' | 'member' | 'owner' = 'v
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Check if user is the creator/owner
+    // Check if user is the direct creator/owner of the project
     if (project.created_by === req.user.id) {
       return next();
+    }
+
+    // Check if user is owner or admin of the project's parent workspace
+    if (project.workspace_id) {
+      const wsMembership = db.prepare(`
+        SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?
+      `).get(project.workspace_id, req.user.id) as { role: string } | undefined;
+
+      if (wsMembership && (wsMembership.role === 'owner' || wsMembership.role === 'admin')) {
+        return next();
+      }
     }
 
     // Check project_members table
@@ -93,9 +112,8 @@ export function requireProjectAccess(minRole: 'viewer' | 'member' | 'owner' = 'v
       return res.status(403).json({ error: 'Access denied: You are not an authorized member of this creative workspace.' });
     }
 
-    const roleHierarchy = { viewer: 1, member: 2, owner: 3 };
-    const userRoleRank = roleHierarchy[membership.role as keyof typeof roleHierarchy] || 0;
-    const requiredRank = roleHierarchy[minRole];
+    const userRoleRank = roleHierarchy[membership.role] || 1;
+    const requiredRank = roleHierarchy[minRole] || 1;
 
     if (userRoleRank < requiredRank) {
       return res.status(403).json({ error: `Insufficient permissions: Action requires ${minRole} privileges.` });
@@ -104,3 +122,46 @@ export function requireProjectAccess(minRole: 'viewer' | 'member' | 'owner' = 'v
     next();
   };
 }
+
+/**
+ * Enforces strict workspace membership and authorization.
+ */
+export function requireWorkspaceAccess(minRole: 'viewer' | 'member' | 'editor' | 'admin' | 'owner' = 'viewer') {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const workspaceId = req.params.workspaceId || req.params.id;
+    if (!workspaceId) {
+      return res.status(400).json({ error: 'Workspace ID required' });
+    }
+
+    const workspace = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(workspaceId) as any;
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' });
+    }
+
+    if (workspace.owner_id === req.user.id) {
+      return next();
+    }
+
+    const membership = db.prepare(`
+      SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?
+    `).get(workspaceId, req.user.id) as { role: string } | undefined;
+
+    if (!membership) {
+      return res.status(403).json({ error: 'Access denied: You are not a member of this workspace.' });
+    }
+
+    const userRoleRank = roleHierarchy[membership.role] || 1;
+    const requiredRank = roleHierarchy[minRole] || 1;
+
+    if (userRoleRank < requiredRank) {
+      return res.status(403).json({ error: `Insufficient permissions: Action requires ${minRole} privileges.` });
+    }
+
+    next();
+  };
+}
+
