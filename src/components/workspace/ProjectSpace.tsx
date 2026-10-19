@@ -8,7 +8,8 @@ import { MonogramSeal } from '../common/MonogramSeal';
 import {
   ArrowLeft, ChevronRight, Layers, FileSignature, CheckCircle,
   AlertTriangle, Bell, ArrowUpRight, Search, Activity, Lock, Unlock,
-  HelpCircle, ChevronDown, ChevronUp, History, Shield, CheckCircle2, X
+  HelpCircle, ChevronDown, ChevronUp, History, Shield, CheckCircle2, X,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -115,6 +116,9 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
   const [isDesktop, setIsDesktop] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth >= 768;
   });
+
+  // Desktop sidebar collapse/expand toggle
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Default module
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(() => {
@@ -486,40 +490,48 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
     return (
       <div className="flex-1 flex flex-row min-h-0 h-full w-full bg-white">
         {/* LEFT COLUMN: 13 Workspace Tools Navigation & Project Identity */}
-        <aside className="w-80 lg:w-96 shrink-0 border-r-[2.5px] border-black bg-[#fbf6f0] flex flex-col h-full overflow-y-auto select-none">
-          {/* Back to Project Cover Bar */}
-          <div className="p-3 border-b-[2px] border-black bg-white flex items-center justify-between">
-            <button
-              onClick={onBackToProjects}
-              className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-black hover:text-[#6A1A4C] cursor-pointer transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>&larr; Project Cover</span>
-            </button>
-            <div className="flex items-center gap-1.5">
+        {isSidebarOpen && (
+          <aside className="w-80 lg:w-96 shrink-0 border-r-[2.5px] border-black bg-[#fbf6f0] flex flex-col h-full overflow-y-auto select-none">
+            {/* Back to Project Cover Bar */}
+            <div className="p-3 border-b-[2px] border-black bg-white flex items-center justify-between">
               <button
-                onClick={() => {
-                  setSearchModalOpen(true);
-                  setSearchQuery('');
-                  setSearchResults([]);
-                }}
-                className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors"
-                title="Search All 12 Modules"
+                onClick={onBackToProjects}
+                className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-black hover:text-[#6A1A4C] cursor-pointer transition-colors"
               >
-                <Search className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>&larr; Project Cover</span>
               </button>
-              <button
-                onClick={() => {
-                  setActivityModalOpen(true);
-                  loadActivities();
-                }}
-                className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors"
-                title="Activity Log"
-              >
-                <History className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setSearchModalOpen(true);
+                    setSearchQuery('');
+                    setSearchResults([]);
+                  }}
+                  className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors"
+                  title="Search All 12 Modules"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setActivityModalOpen(true);
+                    loadActivities();
+                  }}
+                  className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors"
+                  title="Activity Log"
+                >
+                  <History className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors flex items-center justify-center"
+                  title="Hide Sidebar"
+                >
+                  <PanelLeftClose className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-          </div>
 
           {/* Project Summary Card */}
           <div className="p-4 border-b-[2px] border-black bg-[#fbf6f0] space-y-2">
@@ -652,6 +664,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             })}
           </div>
         </aside>
+      )}
 
         {/* MIDDLE COLUMN: Active Tool View Area */}
         <section className="flex-1 min-w-0 bg-white flex flex-col h-full overflow-y-auto">
@@ -659,6 +672,16 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           <div className="border-b-[2.5px] border-black bg-[#FFFDF9] shrink-0">
             <div className="px-4 py-2.5 bg-[#fbf6f0] border-b border-black/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
+                {!isSidebarOpen && (
+                  <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="p-1 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors flex items-center gap-1 font-mono text-[9px] uppercase font-bold mr-1"
+                    title="Show Sidebar"
+                  >
+                    <PanelLeftOpen className="w-3 h-3" />
+                    <span>Sidebar</span>
+                  </button>
+                )}
                 <span className="w-2 h-2 rounded-full bg-[#6A1A4C]" />
                 <span className="font-mono text-[10px] uppercase font-bold tracking-wider text-black">
                   PROJECT CONTEXT &middot; {project.title}
@@ -773,6 +796,16 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           {/* Active Tool Top Masthead */}
           <div className="p-4 border-b-[2.5px] border-black bg-[#fbf6f0] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-3">
+              {!isSidebarOpen && (
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-1.5 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors flex items-center gap-1.5 font-mono text-[10px] uppercase font-bold shrink-0"
+                  title="Show Sidebar"
+                >
+                  <PanelLeftOpen className="w-3.5 h-3.5" />
+                  <span>Modules</span>
+                </button>
+              )}
               <span className="font-mono text-sm font-bold px-2.5 py-1 bg-[#6A1A4C] text-white border-[2px] border-black">
                 {currentMod?.num}
               </span>
