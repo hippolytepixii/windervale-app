@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 
@@ -647,9 +648,78 @@ function seedData() {
     );
   }
 
-  // Fixtures are only loaded when explicitly running automated tests
-  if (isTestRun) {
+  // Ensure initial seed fixtures (Maya Rao, etc.) always exist if users table is empty
+  const existingUsers = db.prepare('SELECT count(*) as count FROM users').get() as { count: number };
+  if (existingUsers.count === 0) {
     seedTestFixtures();
+  }
+  restoreRegisteredUsers();
+}
+
+const BACKUP_FILE = path.resolve(__dirname, 'registered_users_backup.json');
+
+export function backupRegisteredUsers() {
+  try {
+    const users = db.prepare("SELECT * FROM users WHERE role != 'admin'").all();
+    const profiles = db.prepare('SELECT * FROM profiles').all();
+    const acceptances = db.prepare('SELECT * FROM legal_acceptances').all();
+    fs.writeFileSync(BACKUP_FILE, JSON.stringify({ users, profiles, acceptances }, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to backup registered users:', err);
+  }
+}
+
+export function restoreRegisteredUsers() {
+  try {
+    if (!fs.existsSync(BACKUP_FILE)) return;
+    const raw = fs.readFileSync(BACKUP_FILE, 'utf8');
+    const data = JSON.parse(raw);
+    if (!data.users || !Array.isArray(data.users)) return;
+
+    for (const u of data.users) {
+      const exists = db.prepare('SELECT id FROM users WHERE id = ? OR email = ?').get(u.id, u.email);
+      if (!exists) {
+        db.prepare(`
+          INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(u.id, u.email, u.password_hash, u.name, u.role, u.email_verified || 1, u.created_at, u.updated_at);
+      }
+    }
+
+    if (data.profiles && Array.isArray(data.profiles)) {
+      for (const p of data.profiles) {
+        const exists = db.prepare('SELECT user_id FROM profiles WHERE user_id = ?').get(p.user_id);
+        if (!exists) {
+          db.prepare(`
+            INSERT INTO profiles (
+              user_id, display_name, handle, avatar_url, location, country,
+              latitude, longitude, bio, disciplines, roles_list, practices,
+              interests, selected_works, external_links, availability,
+              collaboration_interests, visibility, location_visibility, updated_at,
+              id_document_url, id_document_type, id_verification_status, approval_status,
+              verification_status, reviewed_at, reviewed_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            p.user_id, p.display_name, p.handle, p.avatar_url, p.location, p.country,
+            p.latitude, p.longitude, p.bio, p.disciplines, p.roles_list, p.practices,
+            p.interests, p.selected_works, p.external_links, p.availability,
+            p.collaboration_interests, p.visibility, p.location_visibility, p.updated_at,
+            p.id_document_url, p.id_document_type, p.id_verification_status, p.approval_status || 'approved',
+            p.verification_status || 'verified', p.reviewed_at, p.reviewed_by
+          );
+        } else {
+          db.prepare(`
+            UPDATE profiles SET
+              approval_status = COALESCE(?, approval_status),
+              verification_status = COALESCE(?, verification_status),
+              id_verification_status = COALESCE(?, id_verification_status)
+            WHERE user_id = ?
+          `).run(p.approval_status, p.verification_status, p.id_verification_status, p.user_id);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to restore registered users:', err);
   }
 }
 

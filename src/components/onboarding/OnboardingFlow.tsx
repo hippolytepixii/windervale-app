@@ -30,7 +30,15 @@ const ID_TYPES = [
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { register, login, oauthLogin } = useAuth();
-  const [step, setStep] = useState<'identity' | 'media_id' | 'practice' | 'offer_seek' | 'covenants' | 'login'>('identity');
+  const [step, setStep] = useState<'identity' | 'media_id' | 'practice' | 'offer_seek' | 'covenants' | 'login'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('login') === 'true' || params.get('mode') === 'login' || window.location.hash.includes('login')) {
+        return 'login';
+      }
+    }
+    return 'identity';
+  });
 
   // OAuth State
   const [oauthModalOpen, setOauthModalOpen] = useState(false);
@@ -334,7 +342,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       setOauthModalOpen(false);
 
       if (result && result.isNewUser) {
-        // Not registered yet: route directly to the portrait & verification page!
+        if (step === 'login') {
+          setOauthError(`No registered account found for ${result.email || oauthEmail}. If you registered with password, please sign in above. Otherwise, select 'New Admission' to submit an application.`);
+          return;
+        }
+        // Not registered yet: route to the portrait & verification page
         setEmail(result.email || oauthEmail.trim().toLowerCase());
         setName(result.name || finalName);
         setPassword(oauthPassword);
@@ -342,7 +354,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         setError(null);
         setApplicationNotice(`Authenticated as ${result.email || oauthEmail}. Please complete your monograph portrait & identity verification below.`);
       } else {
-        // ONLY already registered practitioners enter!
+        // Already registered practitioner enters!
         onComplete();
       }
     } catch (err: any) {
@@ -361,10 +373,44 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         Fonts: Fraunces & Syne
       */}
       <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl mx-auto bg-white border-[2.5px] border-black p-6 sm:p-8 md:p-10 relative">
+        {/* Mode Selector Tabs: Member Sign In vs Admission Application */}
+        <div className="grid grid-cols-2 gap-2 mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setStep('login');
+              setError(null);
+              setApplicationNotice(null);
+            }}
+            className={`py-2 px-3 font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              step === 'login'
+                ? 'bg-black text-white shadow-[2px_2px_0px_#6A1A4C]'
+                : 'bg-[#fbf6f0] text-black hover:bg-white'
+            }`}
+          >
+            <span>MEMBER SIGN IN</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStep('identity');
+              setError(null);
+              setApplicationNotice(null);
+            }}
+            className={`py-2 px-3 font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              step !== 'login'
+                ? 'bg-black text-white shadow-[2px_2px_0px_#6A1A4C]'
+                : 'bg-[#fbf6f0] text-black hover:bg-white'
+            }`}
+          >
+            <span>NEW ADMISSION</span>
+          </button>
+        </div>
+
         {/* Folio / Step Tracker */}
         <div className="flex items-center justify-between border-b-[2.5px] border-black pb-3 mb-5 font-mono text-[10px]">
           <span className="font-bold text-black tracking-widest uppercase">
-            WINDERVALE ADMISSION
+            {step === 'login' ? 'WINDERVALE ACCESS' : 'WINDERVALE ADMISSION'}
           </span>
           <span className="font-mono text-[10px] font-bold text-white bg-[#6A1A4C] px-2 py-0.5 uppercase tracking-wider">
             {step === 'identity' && 'FOLIO 01 : IDENTITY'}
@@ -396,6 +442,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         {/* STEP 1: IDENTITY */}
         {step === 'identity' && (
           <div className="space-y-4 animate-editorial-fade">
+            {/* Already Approved Notice */}
+            <div className="p-3 bg-[#6A1A4C]/10 border border-[#6A1A4C] flex items-center justify-between text-xs">
+              <span className="font-mono text-black text-[11px] font-medium">Already registered or approved?</span>
+              <button
+                type="button"
+                onClick={() => setStep('login')}
+                className="font-mono font-bold uppercase text-[#6A1A4C] hover:underline cursor-pointer text-xs"
+              >
+                Sign In Here &rarr;
+              </button>
+            </div>
+
             <div className="space-y-1">
               <h2 className="font-fun font-bold text-2xl text-black leading-tight lowercase">
                 creative identity
@@ -1172,16 +1230,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('identity')}
-                className="font-mono text-xs text-black/70 hover:text-black underline font-bold"
+                className="font-mono text-xs text-black/70 hover:text-[#6A1A4C] underline font-bold cursor-pointer"
               >
-                New practitioner?
+                New practitioner? Apply for Admission &rarr;
               </button>
               <button
                 type="submit"
                 disabled={loading || !loginEmail || !loginPassword}
                 className="py-3 px-6 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>{loading ? 'Authenticating...' : 'Enter App \u2192'}</span>
+                <span>{loading ? 'Authenticating...' : 'Sign In to Workspace \u2192'}</span>
               </button>
             </div>
           </form>

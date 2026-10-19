@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { db, initializeDatabase, ensureUserWorkspace, logWorkspaceActivity } from './db.js';
+import { db, initializeDatabase, ensureUserWorkspace, logWorkspaceActivity, backupRegisteredUsers } from './db.js';
 import { authenticate, optionalAuthenticate, requireProjectAccess, requireWorkspaceAccess, roleHierarchy, JWT_SECRET, AuthRequest } from './authMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -209,6 +209,8 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
 
   const token = jwt.sign({ id: userId, email, name, role: 'creative' }, JWT_SECRET, { expiresIn: '7d' });
   const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId);
+
+  try { backupRegisteredUsers(); } catch {}
 
   return res.status(201).json({
     token,
@@ -658,6 +660,8 @@ app.post('/api/admin/approve-user', verifyAdmin, (req: Request, res: Response) =
       VALUES (?, ?, 'system', 'Profile Approved', 'Your profile has been approved by the Windervale curation team. Welcome to the independent creative network.', '/map', 0, ?)
     `).run(notifId, userId, now);
   } catch {}
+
+  try { backupRegisteredUsers(); } catch {}
 
   return res.json({ success: true, message: 'Creative approved successfully' });
 });
@@ -3597,6 +3601,8 @@ app.post('/api/admin/approve-user', requireAdmin, (req: Request, res: Response) 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'User profile not found' });
     }
+
+    try { backupRegisteredUsers(); } catch {}
 
     return res.json({
       success: true,
