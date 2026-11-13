@@ -596,19 +596,24 @@ export function initializeDatabase() {
   try { db.exec("ALTER TABLE project_memory ADD COLUMN source_module TEXT"); } catch {}
   try { db.exec("ALTER TABLE project_memory ADD COLUMN is_archived INTEGER DEFAULT 0"); } catch {}
 
-  // In production database, purge all fake demo data so only real registered users & projects exist
+  // In production database, purge fake demo users only if real registered members exist
   if (!isTestRun) {
     try {
-      db.exec("DELETE FROM users WHERE id IN ('u-maya', 'u-julian', 'u-soraya', 'u-elena', 'u-tariq', 'u-theo', 'u-arjun', 'u-sara', 'u-david', 'u-zeinab') OR email LIKE '%@windervale.art'");
-      db.exec("DELETE FROM projects WHERE id IN ('proj-dissolve', 'proj-resonance', 'proj-nocturne') OR id LIKE 'proj-%'");
-      db.exec("UPDATE profiles SET avatar_url = NULL WHERE avatar_url LIKE '%unsplash%'");
-      db.exec("UPDATE projects SET cover_image = NULL WHERE cover_image LIKE '%unsplash%'");
+      const realUsersCount = (db.prepare("SELECT count(*) as count FROM users WHERE email NOT LIKE '%@windervale.art'").get() as any)?.count || 0;
+      if (realUsersCount > 0) {
+        db.exec("DELETE FROM users WHERE id IN ('u-maya', 'u-julian', 'u-soraya', 'u-elena', 'u-tariq', 'u-theo', 'u-arjun', 'u-sara', 'u-david', 'u-zeinab') OR email LIKE '%@windervale.art'");
+        db.exec("DELETE FROM projects WHERE id IN ('proj-dissolve', 'proj-resonance', 'proj-nocturne')");
+      }
     } catch (e) {
       console.error('Error cleaning demo fixtures:', e);
     }
   }
 
-  seedData();
+  try {
+    seedData();
+  } catch (e) {
+    console.error('[WINDERVALE WARNING] Non-fatal error during seedData:', e);
+  }
 }
 
 function seedData() {
@@ -616,7 +621,7 @@ function seedData() {
   const existingDocs = db.prepare('SELECT count(*) as count FROM legal_documents').get() as { count: number };
   if (existingDocs.count === 0) {
     const insertDoc = db.prepare(`
-      INSERT INTO legal_documents (id, doc_type, version, title, content, effective_date)
+      INSERT OR REPLACE INTO legal_documents (id, doc_type, version, title, content, effective_date)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
@@ -724,31 +729,32 @@ export function restoreRegisteredUsers() {
 }
 
 export function seedTestFixtures() {
-  // Check if test users exist
-  const existingUsers = db.prepare('SELECT count(*) as count FROM users').get() as { count: number };
-  if (existingUsers.count === 0) {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync('windervale2026', salt);
-    const now = new Date().toISOString();
+  try {
+    // Check if test users exist
+    const existingUsers = db.prepare('SELECT count(*) as count FROM users').get() as { count: number };
+    if (existingUsers.count === 0) {
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync('windervale2026', salt);
+      const now = new Date().toISOString();
 
-    const insertUser = db.prepare(`
-      INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+      const insertUser = db.prepare(`
+        INSERT OR REPLACE INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
 
-    const insertProfile = db.prepare(`
-      INSERT INTO profiles (
-        user_id, display_name, handle, avatar_url, location, country,
-        latitude, longitude, bio, disciplines, roles_list, practices,
-        interests, selected_works, external_links, availability,
-        collaboration_interests, visibility, location_visibility, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+      const insertProfile = db.prepare(`
+        INSERT OR REPLACE INTO profiles (
+          user_id, display_name, handle, avatar_url, location, country,
+          latitude, longitude, bio, disciplines, roles_list, practices,
+          interests, selected_works, external_links, availability,
+          collaboration_interests, visibility, location_visibility, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
 
-    const insertAcceptance = db.prepare(`
-      INSERT INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+      const insertAcceptance = db.prepare(`
+        INSERT OR REPLACE INTO legal_acceptances (id, user_id, doc_type, doc_version, accepted_at, status, ip_hint)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
 
     // 1. Maya Rao (Lead Filmmaker & Director)
     insertUser.run('u-maya', 'maya@windervale.art', hash, 'Maya Rao', 'creative', 1, now, now);
@@ -948,7 +954,7 @@ export function seedTestFixtures() {
     // Sample Project: THE DISSOLVE
     const projId = 'proj-dissolve';
     db.prepare(`
-      INSERT INTO projects (
+      INSERT OR REPLACE INTO projects (
         id, workspace_id, title, project_type, status, description, cover_image,
         location, target_date, visibility, created_by, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -969,19 +975,19 @@ export function seedTestFixtures() {
     );
 
     // Project Members
-    db.prepare(`INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    db.prepare(`INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
       'pm-1', projId, 'u-maya', 'owner', 'Direction & Screenplay', now
     );
-    db.prepare(`INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    db.prepare(`INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
       'pm-2', projId, 'u-arjun', 'member', 'Sound Design & Score', now
     );
-    db.prepare(`INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    db.prepare(`INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
       'pm-3', projId, 'u-sara', 'member', 'Cinematography & Lighting', now
     );
 
     // 01. BUILD Tasks
     const insertTask = db.prepare(`
-      INSERT INTO workspace_tasks (id, project_id, title, description, status, priority, assignee_id, deadline, created_at, updated_at)
+      INSERT OR REPLACE INTO workspace_tasks (id, project_id, title, description, status, priority, assignee_id, deadline, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertTask.run('t-1', projId, 'Finish screenplay final revisions', 'Lock down dialogue for scene 14 (desert bunker confrontation).', 'in_progress', 'urgent', 'u-maya', '2026-09-30', now, now);
@@ -992,7 +998,7 @@ export function seedTestFixtures() {
 
     // 03. CAPTURES
     const insertCapture = db.prepare(`
-      INSERT INTO captures (id, project_id, title, content, capture_type, tags, is_pinned, created_by, created_at)
+      INSERT OR REPLACE INTO captures (id, project_id, title, content, capture_type, tags, is_pinned, created_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertCapture.run('c-1', projId, 'Radio static cadence', 'The static between frequencies should not feel like white noise. It should feel like weather. Wind blowing through copper coils.', 'thought', JSON.stringify(['sound', 'mood', 'atmosphere']), 1, 'u-arjun', now);
@@ -1002,7 +1008,7 @@ export function seedTestFixtures() {
 
     // 04. STUDIO
     const insertAsset = db.prepare(`
-      INSERT INTO studio_assets (id, project_id, name, asset_type, file_url, file_size, notes, uploaded_by, created_at)
+      INSERT OR REPLACE INTO studio_assets (id, project_id, name, asset_type, file_url, file_size, notes, uploaded_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertAsset.run('sa-1', projId, 'The_Dissolve_Treatment_Rev4.pdf', 'script', 'https://windervale.art/docs/treatment_v4.pdf', '2.4 MB', 'Contains complete 18-scene breakdown and visual tone cards.', 'u-maya', now);
@@ -1011,7 +1017,7 @@ export function seedTestFixtures() {
 
     // 05. MILESTONES
     const insertMilestone = db.prepare(`
-      INSERT INTO milestones (id, project_id, title, due_date, status, progress, deliverables, created_at)
+      INSERT OR REPLACE INTO milestones (id, project_id, title, due_date, status, progress, deliverables, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertMilestone.run('m-1', projId, 'Screenplay & Shotlist Lock', '2026-09-30', 'in_progress', 85, 'Final draft screenplay, floor plans, lens chart', now);
@@ -1021,7 +1027,7 @@ export function seedTestFixtures() {
 
     // 06. MEMORY
     const insertMemory = db.prepare(`
-      INSERT INTO project_memory (id, project_id, title, event_date, event_type, summary, full_context, recorded_by, created_at)
+      INSERT OR REPLACE INTO project_memory (id, project_id, title, event_date, event_type, summary, full_context, recorded_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertMemory.run('mem-1', projId, 'Project Genesis at Subtext Cafe', '2026-08-14', 'insight', 'Maya and Arjun conceived the concept after listening to 1970s unreleased desert folk reel tapes.', 'Initial discussion centered around the fear of physical audio degradation and the erasure of anonymous voices.', 'u-maya', now);
@@ -1030,7 +1036,7 @@ export function seedTestFixtures() {
 
     // 07. DECISIONS
     const insertDecision = db.prepare(`
-      INSERT INTO decisions (id, project_id, title, decision_date, why_context, details, made_by, category, created_at)
+      INSERT OR REPLACE INTO decisions (id, project_id, title, decision_date, why_context, details, made_by, category, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertDecision.run('dec-1', projId, 'Keep Final Color Grade Monochrome with Violet Undertones', '2026-09-14', 'The visual language should feel archival, tactile, and non-commercial.', 'Agreed unanimously between Maya and Sara after review of test film strips.', 'Maya Rao & Sara Khan', 'Cinematography', now);
@@ -1038,7 +1044,7 @@ export function seedTestFixtures() {
 
     // 08. RIGHTS
     const insertRight = db.prepare(`
-      INSERT INTO rights (id, project_id, contributor_name, user_id, role, ownership_percentage, rights_details, notes, created_at)
+      INSERT OR REPLACE INTO rights (id, project_id, contributor_name, user_id, role, ownership_percentage, rights_details, notes, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertRight.run('r-1', projId, 'Maya Rao', 'u-maya', 'Director / Writer', 45.0, 'Primary author of original screenplay and directorial vision. 45% copyright share.', 'Includes festival prize distribution.', now);
@@ -1048,7 +1054,7 @@ export function seedTestFixtures() {
 
     // 09. AGREEMENTS
     const insertAgreement = db.prepare(`
-      INSERT INTO agreements (id, project_id, title, terms, status, participants, signed_by, effective_date, created_at)
+      INSERT OR REPLACE INTO agreements (id, project_id, title, terms, status, participants, signed_by, effective_date, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertAgreement.run(
@@ -1069,7 +1075,7 @@ export function seedTestFixtures() {
 
     // 10. MONEY
     const insertMoney = db.prepare(`
-      INSERT INTO financial_transactions (id, project_id, type, amount, currency, category, description, transaction_date, recorded_by, created_at)
+      INSERT OR REPLACE INTO financial_transactions (id, project_id, type, amount, currency, category, description, transaction_date, recorded_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertMoney.run('mny-1', projId, 'funding', 250000, 'INR', 'Grant', 'Windervale Independent Cinema Seed Grant', '2026-08-20', 'u-maya', now);
@@ -1080,7 +1086,7 @@ export function seedTestFixtures() {
 
     // 11. OUTCOME
     const insertOutcome = db.prepare(`
-      INSERT INTO outcomes (id, project_id, title, outcome_type, event_date, venue_or_channel, impact_notes, external_url, created_at)
+      INSERT OR REPLACE INTO outcomes (id, project_id, title, outcome_type, event_date, venue_or_channel, impact_notes, external_url, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertOutcome.run('out-1', projId, 'Work-in-Progress Screening at CineArchive', 'screening', '2026-10-18', 'Kala Ghoda Arts Center, Mumbai', 'Curated closed-room preview for 40 independent filmmakers and film scholars.', 'https://cinearchive.org', now);
@@ -1088,7 +1094,7 @@ export function seedTestFixtures() {
 
     // 12. CREDITS
     const insertCredit = db.prepare(`
-      INSERT INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, created_at)
+      INSERT OR REPLACE INTO credits (id, project_id, role_title, contributor_name, user_id, notes, display_order, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertCredit.run('crd-1', projId, 'DIRECTED & WRITTEN BY', 'Maya Rao', 'u-maya', 'Original Story and Screenplay', 1, now);
@@ -1099,7 +1105,7 @@ export function seedTestFixtures() {
     // Project 2: BLACKPRINT ZINE
     const projId2 = 'proj-blackprint';
     db.prepare(`
-      INSERT INTO projects (
+      INSERT OR REPLACE INTO projects (
         id, title, project_type, status, description, cover_image,
         location, target_date, visibility, created_by, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1117,16 +1123,16 @@ export function seedTestFixtures() {
       now,
       now
     );
-    db.prepare(`INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    db.prepare(`INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
       'pm-b1', projId2, 'u-elena', 'owner', 'Editor-in-Chief & Risograph Production', now
     );
-    db.prepare(`INSERT INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    db.prepare(`INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, contribution_area, joined_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
       'pm-b2', projId2, 'u-arjun', 'member', 'Cassette Archive Essays', now
     );
 
     // Library Articles
     const insertLibrary = db.prepare(`
-      INSERT INTO library_posts (id, title, subtitle, author_name, author_id, category, content, reading_time, cover_image, tags, published_at)
+      INSERT OR REPLACE INTO library_posts (id, title, subtitle, author_name, author_id, category, content, reading_time, cover_image, tags, published_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
@@ -1174,7 +1180,7 @@ export function seedTestFixtures() {
 
     // Fund Grants
     const insertGrant = db.prepare(`
-      INSERT INTO fund_grants (id, title, funder_name, grant_amount, currency, deadline, status, description, eligibility, criteria, supported_disciplines)
+      INSERT OR REPLACE INTO fund_grants (id, title, funder_name, grant_amount, currency, deadline, status, description, eligibility, criteria, supported_disciplines)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
@@ -1208,13 +1214,16 @@ export function seedTestFixtures() {
 
     // Notifications
     const insertNotif = db.prepare(`
-      INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
+      INSERT OR REPLACE INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insertNotif.run('notif-1', 'u-maya', 'workspace', 'Task Completed', 'Sara Khan completed the Kodak 500T push-processing test.', '/workspace/proj-dissolve?tool=build', 0, now);
     insertNotif.run('notif-2', 'u-maya', 'connection', 'New Connection', 'David Chen connected with your creative profile.', '/profile/u-david', 0, now);
     insertNotif.run('notif-3', 'u-maya', 'workspace', 'Decision Recorded', 'New decision logged: Keep Final Color Grade Monochrome.', '/workspace/proj-dissolve?tool=decisions', 1, now);
   }
+} catch (err) {
+  console.error('[WINDERVALE WARNING] Non-fatal error during seedTestFixtures:', err);
+}
 }
 
 export function ensureUserWorkspace(userId: string, userName?: string): string {
