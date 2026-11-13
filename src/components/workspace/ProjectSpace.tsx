@@ -210,6 +210,21 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
     }
   };
 
+  const handleLockWorkspace = () => {
+    if (project?.workspace_id) {
+      sessionStorage.removeItem(`unlocked_ws_${project.workspace_id}`);
+      sessionStorage.removeItem(`unlocked_sensitive_${project.workspace_id}`);
+    }
+    onBackToProjects();
+  };
+
+  const handleRelockSensitive = () => {
+    if (project?.workspace_id) {
+      sessionStorage.removeItem(`unlocked_sensitive_${project.workspace_id}`);
+    }
+    setIsSensitiveUnlocked(false);
+  };
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
@@ -524,6 +539,13 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   <History className="w-3.5 h-3.5" />
                 </button>
                 <button
+                  onClick={handleLockWorkspace}
+                  className="p-1 hover:bg-[#6A1A4C] hover:text-white border border-black cursor-pointer transition-colors flex items-center justify-center"
+                  title="Lock Workspace & Log Out"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                </button>
+                <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors flex items-center justify-center"
                   title="Hide Sidebar"
@@ -825,6 +847,23 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   {project.title}
                 </span>
               </div>
+              {workspace?.sensitive_lock_enabled && isSensitiveUnlocked && (
+                <button
+                  onClick={handleRelockSensitive}
+                  className="px-2 py-1 bg-white hover:bg-black hover:text-white font-mono text-[9px] font-bold uppercase border border-black cursor-pointer transition-colors"
+                  title="Lock Sensitive Modules (02, 03, 08, 09, 10)"
+                >
+                  Lock Sensitive
+                </button>
+              )}
+              <button
+                onClick={handleLockWorkspace}
+                className="px-2.5 py-1 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] font-bold uppercase border border-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_#000]"
+                title="Lock Workspace and Log Out of Session"
+              >
+                <Lock className="w-3 h-3 text-[#F2CBD2]" />
+                <span>Lock Workspace</span>
+              </button>
             </div>
           </div>
 
@@ -860,6 +899,13 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             <span className="font-arthouse font-bold text-sm text-black tracking-wider uppercase">
               {currentMod?.title}
             </span>
+            <button
+              onClick={handleLockWorkspace}
+              className="p-1 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors ml-1"
+              title="Lock Workspace"
+            >
+              <Lock className="w-3 h-3 text-[#F2CBD2]" />
+            </button>
           </div>
         </div>
 
@@ -900,6 +946,13 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             title="Activity"
           >
             <History className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleLockWorkspace}
+            className="p-1 border border-black bg-black text-white hover:bg-[#6A1A4C] cursor-pointer flex items-center justify-center"
+            title="Lock Workspace & Log Out"
+          >
+            <Lock className="w-3.5 h-3.5 text-[#F2CBD2]" />
           </button>
         </div>
       </div>

@@ -4,7 +4,8 @@ import { Project, Workspace } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import {
   Plus, Users, Calendar, X, AlertCircle, Lock, Unlock, Key,
-  Shield, ShieldCheck, ShieldAlert, Settings, FolderPlus, ArrowRight, RefreshCw
+  Shield, ShieldCheck, ShieldAlert, Settings, FolderPlus, ArrowRight, RefreshCw,
+  Eye, EyeOff
 } from 'lucide-react';
 
 interface WorkspaceLandingProps {
@@ -42,6 +43,15 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
   const [recoveryNewPin, setRecoveryNewPin] = useState('');
   const [recovering, setRecovering] = useState(false);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+
+  // Initial Security Setup states (comes first in flow if workspace has no PIN)
+  const [setupDismissed, setSetupDismissed] = useState(false);
+  const [setupPin, setSetupPin] = useState('');
+  const [setupConfirmPin, setSetupConfirmPin] = useState('');
+  const [setupSensitive, setSetupSensitive] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   // Security configuration states
   const [lockAction, setLockAction] = useState<'set' | 'change' | 'remove'>('set');
@@ -102,15 +112,82 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
 
     // Check unlock state in sessionStorage
     const isLocked = Boolean(ws.is_locked);
+    const hasPin = Boolean(ws.has_pin || ws.is_locked);
     const sessionUnlocked = sessionStorage.getItem(`unlocked_ws_${ws.id}`) === 'true';
+    const sessionSkipped = sessionStorage.getItem(`skip_ws_setup_${ws.id}`) === 'true';
 
-    if (!isLocked || sessionUnlocked) {
-      setIsUnlocked(true);
-      loadProjects(ws.id);
+    setSetupDismissed(sessionSkipped);
+
+    if (hasPin) {
+      if (sessionUnlocked) {
+        setIsUnlocked(true);
+        loadProjects(ws.id);
+      } else {
+        setIsUnlocked(false);
+        setProjects([]);
+      }
     } else {
-      setIsUnlocked(false);
-      setProjects([]);
+      // If workspace has no PIN configured yet, check if user chose open access
+      if (sessionSkipped) {
+        setIsUnlocked(true);
+        loadProjects(ws.id);
+      } else {
+        setIsUnlocked(false);
+        setProjects([]);
+      }
     }
+  };
+
+  const handleSetupPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeWorkspace) return;
+    if (setupPin.length < 4) {
+      setSetupError('Security PIN must be at least 4 digits or characters.');
+      return;
+    }
+    if (setupPin !== setupConfirmPin) {
+      setSetupError('PINs do not match. Please verify both fields.');
+      return;
+    }
+
+    setSetupLoading(true);
+    setSetupError(null);
+    try {
+      await api.setWorkspaceLock(activeWorkspace.id, {
+        action: 'set',
+        new_pin: setupPin,
+      });
+
+      if (setupSensitive) {
+        await api.setSensitiveLock(activeWorkspace.id, {
+          enabled: true,
+          pin: setupPin,
+        });
+      }
+
+      sessionStorage.setItem(`unlocked_ws_${activeWorkspace.id}`, 'true');
+      if (setupSensitive) {
+        sessionStorage.setItem(`unlocked_sensitive_${activeWorkspace.id}`, 'true');
+      }
+
+      setSetupPin('');
+      setSetupConfirmPin('');
+      setIsUnlocked(true);
+      await loadWorkspaces();
+      await loadProjects(activeWorkspace.id);
+    } catch (err: any) {
+      setSetupError(err.message || 'Failed to establish workspace security.');
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
+  const handleSkipSetup = () => {
+    if (!activeWorkspace) return;
+    sessionStorage.setItem(`skip_ws_setup_${activeWorkspace.id}`, 'true');
+    setSetupDismissed(true);
+    setIsUnlocked(true);
+    loadProjects(activeWorkspace.id);
   };
 
   const loadProjects = async (workspaceId?: string) => {
@@ -326,6 +403,8 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     );
   }
 
+  const hasPin = Boolean(activeWorkspace?.has_pin || (activeWorkspace?.is_locked && activeWorkspace?.is_locked !== 0));
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 bg-white min-h-full text-black">
       {/* Top Broadsheet Hierarchy & Workspace Switcher Bar */}
@@ -372,19 +451,30 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
 
         {/* Security & Access Status Controls */}
         <div className="flex items-center gap-2">
-          {activeWorkspace?.is_locked ? (
+          {hasPin ? (
             isUnlocked ? (
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#2D7A4C]/15 border border-[#2D7A4C] text-[#2D7A4C] font-mono text-[10px] font-bold uppercase">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-[#2D7A4C]/15 border border-[#2D7A4C] text-[#2D7A4C] font-mono text-[10px] font-bold uppercase">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>UNLOCKED SESSION</span>
+                  <span>WORKSPACE UNLOCKED</span>
                 </span>
                 <button
                   onClick={handleLockNow}
-                  className="px-2.5 py-1 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] font-bold uppercase border border-black cursor-pointer transition-colors"
+                  className="px-3 py-1.5 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] font-bold uppercase border-[2px] border-black cursor-pointer transition-colors flex items-center gap-1.5 shadow-[2px_2px_0px_#000]"
+                  title="Lock Workspace & Log Out of Session"
                 >
-                  <Lock className="w-3 h-3 inline mr-1" />
-                  Lock Now
+                  <Lock className="w-3.5 h-3.5 text-[#F2CBD2]" />
+                  <span>LOG OUT OF WORKSPACE</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSecurityModalOpen(true);
+                    setSecurityFeedback(null);
+                  }}
+                  className="p-1.5 bg-white hover:bg-black hover:text-white border-[2px] border-black cursor-pointer transition-colors"
+                  title="Workspace Lock & Security Settings"
+                >
+                  <Settings className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
@@ -394,40 +484,136 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
               </span>
             )
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#fbf6f0] border border-black/40 text-black/70 font-mono text-[9px] font-bold uppercase">
-              <Shield className="w-3 h-3" />
-              <span>OPEN ACCESS (NO PIN)</span>
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSetupDismissed(false)}
+                className="px-3 py-1.5 bg-[#6A1A4C] text-white hover:bg-black font-mono text-[10px] font-bold uppercase border-[2px] border-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#000]"
+                title="Establish Workspace Password"
+              >
+                <Key className="w-3.5 h-3.5 text-[#F2CBD2]" />
+                <span>SET WORKSPACE PASSWORD</span>
+              </button>
+            </div>
           )}
-
-          <button
-            onClick={() => {
-              setSecurityModalOpen(true);
-              setSecurityFeedback(null);
-            }}
-            className="p-1.5 bg-white hover:bg-black hover:text-white border border-black cursor-pointer transition-colors"
-            title="Workspace Lock & Security Settings"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
 
-      {/* WORKSPACE LOCK SCREEN (When Locked and Not Unlocked in Session) */}
-      {!isUnlocked && activeWorkspace?.is_locked ? (
+      {/* 1. INITIAL WORKSPACE SECURITY SETUP (Comes First in Flow if Workspace Has No PIN) */}
+      {!hasPin && !setupDismissed ? (
+        <div className="max-w-lg mx-auto my-8 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-[#6A1A4C] text-white flex items-center justify-center mx-auto border-[2px] border-black">
+              <Key className="w-6 h-6 text-[#F2CBD2]" />
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+              STEP 01 : SECURITY PROTOCOL &middot; SETUP IN FLOW
+            </span>
+            <h2 className="font-fun font-bold text-2xl text-black lowercase">
+              create workspace password
+            </h2>
+            <p className="font-fun italic text-xs text-black/80 leading-relaxed">
+              Every Windervale Workspace is a private creative repository. Create a private 4 to 8 digit security PIN/password now to protect your creative projects, 12 modules, legal covenants, and revenue splits.
+            </p>
+          </div>
+
+          {setupError && (
+            <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+              <span>{setupError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSetupPassword} className="space-y-4">
+            <div>
+              <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1.5">
+                New Workspace PIN (4 - 8 digits)
+              </label>
+              <div className="relative">
+                <input
+                  type={showPin ? 'text' : 'password'}
+                  maxLength={8}
+                  required
+                  autoFocus
+                  value={setupPin}
+                  onChange={(e) => setSetupPin(e.target.value)}
+                  placeholder="Enter 4 - 8 digit PIN"
+                  className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.4em] text-lg text-black focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black cursor-pointer"
+                >
+                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1.5">
+                Confirm Workspace PIN
+              </label>
+              <input
+                type={showPin ? 'text' : 'password'}
+                maxLength={8}
+                required
+                value={setupConfirmPin}
+                onChange={(e) => setSetupConfirmPin(e.target.value)}
+                placeholder="Confirm your PIN"
+                className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.4em] text-lg text-black focus:outline-none"
+              />
+            </div>
+
+            <div className="p-3 bg-white border-[1.5px] border-black flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="setupSensitiveCheck"
+                checked={setupSensitive}
+                onChange={(e) => setSetupSensitive(e.target.checked)}
+                className="mt-0.5 accent-[#6A1A4C] cursor-pointer"
+              />
+              <label htmlFor="setupSensitiveCheck" className="text-xs font-mono text-black cursor-pointer select-none">
+                <span className="font-bold block uppercase text-[10px]">Enable Sensitive Records Lock</span>
+                <span className="text-[11px] text-black/70">
+                  Restricts 02 Rights, 03 Agreement, 08 Money, 09 Distribution, and 10 Credits until unlocked once per session.
+                </span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={setupLoading || !setupPin || !setupConfirmPin}
+              className="w-full py-3 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
+            >
+              <span>{setupLoading ? 'ESTABLISHING VAULT SECURITY...' : 'SET PASSWORD & ENTER WORKSPACE \u2192'}</span>
+            </button>
+
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={handleSkipSetup}
+                className="font-mono text-[10px] text-black/60 hover:text-black uppercase underline cursor-pointer"
+              >
+                Skip for now &amp; Continue with Open Access (You can lock anytime)
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : hasPin && !isUnlocked ? (
+        /* 2. WORKSPACE LOCK SCREEN (When Locked and Not Unlocked in Session) */
         <div className="max-w-md mx-auto my-12 p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
               <Lock className="w-6 h-6 text-[#F2CBD2]" />
             </div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
-              AUTHENTICATED ENCRYPTION
+              MEMBER WORKSPACE AUTHENTICATION
             </span>
             <h2 className="font-fun font-bold text-2xl text-black lowercase">
-              workspace is private
+              log in to workspace
             </h2>
             <p className="font-fun italic text-xs text-black/80 leading-relaxed">
-              Enter the security PIN set by the workspace administrator to access project records and assets.
+              This creative workspace is locked. Enter the security PIN for &ldquo;{activeWorkspace?.name || 'Studio Primary'}&rdquo; to access projects and records.
             </p>
           </div>
 
@@ -442,27 +628,35 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
             <form onSubmit={handleUnlock} className="space-y-4">
               <div>
                 <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1.5">
-                  Security PIN
+                  Workspace Security PIN
                 </label>
-                <input
-                  type="password"
-                  maxLength={8}
-                  required
-                  autoFocus
-                  value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Enter 4 - 8 digit PIN"
-                  className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.5em] text-lg text-black focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    maxLength={8}
+                    required
+                    autoFocus
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="Enter 4 - 8 digit PIN"
+                    className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.5em] text-lg text-black focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black cursor-pointer"
+                  >
+                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={unlocking || !pinInput}
-                className="w-full py-3 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>{unlocking ? 'VERIFYING CREDENTIAL...' : 'UNLOCK WORKSPACE'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>{unlocking ? 'AUTHENTICATING...' : 'LOG IN TO WORKSPACE \u2192'}</span>
               </button>
 
               <div className="pt-2 text-center">
@@ -536,8 +730,22 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
           )}
         </div>
       ) : (
-        /* UNLOCKED PROJECT DIRECTORY & MODULE INTERFACE */
+        /* 3. UNLOCKED PROJECT DIRECTORY & MODULE INTERFACE */
         <div className="space-y-6">
+          {!hasPin && (
+            <div className="p-3 bg-[#fbf6f0] border-[2px] border-[#6A1A4C] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#6A1A4C]">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-[#6A1A4C] shrink-0" />
+                <span><strong>WORKSPACE UNPROTECTED:</strong> Set a private security PIN now to protect your creative projects, covenants, and revenue splits.</span>
+              </div>
+              <button
+                onClick={() => setSetupDismissed(false)}
+                className="px-3 py-1 bg-[#6A1A4C] text-white hover:bg-black border border-black font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
+              >
+                SET PASSWORD NOW &rarr;
+              </button>
+            </div>
+          )}
           {/* Header answering 'what am i making?' */}
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-[2.5px] border-black pb-4 gap-3">
             <div>

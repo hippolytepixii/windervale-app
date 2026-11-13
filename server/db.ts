@@ -1234,8 +1234,8 @@ export function ensureUserWorkspace(userId: string, userName?: string): string {
   const existingWs = db.prepare('SELECT id FROM workspaces WHERE id = ?').get(wsId) as any;
   if (!existingWs) {
     db.prepare(`
-      INSERT INTO workspaces (id, name, owner_id, password_hash, sensitive_lock_enabled, created_at, updated_at)
-      VALUES (?, ?, ?, NULL, 0, ?, ?)
+      INSERT INTO workspaces (id, name, owner_id, pin_hash, is_locked, sensitive_lock_enabled, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, 0, 0, ?, ?)
     `).run(wsId, name, userId, now, now);
   }
 
