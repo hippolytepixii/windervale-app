@@ -483,18 +483,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 <span>LOCKED</span>
               </span>
             )
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSetupDismissed(false)}
-                className="px-3 py-1.5 bg-[#6A1A4C] text-white hover:bg-black font-mono text-[10px] font-bold uppercase border-[2px] border-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#000]"
-                title="Establish Workspace Password"
-              >
-                <Key className="w-3.5 h-3.5 text-[#F2CBD2]" />
-                <span>SET WORKSPACE PASSWORD</span>
-              </button>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -746,20 +735,20 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
               </button>
             </div>
           )}
-          {/* Header answering 'what am i making?' */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-[2.5px] border-black pb-4 gap-3">
-            <div>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black block">
-                COLLABORATIVE STUDIO &middot; PRAXIS DIRECTORY
-              </span>
-              <h1 className="font-fun font-bold text-2xl sm:text-3xl lg:text-4xl text-black lowercase tracking-normal mt-0.5">
-                what am i making?
-              </h1>
-              <p className="font-fun italic text-xs sm:text-sm text-black/75 mt-1">
-                Dedicated project environments with the 12 production tools, immutable records, and rights protection.
-              </p>
-            </div>
-            {projects.length > 0 && (
+          {/* Header answering 'what am i making?' (Only shown when projects exist) */}
+          {projects.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-[2.5px] border-black pb-4 gap-3">
+              <div>
+                <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black block">
+                  COLLABORATIVE STUDIO &middot; PRAXIS DIRECTORY
+                </span>
+                <h1 className="font-fun font-bold text-2xl sm:text-3xl lg:text-4xl text-black lowercase tracking-normal mt-0.5">
+                  what am i making?
+                </h1>
+                <p className="font-fun italic text-xs sm:text-sm text-black/75 mt-1">
+                  Dedicated project environments with the 12 production tools, immutable records, and rights protection.
+                </p>
+              </div>
               <button
                 onClick={() => setCreateModal(true)}
                 className="px-4 py-2 bg-[#3b0764] hover:bg-[#581c87] text-[#f3e8ff] border-[2px] border-black text-xs flex items-center gap-1.5 font-mono tracking-wider uppercase font-bold cursor-pointer transition-colors self-start sm:self-auto"
@@ -767,32 +756,102 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 <Plus className="w-4 h-4" />
                 <span>New Project</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Projects Content */}
+          {/* Projects Content: Step 02 in Center Flow if No Projects Exist Yet */}
           {projectsLoading ? (
             <div className="py-20 text-center font-mono text-xs text-black/60 animate-pulse font-bold">
               Retrieving workspace projects...
             </div>
           ) : projects.length === 0 ? (
-            <div className="py-16 px-6 text-center space-y-4 border-[2.5px] border-black bg-[#fbf6f0] max-w-xl mx-auto shadow-[3px_3px_0px_#000]">
-              <div className="space-y-2 max-w-sm mx-auto">
-                <h2 className="font-fun font-bold text-2xl text-black lowercase">
-                  nothing here yet
+            <div className="max-w-xl mx-auto my-4 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
+              <div className="text-center space-y-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+                  STEP 02 OF 02 : ESTABLISH YOUR PROJECT
+                </span>
+                <h2 className="font-fun font-bold text-2xl sm:text-3xl text-black lowercase">
+                  what are you creating?
                 </h2>
-                <p className="font-fun text-xs text-black/80 italic leading-relaxed">
-                  Start a project in {activeWorkspace?.name || 'this workspace'} to establish a dedicated creative environment, invite collaborators, and protect your work.
+                <p className="font-fun italic text-xs text-black/80 leading-relaxed max-w-md mx-auto">
+                  Start your first project in {activeWorkspace?.name || 'this workspace'} to unlock the 12 creative tools (Crew, Rights, Agreement, Build, Studio, Money, Credits...).
                 </p>
               </div>
-              <div className="pt-2">
+
+              {error && (
+                <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateProject} className="space-y-4">
+                <div>
+                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                    Project Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. The Dissolve (Short Film)"
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-arthouse font-bold text-sm text-black focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                      Medium / Discipline *
+                    </label>
+                    <select
+                      value={projectType}
+                      onChange={(e) => setProjectType(e.target.value)}
+                      className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black uppercase focus:outline-none cursor-pointer"
+                    >
+                      {PROJECT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                      Target Premiere / Date
+                    </label>
+                    <input
+                      type="date"
+                      value={targetDate}
+                      onChange={(e) => setTargetDate(e.target.value)}
+                      className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                    Creative Synopsis / Intent
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief outline of the creative work, themes, or production scope..."
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none leading-relaxed resize-none"
+                  />
+                </div>
+
                 <button
-                  onClick={() => setCreateModal(true)}
-                  className="py-2.5 px-6 bg-[#3b0764] hover:bg-[#581c87] text-[#f3e8ff] font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black cursor-pointer transition-colors"
+                  type="submit"
+                  disabled={creating || !title.trim()}
+                  className="w-full py-3.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
                 >
-                  [ START A PROJECT &rarr; ]
+                  <span>{creating ? 'INITIALIZING PROJECT ENVIRONMENT...' : 'ESTABLISH PROJECT & ENTER 12 TOOLS \u2192'}</span>
                 </button>
-              </div>
+              </form>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
