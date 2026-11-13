@@ -3771,7 +3771,8 @@ if (distDir) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`[WINDERVALE API] Creative Operating Environment Server running on port ${PORT}`);
+const listenPort = Number(process.env.PORT) || 3001;
+app.listen(listenPort, '0.0.0.0', () => {
+  console.log(`[WINDERVALE API] Creative Operating Environment Server running on 0.0.0.0:${listenPort}`);
 });
 
