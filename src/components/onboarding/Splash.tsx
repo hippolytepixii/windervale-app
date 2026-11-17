@@ -239,41 +239,41 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
           </div>
 
           {/* 
-            BESPOKE AVANT-GARDE CTA PLAQUE (ROUNDED 3XL)
+            REFINED EDITORIAL CTA PLAQUE (CLASSY & COMPACT)
           */}
-          <div className="pt-8 max-w-2xl mx-auto">
+          <div className="pt-6 max-w-md mx-auto">
             <button
               onClick={handleEnter}
-              className="w-full text-left bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] rounded-3xl border-[3px] border-black cursor-pointer select-none transition-all duration-300 p-7 sm:p-9 relative group flex flex-col justify-between shadow-[9px_9px_0px_#000000] hover:shadow-[3px_3px_0px_#000000] hover:translate-x-1.5 hover:translate-y-1.5"
+              className="w-full text-left bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] rounded-2xl border-[2px] border-black cursor-pointer select-none transition-all duration-200 px-5 py-4 sm:px-6 sm:py-4.5 relative group flex flex-col justify-between shadow-[4px_4px_0px_#000000] hover:shadow-[2px_2px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5"
             >
               {/* Top Sub-Bar with Live Status */}
-              <div className="flex items-center justify-between border-b-[2px] border-black group-hover:border-white/20 pb-3 mb-4 font-mono text-[10px] uppercase tracking-widest transition-colors">
-                <span className="font-black">
+              <div className="flex items-center justify-between border-b border-black/20 group-hover:border-white/20 pb-2 mb-2.5 font-mono text-[9px] uppercase tracking-widest transition-colors">
+                <span className="font-bold text-black/75 group-hover:text-white/75">
                   STUDIO ACCESS PASS : EDITION 2026
                 </span>
-                <span className="border border-black group-hover:border-white px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase transition-colors">
+                <span className="border border-black/40 group-hover:border-white/40 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase transition-colors">
                   UNMEDIATED
                 </span>
               </div>
 
               {/* Main Typographic Punch */}
-              <div className="space-y-2 py-2">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="font-arthouse text-4xl sm:text-5xl md:text-6xl font-normal uppercase tracking-normal leading-none">
+              <div className="py-1">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-arthouse text-2xl sm:text-[28px] font-normal uppercase tracking-normal leading-none">
                     ENTER WINDERVALE
                   </h3>
-                  <span className="font-mono text-2xl sm:text-3xl font-black group-hover:translate-x-2 transition-transform duration-300">
+                  <span className="font-mono text-lg sm:text-xl font-bold group-hover:translate-x-1.5 transition-transform duration-200">
                     &rarr;
                   </span>
                 </div>
-                <p className="font-fun italic text-sm sm:text-base opacity-80 leading-normal">
+                <p className="font-fun italic text-xs text-black/75 group-hover:text-white/75 leading-normal pt-1.5">
                   open human map : verified creative dossiers : 12 workspace modules
                 </p>
               </div>
 
               {/* Bottom Discipline Ticker Bar */}
-              <div className="pt-4 mt-2 border-t-[1.5px] border-black/15 group-hover:border-white/15 flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] tracking-wider uppercase opacity-70 transition-colors">
-                <span>CINEMA, SOUND, TYPOGRAPHY, ARCHITECTURE</span>
+              <div className="pt-2 mt-2 border-t border-black/15 group-hover:border-white/15 flex items-center justify-between font-mono text-[8.5px] tracking-wider uppercase text-black/60 group-hover:text-white/60 transition-colors">
+                <span>CINEMA, SOUND, TYPOGRAPHY</span>
                 <span className="font-bold underline underline-offset-2">CLICK TO ENTER &rarr;</span>
               </div>
             </button>
