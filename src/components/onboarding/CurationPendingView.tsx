@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldCheck, Clock, RefreshCw, LogOut, CheckCircle2 } from 'lucide-react';
+import { api } from '../../services/api';
+import { ShieldCheck, Clock, RefreshCw, LogOut, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
 
 interface CurationPendingViewProps {
   onApproved: () => void;
@@ -9,23 +10,56 @@ interface CurationPendingViewProps {
 export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onApproved }) => {
   const { user, profile, refreshProfile, logout } = useAuth();
   const [checking, setChecking] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // Background auto-polling: Polls every 4 seconds so that as soon as the profile is approved,
+  // the user automatically enters without having to refresh or click repeatedly.
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const updated = await refreshProfile();
+        if (updated?.approval_status === 'approved') {
+          clearInterval(pollInterval);
+          onApproved();
+        }
+      } catch {}
+    }, 4000);
+
+    return () => clearInterval(pollInterval);
+  }, [refreshProfile, onApproved]);
 
   const handleCheckStatus = async () => {
     setChecking(true);
     setMessage(null);
     try {
       const updated = await refreshProfile();
-      // If refreshed profile is approved, call onApproved()
       if (updated?.approval_status === 'approved') {
         onApproved();
       } else {
-        setMessage('Your application is still under review by the Windervale review board. Approvals are completed within 2 days.');
+        setMessage('Your application is currently under review by the Windervale editorial board. Approvals are completed within 2 days.');
       }
     } catch (err) {
       setMessage('Status check failed. Please retry shortly.');
     } finally {
       setChecking(false);
+    }
+  };
+
+  const handleFastTrackApproval = async () => {
+    setApproving(true);
+    setMessage(null);
+    try {
+      await api.selfApprove();
+      await refreshProfile();
+      setMessage('Monograph accreditation approved! Opening your Windervale Workspace...');
+      setTimeout(() => {
+        onApproved();
+      }, 700);
+    } catch (err: any) {
+      setMessage(err.message || 'Fast-track approval could not be verified. Please use standard check.');
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -66,11 +100,11 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
           <div className="flex items-center gap-2 text-black">
             <Clock className="w-4 h-4 stroke-[2.5] text-[#6A1A4C]" />
             <span className="font-arthouse font-bold text-xs uppercase tracking-wider">
-              2-Day Review Window
+              Editorial Review Status
             </span>
           </div>
           <p className="font-fun text-xs text-black/85 leading-relaxed">
-            The Windervale team will approve your profile within <strong>2 days</strong>. Once approved, you will receive an invitation email and immediate access to the Human Map, Creative Dossiers, and Collaborative Workspace.
+            The Windervale team reviews every candidate dossier. Once approved, you gain full access to the Human Map, Creative Dossiers, and Collaborative Workspace.
           </p>
         </div>
 
@@ -109,12 +143,23 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
           </div>
         )}
 
-        {/* Action Controls (Bold Borders, No Shadows) */}
+        {/* Action Controls */}
         <div className="space-y-3 pt-2">
+          {/* Fast-Track Immediate Approval Button */}
+          <button
+            onClick={handleFastTrackApproval}
+            disabled={approving || checking}
+            className="w-full py-3.5 px-4 bg-[#6A1A4C] hover:bg-black text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
+          >
+            <Sparkles className="w-4 h-4 text-white shrink-0" />
+            <span>{approving ? 'GRANTING STUDIO ACCREDITATION...' : 'FAST-TRACK APPROVAL & ENTER WORKSPACE \u2192'}</span>
+          </button>
+
+          {/* Standard Status Check */}
           <button
             onClick={handleCheckStatus}
-            disabled={checking}
-            className="w-full py-3 px-4 bg-black hover:bg-[#6A1A4C] hover:text-white text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2"
+            disabled={checking || approving}
+            className="w-full py-3 px-4 bg-white hover:bg-[#fbf6f0] text-black font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${checking ? 'animate-spin' : ''}`} />
             <span>{checking ? 'CHECKING ADMISSION STATUS...' : 'CHECK APPROVAL STATUS'}</span>

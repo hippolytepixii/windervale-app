@@ -49,6 +49,25 @@ export const api = {
   },
 
   // Auth
+  async checkEmail(email: string): Promise<{ exists: boolean; name?: string; approval_status?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`, {
+        headers: getHeaders(false),
+      });
+      return handleResponse(res);
+    } catch {
+      return { exists: false };
+    }
+  },
+
+  async selfApprove(): Promise<{ success: boolean; approval_status: string; profile: Profile }> {
+    const res = await fetch(`${API_BASE}/auth/self-approve`, {
+      method: 'POST',
+      headers: getHeaders(true),
+    });
+    return handleResponse(res);
+  },
+
   async register(data: any): Promise<{ token: string; user: User; profile: Profile }> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',

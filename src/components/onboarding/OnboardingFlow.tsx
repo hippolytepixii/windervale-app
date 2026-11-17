@@ -36,6 +36,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       if (params.get('login') === 'true' || params.get('mode') === 'login' || window.location.hash.includes('login')) {
         return 'login';
       }
+      if (localStorage.getItem('windervale_last_email')) {
+        return 'login';
+      }
     }
     return 'identity';
   });
@@ -53,21 +56,25 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [applicationNotice, setApplicationNotice] = useState<string | null>(null);
 
-  // Step 1: Identity
+  // Existing Account Detection Notice
+  const [existingAccountNotice, setExistingAccountNotice] = useState<{ name: string; status: string } | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+
+  // Step 1: Identity (All Mandatory)
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [location, setLocation] = useState('');
   const [country, setCountry] = useState('');
 
-  // Step 2: Portrait & ID
+  // Step 2: Portrait & ID (All Mandatory)
   const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
   const [avatarPublic, setAvatarPublic] = useState(true);
   const [idType, setIdType] = useState('passport');
   const [idBase64, setIdBase64] = useState<string | null>(null);
   const [idFileName, setIdFileName] = useState<string | null>(null);
 
-  // Step 3: Practice & Portfolio
+  // Step 3: Practice & Portfolio (All Mandatory)
   const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
   const [selectedMediums, setSelectedMediums] = useState<string[]>([]);
   const [showOtherDiscipline, setShowOtherDiscipline] = useState(false);
@@ -77,18 +84,23 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [portfolioLink, setPortfolioLink] = useState('');
   const [bio, setBio] = useState('');
 
-  // Step 4: What Can You Offer & What Do You Want?
+  // Step 4: What Can You Offer & What Do You Want? (All Mandatory)
   const [whatCanYouOffer, setWhatCanYouOffer] = useState('');
   const [whatDoYouWant, setWhatDoYouWant] = useState('');
 
-  // Step 5: Covenants
+  // Step 5: Covenants (All Mandatory)
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [acceptGuidelines, setAcceptGuidelines] = useState(false);
   const [legalDocs, setLegalDocs] = useState<LegalDocument[]>([]);
 
   // Login
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('windervale_last_email') || '';
+    }
+    return '';
+  });
   const [loginPassword, setLoginPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -96,6 +108,30 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const idInputRef = useRef<HTMLInputElement>(null);
+
+  const checkEmailRegistration = async (emailToCheck: string) => {
+    const clean = emailToCheck.trim().toLowerCase();
+    if (!clean || !clean.includes('@') || !clean.includes('.')) {
+      setExistingAccountNotice(null);
+      return;
+    }
+    setCheckingEmail(true);
+    try {
+      const res = await api.checkEmail(clean);
+      if (res.exists) {
+        setExistingAccountNotice({
+          name: res.name || 'Creative Member',
+          status: res.approval_status || 'approved'
+        });
+      } else {
+        setExistingAccountNotice(null);
+      }
+    } catch {
+      setExistingAccountNotice(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   useEffect(() => {
     api.getLegalDocuments().then(data => {
@@ -166,7 +202,60 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     setSelectedMediums(selectedMediums.filter((x) => x !== m));
   };
 
+  const handleAdvanceFromIdentity = async () => {
+    setError(null);
+    if (!name.trim()) {
+      setError('Full Name / Mononym is mandatory.');
+      return;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setError('A valid Email Address is mandatory.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password is mandatory and must contain at least 8 characters.');
+      return;
+    }
+    if (!location.trim()) {
+      setError('City / Base is mandatory.');
+      return;
+    }
+    if (!country.trim()) {
+      setError('Country is mandatory.');
+      return;
+    }
+
+    try {
+      const res = await api.checkEmail(email.trim().toLowerCase());
+      if (res.exists) {
+        setLoginEmail(email.trim().toLowerCase());
+        setExistingAccountNotice({
+          name: res.name || 'Creative Member',
+          status: res.approval_status || 'approved'
+        });
+        setError('This email is already registered on Windervale. Please sign in below.');
+        return;
+      }
+    } catch {}
+
+    setStep('media_id');
+  };
+
+  const handleAdvanceFromMedia = () => {
+    setError(null);
+    if (!avatarBase64) {
+      setError('Monograph portrait photo is mandatory. Please upload a photo to establish your dossier.');
+      return;
+    }
+    if (!idBase64) {
+      setError('Government ID document is mandatory for human verification.');
+      return;
+    }
+    setStep('practice');
+  };
+
   const handleAdvanceFromPractice = () => {
+    setError(null);
     let nextDisciplines = [...selectedDisciplines];
     if (customDisciplineInput.trim()) {
       const trimmed = customDisciplineInput.trim();
@@ -177,10 +266,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     }
 
     if (nextDisciplines.length === 0) {
-      setError('Please select at least one creative discipline to continue your application.');
+      setError('Selecting at least one creative discipline is mandatory.');
       return;
     }
-    setError(null);
 
     let nextMediums = [...selectedMediums];
     if (customMediumInput.trim()) {
@@ -190,16 +278,67 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       }
       setCustomMediumInput('');
     }
+
+    if (nextMediums.length === 0) {
+      setError('Selecting at least one physical medium or tool is mandatory.');
+      return;
+    }
+
+    if (!portfolioLink.trim()) {
+      setError('Portfolio or archive link is mandatory.');
+      return;
+    }
+
+    if (bio.trim().length < 15) {
+      setError('Monograph statement / bio is mandatory (minimum 15 characters).');
+      return;
+    }
+
     setSelectedDisciplines(nextDisciplines);
     setSelectedMediums(nextMediums);
     setStep('offer_seek');
   };
 
-  const handleRegisterSubmit = async () => {
-    if (!acceptTerms || !acceptPrivacy || !acceptGuidelines) {
-      setError('Please review and accept all three founding covenants.');
+  const handleAdvanceFromOfferSeek = () => {
+    setError(null);
+    if (whatCanYouOffer.trim().length < 10) {
+      setError('Describing what you can offer is mandatory (at least 10 characters).');
       return;
     }
+    if (whatDoYouWant.trim().length < 10) {
+      setError('Describing what you seek in collaboration is mandatory (at least 10 characters).');
+      return;
+    }
+    setStep('covenants');
+  };
+
+  const handleRegisterSubmit = async () => {
+    // Comprehensive pre-submission validation of all mandatory folios
+    if (!name.trim() || !email.trim() || password.length < 8 || !location.trim() || !country.trim()) {
+      setError('All fields in Folio 01 (Identity) are mandatory.');
+      setStep('identity');
+      return;
+    }
+    if (!avatarBase64 || !idBase64) {
+      setError('Both a monograph portrait and government ID document are mandatory.');
+      setStep('media_id');
+      return;
+    }
+    if (selectedDisciplines.length === 0 || selectedMediums.length === 0 || !portfolioLink.trim() || bio.trim().length < 15) {
+      setError('All fields in Folio 03 (Practice & Monograph) are mandatory.');
+      setStep('practice');
+      return;
+    }
+    if (whatCanYouOffer.trim().length < 10 || whatDoYouWant.trim().length < 10) {
+      setError('Both collaboration inquiries in Folio 04 are mandatory (minimum 10 characters each).');
+      setStep('offer_seek');
+      return;
+    }
+    if (!acceptTerms || !acceptPrivacy || !acceptGuidelines) {
+      setError('Explicit acceptance of all three founding covenants is mandatory.');
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -225,15 +364,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         }
       }
 
-      // Combine what can you offer and what do you want into structured collaboration inquiry
-      const fullCollaborationNotes = `OFFERING: ${whatCanYouOffer.trim()}\n\nSEEKING: ${whatDoYouWant.trim()}`;
-
       const selectedWorksPayload = portfolioLink.trim() ? [
         {
           title: 'Primary Portfolio & Works Archive',
           year: new Date().getFullYear().toString(),
           role: selectedDisciplines[0] || 'Creative Lead',
-          description: whatCanYouOffer.trim() || 'Principal portfolio record.',
+          description: whatCanYouOffer.trim(),
           link: portfolioLink.trim().startsWith('http') ? portfolioLink.trim() : `https://${portfolioLink.trim()}`
         }
       ] : [];
@@ -267,6 +403,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         },
       });
 
+      localStorage.setItem('windervale_last_email', email.trim().toLowerCase());
+      localStorage.setItem('windervale_entered', 'true');
+      sessionStorage.setItem('windervale_entered', 'true');
+
       onComplete();
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -281,7 +421,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     setError(null);
     setLoading(true);
     try {
-      await login(loginEmail.trim().toLowerCase(), loginPassword);
+      const cleanEmail = loginEmail.trim().toLowerCase();
+      await login(cleanEmail, loginPassword);
+      localStorage.setItem('windervale_last_email', cleanEmail);
+      localStorage.setItem('windervale_entered', 'true');
+      sessionStorage.setItem('windervale_entered', 'true');
       onComplete();
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
@@ -355,6 +499,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         setApplicationNotice(`Authenticated as ${result.email || oauthEmail}. Please complete your monograph portrait & identity verification below.`);
       } else {
         // Already registered practitioner enters!
+        localStorage.setItem('windervale_last_email', oauthEmail.trim().toLowerCase());
+        localStorage.setItem('windervale_entered', 'true');
+        sessionStorage.setItem('windervale_entered', 'true');
         onComplete();
       }
     } catch (err: any) {
@@ -442,24 +589,49 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         {/* STEP 1: IDENTITY */}
         {step === 'identity' && (
           <div className="space-y-4 animate-editorial-fade">
-            {/* Already Approved Notice */}
-            <div className="p-3 bg-[#6A1A4C]/10 border border-[#6A1A4C] flex items-center justify-between text-xs">
-              <span className="font-mono text-black text-[11px] font-medium">Already registered or approved?</span>
-              <button
-                type="button"
-                onClick={() => setStep('login')}
-                className="font-mono font-bold uppercase text-[#6A1A4C] hover:underline cursor-pointer text-xs"
-              >
-                Sign In Here &rarr;
-              </button>
-            </div>
+            {/* Existing Account Detected Banner */}
+            {existingAccountNotice ? (
+              <div className="p-3.5 bg-[#6A1A4C] text-white border-[2px] border-black flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-[2px_2px_0px_#000000]">
+                <div className="space-y-0.5">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider block">
+                    ACCOUNT ALREADY REGISTERED
+                  </span>
+                  <p className="font-fun text-xs text-white/95 leading-snug">
+                    Welcome back, <strong>{existingAccountNotice.name}</strong>. Your account is already registered ({existingAccountNotice.status === 'approved' ? 'Approved Member' : 'Under Review'}).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail(email.trim().toLowerCase());
+                    setStep('login');
+                    setError(null);
+                  }}
+                  className="px-3.5 py-1.5 bg-white text-black hover:bg-black hover:text-white font-arthouse font-bold text-xs uppercase tracking-wider border border-black cursor-pointer transition-colors shrink-0"
+                >
+                  Sign In with Password &rarr;
+                </button>
+              </div>
+            ) : (
+              /* Already Registered Notice */
+              <div className="p-3 bg-[#6A1A4C]/10 border border-[#6A1A4C] flex items-center justify-between text-xs">
+                <span className="font-mono text-black text-[11px] font-medium">Already registered or approved?</span>
+                <button
+                  type="button"
+                  onClick={() => setStep('login')}
+                  className="font-mono font-bold uppercase text-[#6A1A4C] hover:underline cursor-pointer text-xs"
+                >
+                  Member Sign In &rarr;
+                </button>
+              </div>
+            )}
 
             <div className="space-y-1">
               <h2 className="font-fun font-bold text-2xl text-black leading-tight lowercase">
                 creative identity
               </h2>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
-                Establish your practitioner monograph on the independent network.
+                Establish your practitioner monograph on the independent network. All fields are mandatory.
               </p>
             </div>
 
@@ -493,7 +665,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <div className="flex items-center my-3">
                 <div className="flex-1 border-t-[1.5px] border-black/20"></div>
                 <span className="px-2 font-mono text-[9px] uppercase tracking-wider text-black/70 font-bold">
-                  or register manually [preferred]
+                  or register manually [all fields required]
                 </span>
                 <div className="flex-1 border-t-[1.5px] border-black/20"></div>
               </div>
@@ -501,70 +673,91 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
             <div className="space-y-3 pt-2">
               <div>
-                <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                  Full Name / Mononym
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                    Full Name / Mononym
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Maya Rao"
-                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none "
+                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                  Email Address
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                    Email Address
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <input
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (existingAccountNotice) setExistingAccountNotice(null);
+                  }}
+                  onBlur={() => checkEmailRegistration(email)}
                   placeholder="e.g. maya@independentfilm.org"
-                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none "
+                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                  Password
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                    Password (Min 8 Characters)
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 8 characters"
-                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none "
+                  className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    City / Base
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                      City / Base
+                    </label>
+                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  </div>
                   <input
                     type="text"
+                    required
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. Mumbai"
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none "
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black mb-1">
-                    Country
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                      Country
+                    </label>
+                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  </div>
                   <input
                     type="text"
+                    required
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     placeholder="e.g. India"
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none "
+                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                   />
                 </div>
               </div>
@@ -574,17 +767,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('login')}
-                className="font-mono text-xs text-black/70 hover:text-black underline font-bold"
+                className="font-mono text-xs text-black/70 hover:text-black underline font-bold cursor-pointer"
               >
-                Existing Member?
+                Existing Member? Sign In &rarr;
               </button>
               <button
                 type="button"
-                disabled={!name.trim() || !email.trim() || password.length < 6}
-                onClick={() => setStep('media_id')}
+                disabled={!name.trim() || !email.trim() || !email.includes('@') || password.length < 8 || !location.trim() || !country.trim()}
+                onClick={handleAdvanceFromIdentity}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Portrait &amp; ID Verification</span>
+                <span>Continue to Portrait &amp; ID</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -599,15 +792,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 portrait &amp; verification
               </h2>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
-                Upload your monograph portrait and authenticate your identity.
+                Upload your monograph portrait and authenticate your identity. Both requirements are mandatory.
               </p>
             </div>
 
             {/* Profile Picture Upload */}
             <div className="p-3.5 bg-white border-[2px] border-black space-y-3">
-              <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider block">
-                01 : Monograph Portrait
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider block">
+                  01 : Monograph Portrait Photo
+                </span>
+                <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+              </div>
               <div className="flex items-center gap-3.5">
                 <div
                   onClick={() => avatarInputRef.current?.click()}
@@ -632,11 +828,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     onClick={() => avatarInputRef.current?.click()}
                     className="font-arthouse text-xs uppercase tracking-wider text-black hover:underline font-bold block"
                   >
-                    {avatarBase64 ? 'Replace Photo' : 'Upload Portrait Photo'}
+                    {avatarBase64 ? 'Replace Photo' : 'Upload Portrait Photo *'}
                   </button>
                   <p className="font-fun italic text-[11px] text-black/70 mt-0.5 leading-snug">
                     Natural light portrait, darkroom still, or creative headshot.
                   </p>
+                  {!avatarBase64 && (
+                    <span className="font-mono text-[10px] text-[#6A1A4C] font-bold block mt-1">
+                      [!] Required: Please select and upload your portrait.
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -668,7 +869,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   02 : Government ID Document
                 </span>
                 <span className="font-mono text-[9px] bg-[#6A1A4C] text-white px-1.5 py-0.5 uppercase font-bold">
-                  ENCRYPTED
+                  *MANDATORY &amp; ENCRYPTED
                 </span>
               </div>
 
@@ -709,7 +910,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <div className="space-y-1">
                     <Upload className="w-5 h-5 text-black mx-auto" />
                     <span className="font-arthouse text-xs uppercase tracking-wider text-black block font-bold">
-                      Upload ID Document File / Scan
+                      Upload ID Document File / Scan *
+                    </span>
+                    <span className="font-mono text-[10px] text-[#6A1A4C] font-bold block">
+                      [!] Required: Passport, Driver's License, or National ID.
                     </span>
                   </div>
                 )}
@@ -727,16 +931,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('identity')}
-                className="font-mono text-xs text-black/70 hover:text-black font-bold"
+                className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
-                onClick={() => setStep('practice')}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                disabled={!avatarBase64 || !idBase64}
+                onClick={handleAdvanceFromMedia}
+                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Disciplines &amp; Practice</span>
+                <span>Continue to Practice &amp; Disciplines</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -847,9 +1052,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </div>
 
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1.5">
-                  Physical Mediums &amp; Tools ({selectedMediums.length})
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    Physical Mediums &amp; Tools ({selectedMediums.length})
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {MEDIUMS_LIST.map((m) => {
                     const isSel = selectedMediums.includes(m);
@@ -931,41 +1139,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                    City / Base
-                  </label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. Mumbai"
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-xs font-mono text-black focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    placeholder="e.g. India"
-                    className="w-full bg-white border-[2px] border-black px-3 py-2 text-xs font-mono text-black focus:outline-none"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                  Portfolio / Reel Link
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    Portfolio / Reel / Archive Link
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <div className="relative">
                   <LinkIcon className="w-4 h-4 text-black absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="url"
+                    required
                     value={portfolioLink}
                     onChange={(e) => setPortfolioLink(e.target.value)}
                     placeholder="https://vimeo.com/... or personal archive link"
@@ -975,14 +1160,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </div>
 
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                  Bio / Monograph Statement
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    Monograph Statement / Bio (Min 15 Characters)
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                </div>
                 <textarea
-                  rows={2}
+                  rows={3}
+                  required
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="e.g. Director exploring celluloid memory, oral histories, and tactile audio."
+                  placeholder="e.g. Director exploring celluloid memory, oral histories, and tactile audio. Documenting rituals across South Asia."
                   className="w-full bg-white border-[2px] border-black p-2.5 text-xs font-fun text-black focus:outline-none resize-none"
                 />
               </div>
@@ -992,17 +1181,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('media_id')}
-                className="font-mono text-xs text-black/70 hover:text-black font-bold"
+                className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
-                disabled={selectedDisciplines.length === 0}
+                disabled={selectedDisciplines.length === 0 || selectedMediums.length === 0 || !portfolioLink.trim() || bio.trim().length < 15}
                 onClick={handleAdvanceFromPractice}
                 className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
               >
-                <span>Offer &amp; Seek</span>
+                <span>Continue to Offer &amp; Seek</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -1017,17 +1206,21 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 collaboration exchange
               </h2>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
-                Define the creative energy, tools, and partnerships you wish to exchange.
+                Define the creative energy, tools, and partnerships you wish to exchange. Both statements are mandatory.
               </p>
             </div>
 
             <div className="space-y-3 pt-2">
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                  What Can You Offer?
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    What Can You Offer?
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
+                </div>
                 <textarea
                   rows={3}
+                  required
                   value={whatCanYouOffer}
                   onChange={(e) => setWhatCanYouOffer(e.target.value)}
                   placeholder="e.g. 16mm Bolex camera package, darkroom hand-printing, tape loop mastering, score composition, script consultation, color grading."
@@ -1036,11 +1229,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </div>
 
               <div>
-                <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black mb-1">
-                  What Do You Want / What Are You Seeking?
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
+                    What Do You Want / What Are You Seeking?
+                  </label>
+                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
+                </div>
                 <textarea
                   rows={3}
+                  required
                   value={whatDoYouWant}
                   onChange={(e) => setWhatDoYouWant(e.target.value)}
                   placeholder="e.g. Seeking co-director for a docu-fiction project, cellist for original score, sound recordist, or exhibition curator."
@@ -1053,16 +1250,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('practice')}
-                className="font-mono text-xs text-black/70 hover:text-black font-bold"
+                className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
               >
                 &larr; Back
               </button>
               <button
                 type="button"
-                onClick={() => setStep('covenants')}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                disabled={whatCanYouOffer.trim().length < 10 || whatDoYouWant.trim().length < 10}
+                onClick={handleAdvanceFromOfferSeek}
+                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>Founding Covenants</span>
+                <span>Continue to Founding Covenants</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -1077,7 +1275,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 founding covenants
               </h2>
               <p className="font-fun italic text-xs text-black/75 leading-snug">
-                Windervale is governed by legal respect, creative integrity, and mutual autonomy.
+                Windervale is governed by legal respect, creative integrity, and mutual autonomy. All covenants are mandatory.
               </p>
             </div>
 
@@ -1085,12 +1283,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <label className="flex items-start gap-2.5 p-2.5 bg-white border-[2px] border-black cursor-pointer">
                 <input
                   type="checkbox"
+                  required
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
                 />
                 <div>
-                  <span className="font-arthouse font-bold text-black uppercase text-xs block">Terms of Service</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-arthouse font-bold text-black uppercase text-xs block">Terms of Service</span>
+                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     You retain 100% intellectual property ownership of your work.
                   </span>
@@ -1100,12 +1302,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <label className="flex items-start gap-2.5 p-2.5 bg-white border-[2px] border-black cursor-pointer">
                 <input
                   type="checkbox"
+                  required
                   checked={acceptPrivacy}
                   onChange={(e) => setAcceptPrivacy(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
                 />
                 <div>
-                  <span className="font-arthouse font-bold text-black uppercase text-xs block">Privacy Policy</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-arthouse font-bold text-black uppercase text-xs block">Privacy Policy</span>
+                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     Private workspaces are confidential and never sold or indexed.
                   </span>
@@ -1115,12 +1321,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <label className="flex items-start gap-2.5 p-2.5 bg-white border-[2px] border-black cursor-pointer">
                 <input
                   type="checkbox"
+                  required
                   checked={acceptGuidelines}
                   onChange={(e) => setAcceptGuidelines(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
                 />
                 <div>
-                  <span className="font-arthouse font-bold text-black uppercase text-xs block">Community Guidelines</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-arthouse font-bold text-black uppercase text-xs block">Community Guidelines</span>
+                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     Credit honestly, establish split sheets early, and honour shared work.
                   </span>
@@ -1132,7 +1342,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('offer_seek')}
-                className="font-mono text-xs text-black/70 hover:text-black font-bold"
+                className="font-mono text-xs text-black/70 hover:text-black font-bold cursor-pointer"
               >
                 &larr; Back
               </button>
@@ -1142,7 +1352,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 onClick={handleRegisterSubmit}
                 className="py-3 px-6 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span>{loading ? 'Transmitting...' : 'Complete Registration \u2192'}</span>
+                <span>{loading ? 'Transmitting Monograph...' : 'Submit Admission Application \u2192'}</span>
               </button>
             </div>
           </div>

@@ -107,6 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('windervale_token');
+    localStorage.removeItem('windervale_entered');
+    sessionStorage.removeItem('windervale_entered');
     setUser(null);
     setProfile(null);
     setToken(null);

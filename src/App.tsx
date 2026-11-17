@@ -91,7 +91,7 @@ const MainLayout: React.FC = () => {
         return 'done';
       }
     }
-    return sessionStorage.getItem('windervale_entered') ? 'done' : 'splash';
+    return (sessionStorage.getItem('windervale_entered') || localStorage.getItem('windervale_entered') || localStorage.getItem('windervale_token')) ? 'done' : 'splash';
   });
 
   // Exactly 4 primary mobile tabs: 'map' | 'connections' | 'workspace' | 'profile'
@@ -139,6 +139,7 @@ const MainLayout: React.FC = () => {
 
   const handleSplashComplete = () => {
     sessionStorage.setItem('windervale_entered', 'true');
+    localStorage.setItem('windervale_entered', 'true');
     setOpeningStage('done');
   };
 

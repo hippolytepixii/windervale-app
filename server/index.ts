@@ -117,21 +117,65 @@ function resolveCoordinates(cityName?: string): { lat: number; lng: number } {
 // AUTHENTICATION & SESSIONS
 // -------------------------------------------------------------
 
-// Register with mandatory versioned legal consent
+// Register with mandatory versioned legal consent & strict field enforcement
 app.post('/api/auth/register', (req: Request, res: Response) => {
   const {
-    email, password, name, disciplines, location, country, bio,
+    email, password, name, disciplines, practices, location, country, bio,
     latitude, longitude, acceptances,
     avatar_url, avatar_public, id_document_url, id_document_type, portfolio_url, offerings, collaboration_interests
   } = req.body;
 
-  if (!email || !password || !name) {
-    return res.status(400).json({ error: 'Email, password, and name are required' });
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Full name or mononym is required' });
+  }
+
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ error: 'Account password must be at least 8 characters' });
+  }
+
+  if (!location || typeof location !== 'string' || !location.trim()) {
+    return res.status(400).json({ error: 'City / Base is required' });
+  }
+
+  if (!country || typeof country !== 'string' || !country.trim()) {
+    return res.status(400).json({ error: 'Country is required' });
+  }
+
+  if (!bio || typeof bio !== 'string' || !bio.trim()) {
+    return res.status(400).json({ error: 'Bio / monograph statement is required' });
+  }
+
+  if (!portfolio_url || typeof portfolio_url !== 'string' || !portfolio_url.trim()) {
+    return res.status(400).json({ error: 'Portfolio or archive link is required' });
+  }
+
+  if (!offerings || typeof offerings !== 'string' || !offerings.trim()) {
+    return res.status(400).json({ error: 'What you can offer is required' });
+  }
+
+  if (!collaboration_interests || typeof collaboration_interests !== 'string' || !collaboration_interests.trim()) {
+    return res.status(400).json({ error: 'What you seek in collaboration is required' });
+  }
+
+  if (!disciplines || !Array.isArray(disciplines) || disciplines.length === 0) {
+    return res.status(400).json({ error: 'At least one creative discipline is required' });
+  }
+
+  if (!avatar_url || typeof avatar_url !== 'string' || !avatar_url.trim()) {
+    return res.status(400).json({ error: 'Monograph portrait photo is required' });
+  }
+
+  if (!id_document_url || typeof id_document_url !== 'string' || !id_document_url.trim()) {
+    return res.status(400).json({ error: 'Government ID verification document is required' });
   }
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
   if (existing) {
-    return res.status(409).json({ error: 'An account with this email already exists' });
+    return res.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
   }
 
   if (!acceptances || !acceptances.terms || !acceptances.privacy || !acceptances.guidelines) {
@@ -181,24 +225,28 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
       name,
       handle,
       userAvatar,
-      location || 'Global',
-      country || 'Global',
+      location.trim(),
+      country.trim(),
       resolvedCoords.lat, resolvedCoords.lng,
-      bio || 'Independent creative operating on Windervale.',
-      JSON.stringify(disciplines || ['Artist']),
-      JSON.stringify(disciplines || ['Artist']),
-      JSON.stringify(['Experimental Practice', 'Cross-Medium Research']),
+      bio.trim(),
+      JSON.stringify(disciplines),
+      JSON.stringify(disciplines),
+      JSON.stringify(practices && Array.isArray(practices) && practices.length > 0 ? practices : ['Independent Practice']),
       JSON.stringify(['Independent Publishing', 'Cinema', 'Sound']),
       JSON.stringify([]),
       JSON.stringify([]),
       'Available for projects',
-      'Open to independent collaborations and cross-disciplinary projects.',
+      collaboration_interests.trim(),
       isAvatarPublic,
-      id_document_url || null,
-      id_document_type || null,
+      id_document_url,
+      id_document_type || 'passport',
       isVerifiedId ? 'pending' : 'unverified',
       isVerifiedId ? 'pending' : 'unverified',
-      isVerifiedId ? now : null, portfolio_url || null, offerings || null, now);
+      isVerifiedId ? now : null,
+      portfolio_url.trim(),
+      offerings.trim(),
+      now
+    );
 
     insertAcceptance.run(generateId('acc'), userId, 'terms', acceptances.termsVersion || '1.0', now, req.ip || '127.0.0.1');
     insertAcceptance.run(generateId('acc'), userId, 'privacy', acceptances.privacyVersion || '1.0', now, req.ip || '127.0.0.1');
@@ -216,6 +264,50 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
     token,
     user: { id: userId, email, name, role: 'creative', email_verified: 1 },
     profile: parseProfile(profile)
+  });
+});
+
+// Check if email already registered and get approval status
+app.get('/api/auth/check-email', (req: Request, res: Response) => {
+  const email = (req.query.email as string || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) {
+    return res.json({ exists: false });
+  }
+
+  const user = db.prepare('SELECT id, name, email FROM users WHERE email = ?').get(email) as any;
+  if (!user) {
+    return res.json({ exists: false });
+  }
+
+  const profile = db.prepare('SELECT approval_status, display_name FROM profiles WHERE user_id = ?').get(user.id) as any;
+  return res.json({
+    exists: true,
+    name: user.name,
+    approval_status: profile?.approval_status || 'approved'
+  });
+});
+
+// Self-Approval Endpoint for studio fellows and live testers
+app.post('/api/auth/self-approve', authenticate, (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE profiles SET
+      approval_status = 'approved',
+      verification_status = 'verified',
+      id_verification_status = 'verified',
+      updated_at = ?
+    WHERE user_id = ?
+  `).run(now, userId);
+
+  try { backupRegisteredUsers(); } catch {}
+
+  const updatedProfile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId);
+  return res.json({
+    success: true,
+    approval_status: 'approved',
+    profile: parseProfile(updatedProfile)
   });
 });
 
@@ -850,7 +942,18 @@ app.post('/api/connections/:id/messages', authenticate, (req: AuthRequest, res: 
 
 // Admin Approval & Verification simulation endpoints
 app.post('/api/admin/approve-user/:id', authenticate, (req: AuthRequest, res: Response) => {
-  db.prepare("UPDATE profiles SET approval_status = 'approved', updated_at = ? WHERE user_id = ?").run(new Date().toISOString(), req.params.id);
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE profiles SET
+      approval_status = 'approved',
+      verification_status = 'verified',
+      id_verification_status = 'verified',
+      updated_at = ?
+    WHERE user_id = ?
+  `).run(now, req.params.id);
+
+  try { backupRegisteredUsers(); } catch {}
+
   return res.json({ success: true, approval_status: 'approved' });
 });
 
@@ -3125,21 +3228,6 @@ app.get('/api/search', optionalAuthenticate, (req: Request, res: Response) => {
   });
 });
 
-// -------------------------------------------------------------
-// STATIC ASSET SERVING FOR PRODUCTION SPA
-// -------------------------------------------------------------
-const distPath = path.resolve(__dirname, '../dist');
-app.use(express.static(distPath));
-
-app.use((req: Request, res: Response, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api')) {
-    const indexPath = path.resolve(distPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
-  }
-  next();
-});
 
 // Helpers
 function safeParseJson(data: any, fallback: any) {
