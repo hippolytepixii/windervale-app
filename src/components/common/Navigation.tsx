@@ -12,7 +12,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }
     { id: 'projects', num: '02', label: 'PROJECTS', sub: 'Studio & Workspaces', icon: FolderKanban, accent: 'group-hover:text-wv-pink' },
     { id: 'library', num: '03', label: 'LIBRARY', sub: 'Editorial Press', icon: BookOpen, accent: 'group-hover:text-wv-dirtywhite' },
     { id: 'fund', num: '04', label: 'FUND', sub: 'Grants Ecosystem', icon: Banknote, accent: 'group-hover:text-wv-dustyrose' },
-    { id: 'profile', num: '05', label: 'PROFILE', sub: 'Creative Dossier', icon: UserCheck, accent: 'group-hover:text-wv-pink' },
+    { id: 'profile', num: '05', label: 'PROFILE', sub: 'Member Profile', icon: UserCheck, accent: 'group-hover:text-wv-pink' },
   ];
 
   return (

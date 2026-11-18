@@ -43,7 +43,7 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
     {
       id: 'profile',
       num: '04',
-      label: 'CREATIVE DOSSIER',
+      label: 'PROFILE',
       icon: <User className="w-4 h-4 stroke-[2.5]" />,
     },
   ];
@@ -69,13 +69,13 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
                 className={`flex items-center gap-2.5 px-4 lg:px-6 py-3.5 transition-colors focus:outline-none cursor-pointer group ${
                   isActive
                     ? 'bg-black text-white'
-                    : 'bg-white text-black hover:bg-[#6A1A4C]/10'
+                    : 'bg-white text-black hover:bg-black/5'
                 }`}
               >
                 <span
                   className={`font-mono text-[10px] font-bold px-1.5 py-0.5 border ${
                     isActive
-                      ? 'bg-[#6A1A4C] text-white border-black'
+                      ? 'bg-white text-black border-white'
                       : 'bg-black text-white border-black'
                   }`}
                 >
@@ -83,7 +83,7 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
                 </span>
 
                 <span className="flex items-center gap-1.5">
-                  <span className={isActive ? 'text-[#6A1A4C]' : 'text-black'}>
+                  <span className={isActive ? 'text-white' : 'text-black'}>
                     {t.icon}
                   </span>
                   <span className="font-arthouse font-bold text-xs lg:text-sm tracking-wider uppercase">
@@ -91,9 +91,9 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
                   </span>
                 </span>
 
-                {/* Pending Requests Badge in Selective Royal Purple */}
+                {/* Pending Requests Badge */}
                 {t.id === 'connections' && pendingConnectionsCount > 0 && (
-                  <span className="ml-1 px-2 py-0.5 bg-[#6A1A4C] text-[#f3e8ff] border border-black font-mono text-[9px] font-black uppercase">
+                  <span className="ml-1 px-2 py-0.5 bg-black text-white border border-white font-mono text-[9px] font-black uppercase">
                     {pendingConnectionsCount} PENDING
                   </span>
                 )}
@@ -108,7 +108,7 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
           {onOpenSearch && (
             <button
               onClick={onOpenSearch}
-              className="flex items-center gap-2 px-3.5 py-2 bg-[#fbf6f0] hover:bg-[#6A1A4C] hover:text-white text-black border-[1.5px] border-black font-mono text-xs font-bold uppercase transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3.5 py-2 bg-[#fbf6f0] hover:bg-black hover:text-white text-black border-[1.5px] border-black font-mono text-xs font-bold uppercase transition-colors cursor-pointer"
               title="Search (⌘K)"
             >
               <Search className="w-3.5 h-3.5" />

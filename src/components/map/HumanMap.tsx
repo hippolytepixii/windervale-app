@@ -449,7 +449,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                     </span>
                   )}
                 </div>
-                <p className="font-fun italic text-xs text-black/85 mt-0.5">
+                <p className="font-mono text-[11px] text-black/85 mt-1 leading-normal">
                   {reason.detail}
                 </p>
               </div>
@@ -458,7 +458,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
         </div>
 
         {/* Bio */}
-        <p className="font-fun italic text-xs text-black leading-relaxed">
+        <p className="font-mono text-xs text-black leading-relaxed">
           "{creative.bio || 'Independent practitioner operating on Windervale.'}"
         </p>
 
@@ -467,13 +467,13 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
           {creative.offerings && (
             <div className="p-2 border-[1.5px] border-black bg-[#fbf6f0]">
               <span className="font-bold text-[9px] uppercase text-black block mb-0.5">CAN OFFER:</span>
-              <p className="font-fun italic text-xs text-black">{creative.offerings}</p>
+              <p className="font-mono text-xs text-black">{creative.offerings}</p>
             </div>
           )}
           {creative.collaboration_interests && (
             <div className="p-2 border-[1.5px] border-black bg-white">
               <span className="font-bold text-[9px] uppercase text-black block mb-0.5">SEEKING:</span>
-              <p className="font-fun italic text-xs text-black">{creative.collaboration_interests}</p>
+              <p className="font-mono text-xs text-black">{creative.collaboration_interests}</p>
             </div>
           )}
         </div>
@@ -484,7 +484,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
             onClick={() => onOpenProfile(creative.user_id)}
             className="py-2.5 px-3 border-[2px] border-black bg-white text-black font-mono text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors text-center cursor-pointer"
           >
-            Full Dossier &rarr;
+            View Profile &rarr;
           </button>
           {connStatus === 'accepted' ? (
             <button
@@ -555,7 +555,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
               <h2 className="font-fun font-bold text-2xl text-black lowercase">
                 the map is quiet
               </h2>
-              <p className="font-fun italic text-xs text-black/80 leading-relaxed">
+              <p className="font-mono text-xs text-black/80 leading-relaxed">
                 You are at the center of the sector ({profile?.location || 'Base'}). No other approved practitioners currently match your craft disciplines or active inquiries.
               </p>
             </div>
@@ -647,14 +647,14 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
               <h2 className="font-fun font-bold text-xl text-black lowercase leading-tight mt-0.5">
                 matched craft peers
               </h2>
-              <p className="font-fun italic text-xs text-black/75 mt-1">
+              <p className="font-mono text-xs text-black/75 mt-1">
                 Approved practitioners matching your craft disciplines and studio production needs.
               </p>
             </div>
 
             {creatives.length === 0 ? (
               <div className="p-6 text-center border-[2px] border-black bg-white space-y-2">
-                <p className="font-fun italic text-xs text-black/70">
+                <p className="font-mono text-xs text-black/70">
                   No other approved practitioners match your craft disciplines or active inquiries at this coordinate.
                 </p>
               </div>
@@ -724,7 +724,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
             <h4 className="font-fun font-bold text-lg text-black lowercase leading-tight">
               connect with {selectedCreative.display_name}
             </h4>
-            <p className="font-fun italic text-xs text-black/80 leading-relaxed">
+            <p className="font-mono text-xs text-black/80 leading-relaxed">
               Send a craft-aligned friend request ({profile?.disciplines?.[0] || 'Creative'} &times; {selectedCreative.disciplines?.[0] || 'Creative'}).
             </p>
 
@@ -742,7 +742,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                 <p className="font-fun font-bold text-base text-black">
                   Friend Request Sent
                 </p>
-                <p className="font-fun italic text-xs text-black/75">
+                <p className="font-mono text-xs text-black/75">
                   Your invitation has been transmitted to {selectedCreative.display_name}.
                 </p>
               </div>
@@ -777,7 +777,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                   value={connectMessage}
                   onChange={(e) => setConnectMessage(e.target.value)}
                   placeholder={`e.g. I admire your work in ${selectedCreative.disciplines?.[0] || 'your craft'} and would love to connect as friends and collaborate.`}
-                  className="w-full bg-white border-[2px] border-black p-3 font-fun italic text-xs text-black focus:outline-none transition-colors resize-none"
+                  className="w-full bg-white border-[2px] border-black p-3 font-mono text-xs text-black focus:outline-none transition-colors resize-none placeholder:text-black/40"
                 />
 
                 <div className="flex items-center justify-between pt-2 border-t-[2px] border-black">

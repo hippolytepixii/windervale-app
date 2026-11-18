@@ -42,7 +42,7 @@ export const WebAppShell: React.FC<WebAppShellProps> = ({
                 <h1 className="font-brand text-4xl sm:text-5xl lg:text-6xl text-black tracking-normal leading-none lowercase whitespace-nowrap">
                   windervale
                 </h1>
-                <span className="font-mono text-[10px] tracking-widest uppercase bg-[#6A1A4C] text-white px-2 py-0.5 font-bold">
+                <span className="font-mono text-[10px] tracking-widest uppercase bg-black text-white px-2 py-0.5 font-bold">
                   OPERATING ENVIRONMENT
                 </span>
               </div>
@@ -74,8 +74,8 @@ export const WebAppShell: React.FC<WebAppShellProps> = ({
                     <span className="font-fun font-bold text-sm text-black leading-tight">
                       {user.name}
                     </span>
-                    {/* Purple Verified Fellow Badge */}
-                    <span className="bg-[#3b0764] text-[#f3e8ff] border border-black font-mono text-[8px] font-bold px-1.5 py-0.2 uppercase tracking-wider">
+                    {/* Verified Fellow Badge */}
+                    <span className="bg-black text-white border border-black font-mono text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wider">
                       VERIFIED PRAXIS
                     </span>
                   </div>

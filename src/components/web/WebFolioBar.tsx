@@ -40,8 +40,8 @@ export const WebFolioBar: React.FC = () => {
       {/* Center Volume & Issue */}
       <div className="hidden sm:flex items-center gap-2 text-white/80">
         <span>VOL. 31 &middot; ISSUE 04</span>
-        <span className="text-[#6A1A4C]">&middot;</span>
-        <span className="bg-[#6A1A4C] text-[#fbf6f0] px-1.5 py-0.5 border border-black font-bold text-[9px]">
+        <span className="text-white/40">&middot;</span>
+        <span className="bg-white text-black px-1.5 py-0.5 border border-black font-bold text-[9px]">
           90s BROADSHEET EDITION
         </span>
       </div>
@@ -49,9 +49,9 @@ export const WebFolioBar: React.FC = () => {
       {/* Right Live Frequency & Clock */}
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-1.5 text-white/90">
-          <span className="w-1.5 h-1.5 bg-[#6A1A4C] rounded-full animate-pulse" />
+          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
           <span className="hidden md:inline">NETWORK FREQUENCY: </span>
-          <span className="font-bold text-[#6A1A4C]">ONLINE</span>
+          <span className="font-bold text-white">ONLINE</span>
         </span>
         <span className="hidden xl:inline text-white/40">|</span>
         <span className="hidden xl:inline text-white/70 font-mono">

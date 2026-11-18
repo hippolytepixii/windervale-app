@@ -89,7 +89,15 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     setLoading(true);
     try {
       const data = await api.getWorkspaces();
-      const list = data.workspaces || [];
+      let list = data.workspaces || [];
+      if (list.length === 0) {
+        try {
+          const created = await api.createWorkspace({ name: 'Studio Primary' });
+          if (created?.workspace) {
+            list = [created.workspace];
+          }
+        } catch {}
+      }
       setWorkspaces(list);
 
       // Select active workspace
@@ -140,7 +148,18 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
 
   const handleSetupPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeWorkspace) return;
+    let ws = activeWorkspace;
+    if (!ws) {
+      try {
+        const data = await api.getWorkspaces();
+        ws = data.workspaces?.[0] || null;
+        if (ws) selectWorkspace(ws);
+      } catch {}
+    }
+    if (!ws) {
+      setSetupError('Connecting to workspace. Please tap again.');
+      return;
+    }
     if (setupPin.length < 4) {
       setSetupError('Security PIN must be at least 4 digits or characters.');
       return;
@@ -153,28 +172,28 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     setSetupLoading(true);
     setSetupError(null);
     try {
-      await api.setWorkspaceLock(activeWorkspace.id, {
+      await api.setWorkspaceLock(ws.id, {
         action: 'set',
         new_pin: setupPin,
       });
 
       if (setupSensitive) {
-        await api.setSensitiveLock(activeWorkspace.id, {
+        await api.setSensitiveLock(ws.id, {
           enabled: true,
           pin: setupPin,
         });
       }
 
-      sessionStorage.setItem(`unlocked_ws_${activeWorkspace.id}`, 'true');
+      sessionStorage.setItem(`unlocked_ws_${ws.id}`, 'true');
       if (setupSensitive) {
-        sessionStorage.setItem(`unlocked_sensitive_${activeWorkspace.id}`, 'true');
+        sessionStorage.setItem(`unlocked_sensitive_${ws.id}`, 'true');
       }
 
       setSetupPin('');
       setSetupConfirmPin('');
       setIsUnlocked(true);
       await loadWorkspaces();
-      await loadProjects(activeWorkspace.id);
+      await loadProjects(ws.id);
     } catch (err: any) {
       setSetupError(err.message || 'Failed to establish workspace security.');
     } finally {
@@ -182,12 +201,23 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     }
   };
 
-  const handleSkipSetup = () => {
-    if (!activeWorkspace) return;
-    sessionStorage.setItem(`skip_ws_setup_${activeWorkspace.id}`, 'true');
+  const handleSkipSetup = async () => {
+    let ws = activeWorkspace;
+    if (!ws) {
+      try {
+        const data = await api.getWorkspaces();
+        ws = data.workspaces?.[0] || null;
+        if (ws) selectWorkspace(ws);
+      } catch {}
+    }
+    if (ws) {
+      sessionStorage.setItem(`skip_ws_setup_${ws.id}`, 'true');
+    }
     setSetupDismissed(true);
     setIsUnlocked(true);
-    loadProjects(activeWorkspace.id);
+    if (ws) {
+      loadProjects(ws.id);
+    }
   };
 
   const loadProjects = async (workspaceId?: string) => {
@@ -410,7 +440,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
       {/* Top Broadsheet Hierarchy & Workspace Switcher Bar */}
       <div className="border-[2.5px] border-black bg-[#fbf6f0] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[3px_3px_0px_#000]">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+          <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black block">
             CREATIVE OPERATING SYSTEM
           </span>
           <span className="text-black/30 font-mono text-xs">&middot;</span>
@@ -460,10 +490,10 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 </span>
                 <button
                   onClick={handleLockNow}
-                  className="px-3 py-1.5 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] font-bold uppercase border-[2px] border-black cursor-pointer transition-colors flex items-center gap-1.5 shadow-[2px_2px_0px_#000]"
+                  className="px-3 py-1.5 bg-black text-white hover:bg-white hover:text-black font-mono text-[10px] font-bold uppercase border-[2px] border-black cursor-pointer transition-colors flex items-center gap-1.5 shadow-[2px_2px_0px_#000]"
                   title="Lock Workspace & Log Out of Session"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#F2CBD2]" />
+                  <Lock className="w-3.5 h-3.5 text-white" />
                   <span>LOG OUT OF WORKSPACE</span>
                 </button>
                 <button
@@ -491,16 +521,16 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
       {!hasPin && !setupDismissed ? (
         <div className="max-w-lg mx-auto my-8 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 bg-[#6A1A4C] text-white flex items-center justify-center mx-auto border-[2px] border-black">
-              <Key className="w-6 h-6 text-[#F2CBD2]" />
+            <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
+              <Key className="w-6 h-6 text-white" />
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
               STEP 01 : SECURITY PROTOCOL &middot; SETUP IN FLOW
             </span>
             <h2 className="font-fun font-bold text-2xl text-black lowercase">
               create workspace password
             </h2>
-            <p className="font-fun italic text-xs text-black/80 leading-relaxed">
+            <p className="font-mono text-xs text-black/80 leading-relaxed">
               Every Windervale Workspace is a private creative repository. Create a private 4 to 8 digit security PIN/password now to protect your creative projects, 12 modules, legal covenants, and revenue splits.
             </p>
           </div>
@@ -559,7 +589,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 id="setupSensitiveCheck"
                 checked={setupSensitive}
                 onChange={(e) => setSetupSensitive(e.target.checked)}
-                className="mt-0.5 accent-[#6A1A4C] cursor-pointer"
+                className="mt-0.5 accent-black cursor-pointer"
               />
               <label htmlFor="setupSensitiveCheck" className="text-xs font-mono text-black cursor-pointer select-none">
                 <span className="font-bold block uppercase text-[10px]">Enable Sensitive Records Lock</span>
@@ -572,7 +602,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
             <button
               type="submit"
               disabled={setupLoading || !setupPin || !setupConfirmPin}
-              className="w-full py-3 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
+              className="w-full py-3 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
             >
               <span>{setupLoading ? 'ESTABLISHING VAULT SECURITY...' : 'SET PASSWORD & ENTER WORKSPACE \u2192'}</span>
             </button>
@@ -593,15 +623,15 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
         <div className="max-w-md mx-auto my-12 p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
-              <Lock className="w-6 h-6 text-[#F2CBD2]" />
+              <Lock className="w-6 h-6 text-white" />
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
               MEMBER WORKSPACE AUTHENTICATION
             </span>
             <h2 className="font-fun font-bold text-2xl text-black lowercase">
               log in to workspace
             </h2>
-            <p className="font-fun italic text-xs text-black/80 leading-relaxed">
+            <p className="font-mono text-xs text-black/80 leading-relaxed">
               This creative workspace is locked. Enter the security PIN for &ldquo;{activeWorkspace?.name || 'Studio Primary'}&rdquo; to access projects and records.
             </p>
           </div>
@@ -643,7 +673,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
               <button
                 type="submit"
                 disabled={unlocking || !pinInput}
-                className="w-full py-3 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+                className="w-full py-3 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>{unlocking ? 'AUTHENTICATING...' : 'LOG IN TO WORKSPACE \u2192'}</span>
               </button>
@@ -710,7 +740,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 <button
                   type="submit"
                   disabled={recovering || !recoveryPassword || !recoveryNewPin}
-                  className="px-4 py-2 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
                 >
                   {recovering ? 'RECOVERING...' : 'RESET PIN & UNLOCK'}
                 </button>
@@ -722,14 +752,14 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
         /* 3. UNLOCKED PROJECT DIRECTORY & MODULE INTERFACE */
         <div className="space-y-6">
           {!hasPin && (
-            <div className="p-3 bg-[#fbf6f0] border-[2px] border-[#6A1A4C] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#6A1A4C]">
+            <div className="p-3 bg-[#fbf6f0] border-[2px] border-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#000]">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-[#6A1A4C] shrink-0" />
+                <ShieldAlert className="w-4 h-4 text-black shrink-0" />
                 <span><strong>WORKSPACE UNPROTECTED:</strong> Set a private security PIN now to protect your creative projects, covenants, and revenue splits.</span>
               </div>
               <button
                 onClick={() => setSetupDismissed(false)}
-                className="px-3 py-1 bg-[#6A1A4C] text-white hover:bg-black border border-black font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
+                className="px-3 py-1 bg-black text-white hover:bg-white hover:text-black border border-black font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
               >
                 SET PASSWORD NOW &rarr;
               </button>
@@ -751,7 +781,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
               </div>
               <button
                 onClick={() => setCreateModal(true)}
-                className="px-4 py-2 bg-[#3b0764] hover:bg-[#581c87] text-[#f3e8ff] border-[2px] border-black text-xs flex items-center gap-1.5 font-mono tracking-wider uppercase font-bold cursor-pointer transition-colors self-start sm:self-auto"
+                className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white border-[2px] border-black text-xs flex items-center gap-1.5 font-mono tracking-wider uppercase font-bold cursor-pointer transition-colors self-start sm:self-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>New Project</span>
@@ -767,13 +797,13 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
           ) : projects.length === 0 ? (
             <div className="max-w-xl mx-auto my-4 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
               <div className="text-center space-y-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
                   STEP 02 OF 02 : ESTABLISH YOUR PROJECT
                 </span>
                 <h2 className="font-fun font-bold text-2xl sm:text-3xl text-black lowercase">
                   what are you creating?
                 </h2>
-                <p className="font-fun italic text-xs text-black/80 leading-relaxed max-w-md mx-auto">
+                <p className="font-mono text-xs text-black/80 leading-relaxed max-w-md mx-auto">
                   Start your first project in {activeWorkspace?.name || 'this workspace'} to unlock the 12 creative tools (Crew, Rights, Agreement, Build, Studio, Money, Credits...).
                 </p>
               </div>
@@ -840,14 +870,14 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief outline of the creative work, themes, or production scope..."
-                    className="w-full p-2.5 bg-white border-[2px] border-black font-fun text-xs text-black focus:outline-none leading-relaxed resize-none"
+                    className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none leading-relaxed resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={creating || !title.trim()}
-                  className="w-full py-3.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
+                  className="w-full py-3.5 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
                 >
                   <span>{creating ? 'INITIALIZING PROJECT ENVIRONMENT...' : 'ESTABLISH PROJECT & ENTER 12 TOOLS \u2192'}</span>
                 </button>
@@ -863,7 +893,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-[#6A1A4C] border border-black text-white font-bold">
+                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black border border-black text-white font-bold">
                         {p.project_type}
                       </span>
                       <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black text-black font-bold">
@@ -878,11 +908,11 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                   </div>
 
                   <div>
-                    <h3 className="font-fun font-bold text-xl text-black group-hover:text-[#6A1A4C] transition-colors">
+                    <h3 className="font-fun font-bold text-xl text-black group-hover:underline transition-colors">
                       {p.title}
                     </h3>
                     {p.description && (
-                      <p className="font-fun italic text-xs text-black/85 mt-1 line-clamp-2 leading-relaxed">
+                      <p className="font-mono text-xs text-black/85 mt-1 line-clamp-2 leading-relaxed">
                         {p.description}
                       </p>
                     )}
@@ -918,7 +948,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
           <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[5px_5px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] uppercase text-[#6A1A4C] font-bold tracking-widest">
+                <span className="font-mono text-[10px] uppercase text-black font-bold tracking-widest">
                   ACCESS CONTROL &amp; ENCRYPTION
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black leading-tight">
@@ -1030,7 +1060,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
               <button
                 type="submit"
                 disabled={updatingSecurity}
-                className="w-full py-2.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
+                className="w-full py-2.5 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
               >
                 {updatingSecurity ? 'SAVING...' : 'UPDATE WORKSPACE LOCK'}
               </button>
@@ -1068,7 +1098,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
           <div className="w-full max-w-sm bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[4px_4px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-2">
-              <span className="font-mono text-[10px] uppercase text-[#6A1A4C] font-black tracking-widest">
+              <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest">
                 CREATIVE STUDIO
               </span>
               <button
@@ -1082,7 +1112,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
             <h3 className="font-fun font-bold text-xl text-black lowercase leading-tight">
               create new workspace
             </h3>
-            <p className="font-fun italic text-xs text-black/80">
+            <p className="font-mono text-xs text-black/80">
               Create an isolated workspace environment to house multiple projects with independent access rules.
             </p>
 
@@ -1145,7 +1175,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 <button
                   type="submit"
                   disabled={creatingWs || !newWsName.trim()}
-                  className="px-4 py-2 bg-black text-white hover:bg-[#6A1A4C] border-[2px] border-black font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-black text-white hover:bg-white hover:text-black border-[2px] border-black font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
                 >
                   {creatingWs ? 'CREATING...' : 'CREATE WORKSPACE \u2197'}
                 </button>
@@ -1180,7 +1210,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
 
             {error && (
               <div className="p-2 bg-black border border-black text-white font-mono text-[10px] flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                <AlertCircle className="w-3.5 h-3.5 text-white" />
                 <span>{error}</span>
               </div>
             )}
@@ -1226,7 +1256,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What is this project making and exploring?"
-                  className="w-full bg-white border-[2px] border-black p-3 font-fun italic text-xs text-black focus:outline-none resize-none"
+                  className="w-full bg-white border-[2px] border-black p-3 font-mono text-xs text-black focus:outline-none resize-none"
                 />
               </div>
 
@@ -1267,7 +1297,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 <button
                   type="submit"
                   disabled={creating || !title.trim()}
-                  className="px-4 py-2 bg-black text-white hover:bg-[#6A1A4C] border-[2px] border-black font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-black text-white hover:bg-white hover:text-black border-[2px] border-black font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
                 >
                   {creating ? 'CREATING...' : 'ESTABLISH WORKSPACE \u2197'}
                 </button>

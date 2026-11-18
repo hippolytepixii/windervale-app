@@ -1232,7 +1232,7 @@ export function ensureUserWorkspace(userId: string, userName?: string): string {
   `).get(userId) as { workspace_id: string } | undefined;
 
   if (membership?.workspace_id) {
-    db.prepare('UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = "")').run(membership.workspace_id, userId);
+    db.prepare("UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = '')").run(membership.workspace_id, userId);
     return membership.workspace_id;
   }
 
@@ -1256,7 +1256,7 @@ export function ensureUserWorkspace(userId: string, userName?: string): string {
     `).run(`wm-${wsId}-${userId}`, wsId, userId, now);
   }
 
-  db.prepare('UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = "")').run(wsId, userId);
+  db.prepare("UPDATE projects SET workspace_id = ? WHERE created_by = ? AND (workspace_id IS NULL OR workspace_id = '')").run(wsId, userId);
   return wsId;
 }
 

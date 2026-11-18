@@ -59,7 +59,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
   if (!profile || !user) {
     return (
       <div className="p-8 text-center space-y-3">
-        <p className="font-fun font-bold text-base text-black">DOSSIER NOT FOUND</p>
+        <p className="font-fun font-bold text-base text-black">PROFILE NOT FOUND</p>
       </div>
     );
   }
@@ -67,38 +67,39 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
   const showAvatar = profile.avatar_url && (isOwnProfile || profile.avatar_public !== 0);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 bg-white min-h-full text-black">
-      {/* Top Folio Header */}
-      <div className="flex items-center justify-between border-b-[2.5px] border-black pb-4">
-        <div>
-          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-black font-black block">
-            INDIE PRAXIS &middot; CREATIVE MONOGRAPH
-          </span>
-          <h1 className="font-fun font-bold text-2xl sm:text-3xl text-black tracking-tight mt-0.5 lowercase">
-            creative dossier
-          </h1>
+    <div className="w-full bg-white min-h-full text-black">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Top Folio Header */}
+        <div className="flex items-center justify-between border-b-[2.5px] border-black pb-4">
+          <div>
+            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-black font-black block">
+              INDIE PRAXIS &middot; MEMBER PROFILE
+            </span>
+            <h1 className="font-fun font-bold text-2xl sm:text-3xl text-black tracking-tight mt-0.5 lowercase">
+              profile
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isOwnProfile && onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                className="p-2 bg-black text-white border-[2px] border-black text-xs flex items-center gap-1.5 font-arthouse font-bold cursor-pointer hover:bg-white hover:text-black transition-colors"
+                title="Settings"
+              >
+                <SettingsIcon className="w-3.5 h-3.5" />
+                <span className="text-[10px] uppercase">SETTINGS</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isOwnProfile && onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="p-2 bg-black text-white border-[2px] border-black text-xs flex items-center gap-1.5 font-arthouse font-bold cursor-pointer hover:bg-[#6A1A4C] hover:text-white transition-colors"
-              title="Settings"
-            >
-              <SettingsIcon className="w-3.5 h-3.5 text-[#6A1A4C]" />
-              <span className="text-[10px] uppercase">SETTINGS</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 2-Column Broadsheet Grid on Desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: Identity, Disciplines & Mediums */}
-        <div className="md:col-span-5 space-y-5">
-          {/* Dossier Monograph Box */}
-          <div className="p-5 bg-[#fbf6f0] border-[2.5px] border-black space-y-4">
+        {/* 2-Column Broadsheet Grid on Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* LEFT COLUMN: Identity, Disciplines & Mediums */}
+          <div className="space-y-5">
+            {/* Profile Monograph Box */}
+            <div className="p-5 bg-[#fbf6f0] border-[2.5px] border-black space-y-4">
             <div className="flex items-start gap-4">
               {showAvatar ? (
                 <div className="w-20 h-20 border-[2.5px] border-black bg-black shrink-0 overflow-hidden">
@@ -116,18 +117,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
 
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  {/* Purple Verified Fellow Badge */}
-                  <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-[#6A1A4C] text-[#f3e8ff] border border-black font-bold">
+                  {/* Verified Fellow Badge */}
+                  <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black text-white border border-black font-bold">
                     {profile.approval_status || 'VERIFIED PRAXIS'}
                   </span>
                   {profile.id_verification_status === 'pending' ? (
-                    <span className="font-mono text-[9px] uppercase px-2 py-0.5 border-[1.5px] border-black text-black flex items-center gap-1 bg-[#6A1A4C]/20 font-bold">
-                      <Clock className="w-3 h-3 text-[#6A1A4C]" />
+                    <span className="font-mono text-[9px] uppercase px-2 py-0.5 border-[1.5px] border-black text-black flex items-center gap-1 bg-black/10 font-bold">
+                      <Clock className="w-3 h-3 text-black" />
                       ID PENDING
                     </span>
                   ) : profile.id_verification_status === 'verified' || profile.verification_status === 'verified' ? (
                     <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black text-white flex items-center gap-1 font-bold">
-                      <CheckCircle className="w-3 h-3 text-[#6A1A4C]" />
+                      <CheckCircle className="w-3 h-3 text-white" />
                       AUTHENTICATED
                     </span>
                   ) : (
@@ -159,7 +160,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
 
             {/* Bio */}
             {profile.bio && (
-              <p className="font-fun text-sm text-black/90 leading-relaxed pt-3 border-t-[1.5px] border-black/20 font-normal italic">
+              <p className="font-mono text-xs text-black/90 leading-relaxed pt-3 border-t-[1.5px] border-black/20">
                 "{profile.bio}"
               </p>
             )}
@@ -175,7 +176,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
                 {profile.disciplines?.map((d: string) => (
                   <span
                     key={d}
-                    className="px-2.5 py-1 bg-[#6A1A4C] text-white font-arthouse font-bold text-xs uppercase"
+                    className="px-2.5 py-1 bg-black text-white font-arthouse font-bold text-xs uppercase"
                   >
                     {d}
                   </span>
@@ -203,15 +204,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Collaboration Exchange & Portfolio */}
-        <div className="md:col-span-7 space-y-5">
-          {/* Collaboration Exchange (What Can You Offer & What Do You Want) */}
+        {/* RIGHT COLUMN: What You Can Offer, Collaboration Exchange & Portfolio */}
+        <div className="space-y-5">
+          {/* Repertoire / What You Can Offer */}
+          {profile.offerings && (
+            <div className="p-5 bg-[#fbf6f0] border-[2.5px] border-black space-y-2">
+              <span className="font-arthouse text-[10px] uppercase text-black font-bold tracking-wider block">
+                WHAT YOU CAN OFFER / REPERTOIRE
+              </span>
+              <p className="font-mono text-xs sm:text-sm text-black/90 leading-relaxed whitespace-pre-line">
+                {profile.offerings}
+              </p>
+            </div>
+          )}
+
+          {/* Collaboration Exchange (What Do You Want / Seeking) */}
           {profile.collaboration_interests && (
             <div className="p-5 bg-[#fbf6f0] border-[2.5px] border-black space-y-2">
               <span className="font-arthouse text-[10px] uppercase text-black font-bold tracking-wider block">
-                COLLABORATION EXCHANGE
+                COLLABORATION EXCHANGE / SEEKING
               </span>
-              <p className="font-fun text-sm text-black/90 leading-relaxed whitespace-pre-line">
+              <p className="font-mono text-xs sm:text-sm text-black/90 leading-relaxed whitespace-pre-line">
                 {profile.collaboration_interests}
               </p>
             </div>
@@ -235,7 +248,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
                         href={w.link}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-2.5 py-1 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] uppercase font-bold shrink-0 flex items-center gap-1.5 transition-colors"
+                        className="px-2.5 py-1 bg-black text-white hover:bg-black/80 font-mono text-[10px] uppercase font-bold shrink-0 flex items-center gap-1.5 transition-colors"
                       >
                         <span>VIEW REEL</span>
                         <ExternalLink className="w-3 h-3" />
@@ -259,6 +272,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userId, onOpenWorkspac
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
