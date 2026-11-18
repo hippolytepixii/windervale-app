@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
-import { ShieldCheck, Clock, RefreshCw, LogOut, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
+import { ShieldCheck, Clock, RefreshCw, Mail, CheckCircle2 } from 'lucide-react';
 
 interface CurationPendingViewProps {
   onApproved: () => void;
@@ -10,11 +9,10 @@ interface CurationPendingViewProps {
 export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onApproved }) => {
   const { user, profile, refreshProfile, logout } = useAuth();
   const [checking, setChecking] = useState(false);
-  const [approving, setApproving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Background auto-polling: Polls every 4 seconds so that as soon as the profile is approved,
-  // the user automatically enters without having to refresh or click repeatedly.
+  // Background auto-polling: Polls every 4 seconds so that as soon as the profile is approved by the admin on the backend,
+  // the user automatically enters without having to refresh or manually skip.
   useEffect(() => {
     const pollInterval = setInterval(async () => {
       try {
@@ -37,7 +35,7 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
       if (updated?.approval_status === 'approved') {
         onApproved();
       } else {
-        setMessage('Your application is currently under review by the Windervale editorial board. Approvals are completed within 2 days.');
+        setMessage('Your application is queued in the curation desk. Admission and email verification are reviewed manually on the backend.');
       }
     } catch (err) {
       setMessage('Status check failed. Please retry shortly.');
@@ -46,28 +44,11 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
     }
   };
 
-  const handleFastTrackApproval = async () => {
-    setApproving(true);
-    setMessage(null);
-    try {
-      await api.selfApprove();
-      await refreshProfile();
-      setMessage('Monograph accreditation approved! Opening your Windervale Workspace...');
-      setTimeout(() => {
-        onApproved();
-      }, 700);
-    } catch (err: any) {
-      setMessage(err.message || 'Fast-track approval could not be verified. Please use standard check.');
-    } finally {
-      setApproving(false);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full bg-[#fbf6f0] text-black select-none p-4 sm:p-6 md:p-10 flex flex-col justify-center items-center film-grain">
       {/* 
         Arthouse Cinema Admission Pending Screen
-        Palette: Glistening Grape (#6A1A4C), Stark Black (#000000), Crisp Ivory (#fbf6f0)
+        Palette: Stark Black (#000000), Crisp Ivory (#fbf6f0), Pure White (#ffffff)
         Borders: Bold 2.5px Black Borders ONLY, ZERO drop shadow
         Fonts: Fraunces & Syne
       */}
@@ -75,9 +56,9 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
         {/* Folio */}
         <div className="flex items-center justify-between border-b-[2.5px] border-black pb-3 font-mono text-[10px]">
           <span className="font-bold text-black tracking-widest uppercase">
-            WINDERVALE ADMISSION
+            WINDERVALE ADMISSION &middot; MANUAL QUEUE
           </span>
-          <span className="font-bold text-white bg-[#6A1A4C] border-[1.5px] border-black px-2 py-0.5 uppercase">
+          <span className="font-bold text-white bg-black border-[1.5px] border-black px-2 py-0.5 uppercase">
             REVIEW IN PROGRESS
           </span>
         </div>
@@ -88,31 +69,44 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
             windervale
           </span>
           <h1 className="font-arthouse font-bold text-lg sm:text-xl text-black uppercase tracking-wider mt-2">
-            PROFILE UNDER REVIEW
+            PROFILE QUEUED FOR REVIEW
           </h1>
-          <p className="font-fun italic text-sm text-black/80 leading-relaxed max-w-xs mx-auto">
-            The Windervale review board hand-reviews each practitioner monograph to protect independent craft.
+          <p className="font-fun italic text-sm text-black/80 leading-relaxed max-w-sm mx-auto">
+            The Windervale editorial board reviews each applicant monograph and ID document manually on the backend before admission is unlocked.
           </p>
         </div>
 
-        {/* 2-Day Notice Box (Bold Border Only) */}
+        {/* Manual Review Notice Box (Bold Border Only) */}
         <div className="border-[2px] border-black bg-[#fbf6f0] p-4 space-y-2">
           <div className="flex items-center gap-2 text-black">
-            <Clock className="w-4 h-4 stroke-[2.5] text-[#6A1A4C]" />
+            <Clock className="w-4 h-4 stroke-[2.5] text-black" />
             <span className="font-arthouse font-bold text-xs uppercase tracking-wider">
-              Editorial Review Status
+              Backend Curation Desk Status
             </span>
           </div>
           <p className="font-fun text-xs text-black/85 leading-relaxed">
-            The Windervale team reviews every candidate dossier. Once approved, you gain full access to the Human Map, Creative Dossiers, and Collaborative Workspace.
+            Fast-track skipping has been locked. All accounts, handles, and email verifications are hand-adjudicated by the administrator on the curation desk. Once approved, this screen will advance automatically into your Workspace and the Human Map.
           </p>
         </div>
 
         {/* Applicant Summary */}
-        <div className="border-[2px] border-black bg-[#6A1A4C]/10 p-4 space-y-2.5 font-mono text-xs">
+        <div className="border-[2px] border-black bg-[#fbf6f0] p-4 space-y-2.5 font-mono text-xs">
           <div className="flex justify-between border-b border-black/20 pb-1.5">
             <span className="text-black/60 uppercase text-[10px]">Applicant</span>
             <span className="font-bold text-black">{user?.name}</span>
+          </div>
+          <div className="flex justify-between border-b border-black/20 pb-1.5">
+            <span className="text-black/60 uppercase text-[10px]">Unique Handle</span>
+            <span className="font-bold text-black font-mono">@{profile?.handle || 'registered_fellow'}</span>
+          </div>
+          <div className="flex justify-between border-b border-black/20 pb-1.5">
+            <span className="text-black/60 uppercase text-[10px]">Registered Email</span>
+            <div className="flex items-center gap-1.5 text-right">
+              <span className="text-black font-mono text-[11px]">{user?.email}</span>
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-black text-white">
+                {user?.email_verified ? 'VERIFIED' : 'PENDING APPROVAL'}
+              </span>
+            </div>
           </div>
           <div className="flex justify-between border-b border-black/20 pb-1.5">
             <span className="text-black/60 uppercase text-[10px]">Base Location</span>
@@ -122,16 +116,10 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
             <span className="text-black/60 uppercase text-[10px]">Disciplines</span>
             <span className="text-black">{profile?.disciplines?.join(', ') || 'Independent Creative'}</span>
           </div>
-          {profile?.offerings && (
-            <div className="border-b border-black/20 pb-1.5">
-              <span className="text-black/60 uppercase text-[10px] block mb-0.5">Offerings</span>
-              <span className="font-fun italic text-xs text-black">{profile.offerings}</span>
-            </div>
-          )}
           <div className="flex items-center justify-between pt-1">
             <span className="text-black/60 uppercase text-[10px]">Government ID</span>
-            <span className="text-[#6A1A4C] font-bold flex items-center gap-1 text-[10px]">
-              <ShieldCheck className="w-3.5 h-3.5 stroke-[2]" />
+            <span className="text-black font-bold flex items-center gap-1 text-[10px]">
+              <ShieldCheck className="w-3.5 h-3.5 stroke-[2] text-black" />
               SUBMITTED FOR VERIFICATION
             </span>
           </div>
@@ -145,30 +133,20 @@ export const CurationPendingView: React.FC<CurationPendingViewProps> = ({ onAppr
 
         {/* Action Controls */}
         <div className="space-y-3 pt-2">
-          {/* Fast-Track Immediate Approval Button */}
-          <button
-            onClick={handleFastTrackApproval}
-            disabled={approving || checking}
-            className="w-full py-3.5 px-4 bg-[#6A1A4C] hover:bg-black text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
-          >
-            <Sparkles className="w-4 h-4 text-white shrink-0" />
-            <span>{approving ? 'GRANTING STUDIO ACCREDITATION...' : 'FAST-TRACK APPROVAL & ENTER WORKSPACE \u2192'}</span>
-          </button>
-
-          {/* Standard Status Check */}
+          {/* Status Check Button */}
           <button
             onClick={handleCheckStatus}
-            disabled={checking || approving}
-            className="w-full py-3 px-4 bg-white hover:bg-[#fbf6f0] text-black font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2"
+            disabled={checking}
+            className="w-full py-3.5 px-4 bg-black hover:bg-white hover:text-black text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors flex items-center justify-center gap-2"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${checking ? 'animate-spin' : ''}`} />
-            <span>{checking ? 'CHECKING ADMISSION STATUS...' : 'CHECK APPROVAL STATUS'}</span>
+            <span>{checking ? 'CHECKING CURATION DESK...' : 'CHECK ADMISSION STATUS'}</span>
           </button>
 
           <div className="text-center pt-2">
             <button
               onClick={logout}
-              className="font-mono text-xs text-black/60 hover:text-[#6A1A4C] uppercase tracking-wider underline cursor-pointer"
+              className="font-mono text-xs text-black/60 hover:text-black uppercase tracking-wider underline cursor-pointer"
             >
               Sign Out / Switch Account
             </button>

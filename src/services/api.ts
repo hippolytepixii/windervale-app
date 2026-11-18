@@ -49,6 +49,17 @@ export const api = {
   },
 
   // Auth
+  async checkUsername(username: string): Promise<{ available: boolean; username: string; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/check-username?username=${encodeURIComponent(username)}`, {
+        headers: getHeaders(false),
+      });
+      return handleResponse(res);
+    } catch (err: any) {
+      return { available: false, username, error: err.message || 'Check failed' };
+    }
+  },
+
   async checkEmail(email: string): Promise<{ exists: boolean; name?: string; approval_status?: string }> {
     try {
       const res = await fetch(`${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`, {
@@ -58,14 +69,6 @@ export const api = {
     } catch {
       return { exists: false };
     }
-  },
-
-  async selfApprove(): Promise<{ success: boolean; approval_status: string; profile: Profile }> {
-    const res = await fetch(`${API_BASE}/auth/self-approve`, {
-      method: 'POST',
-      headers: getHeaders(true),
-    });
-    return handleResponse(res);
   },
 
   async register(data: any): Promise<{ token: string; user: User; profile: Profile }> {
@@ -1057,6 +1060,19 @@ export const api = {
         'x-admin-key': adminKey,
       },
       body: JSON.stringify({ userId }),
+    });
+    return handleResponse(res);
+  },
+
+  async verifyAdminEmail(userId: string, verified: boolean = true): Promise<{ success: boolean; email_verified: number }> {
+    const adminKey = sessionStorage.getItem('windervale_admin_key') || 'windervale-curation-desk-2026';
+    const res = await fetch(`${API_BASE}/admin/verify-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminKey,
+      },
+      body: JSON.stringify({ userId, verified }),
     });
     return handleResponse(res);
   },

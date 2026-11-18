@@ -48,7 +48,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
     try {
       await api.approveUser(userId);
       setApplications(prev =>
-        prev.map(app => (app.user_id === userId ? { ...app, approval_status: 'approved', verification_status: 'verified' } : app))
+        prev.map(app => (app.user_id === userId ? { ...app, approval_status: 'approved', verification_status: 'verified', email_verified: 1 } : app))
       );
       if (stats) {
         setStats({
@@ -60,6 +60,21 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
       if (onActionCompleted) onActionCompleted();
     } catch (err: any) {
       alert(err.message || 'Approval failed');
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
+  const handleToggleEmailVerification = async (userId: string, currentStatus: boolean) => {
+    setActionUserId(userId);
+    try {
+      const nextStatus = !currentStatus;
+      await api.verifyAdminEmail(userId, nextStatus);
+      setApplications(prev =>
+        prev.map(app => (app.user_id === userId ? { ...app, email_verified: nextStatus ? 1 : 0 } : app))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to update email verification');
     } finally {
       setActionUserId(null);
     }
@@ -115,7 +130,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-[2.5px] border-black pb-4 gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] uppercase text-[#6A1A4C] font-black tracking-widest">
+              <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest">
                 WINDERVALE CURATION DESK
               </span>
               <span className="font-mono text-[9px] bg-black text-[#fbf6f0] px-1.5 py-0.2 font-bold uppercase">
@@ -131,7 +146,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
             <button
               onClick={handleExportCsv}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#6A1A4C] hover:bg-[#4a1235] text-white font-mono text-xs font-bold uppercase border-[2px] border-black cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black cursor-pointer transition-colors"
               title="Download full applicants database as CSV"
             >
               <Download className="w-3.5 h-3.5" />
@@ -154,9 +169,9 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
               <span className="text-black/60 text-[10px] uppercase block font-bold">TOTAL REGISTERED</span>
               <span className="font-fun font-bold text-xl text-black">{stats.total_applications}</span>
             </div>
-            <div className="p-2.5 bg-[#6A1A4C]/10 border-[2px] border-[#6A1A4C]">
-              <span className="text-[#6A1A4C] text-[10px] uppercase block font-black">PENDING REVIEW</span>
-              <span className="font-fun font-bold text-xl text-[#6A1A4C]">{stats.pending}</span>
+            <div className="p-2.5 bg-[#fbf6f0] border-[2px] border-black">
+              <span className="text-black text-[10px] uppercase block font-black">PENDING REVIEW</span>
+              <span className="font-fun font-bold text-xl text-black">{stats.pending}</span>
             </div>
             <div className="p-2.5 bg-black text-white border-[2px] border-black">
               <span className="text-white/60 text-[10px] uppercase block font-bold">APPROVED FELLOWS</span>
@@ -207,7 +222,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
             </div>
             <button
               type="submit"
-              className="px-3 py-1.5 bg-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black hover:bg-[#6A1A4C] cursor-pointer"
+              className="px-3 py-1.5 bg-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black hover:bg-white hover:text-black cursor-pointer transition-colors"
             >
               FIND
             </button>
@@ -216,7 +231,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
 
         {error && (
           <div className="p-3 bg-black text-white border-[2px] border-black font-mono text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#6A1A4C] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-white shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -260,18 +275,34 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
                           />
                         </div>
                       ) : (
-                        <div className="w-13 h-13 border-[2px] border-black bg-[#6A1A4C] flex items-center justify-center font-bold text-white text-base shrink-0 font-fun">
+                        <div className="w-13 h-13 border-[2px] border-black bg-black flex items-center justify-center font-bold text-white text-base shrink-0 font-fun">
                           {applicant.name?.slice(0, 2).toUpperCase()}
                         </div>
                       )}
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-fun font-bold text-xl text-black">
                             {applicant.name}
                           </h3>
+                          <span className="font-mono text-xs font-bold px-2 py-0.5 bg-black text-white border border-black">
+                            @{applicant.handle || 'fellow'}
+                          </span>
                           <span className="font-mono text-[9px] text-black/60">
                             [{applicant.email}]
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEmailVerification(applicant.user_id, !!applicant.email_verified)}
+                            disabled={actionUserId === applicant.user_id}
+                            className={`font-mono text-[9px] font-bold uppercase px-2 py-0.5 border border-black cursor-pointer transition-colors ${
+                              applicant.email_verified
+                                ? 'bg-black text-white hover:bg-white hover:text-black'
+                                : 'bg-[#fbf6f0] text-black hover:bg-black hover:text-white'
+                            }`}
+                            title="Click to toggle email verification status on backend"
+                          >
+                            {applicant.email_verified ? '✓ EMAIL VERIFIED' : '⚠ EMAIL UNVERIFIED (CLICK TO VERIFY)'}
+                          </button>
                         </div>
                         <p className="font-mono text-xs text-black/70 mt-0.5">
                           {applicant.location || 'Nomadic'} &middot; {applicant.country || 'Global'} &middot; Registered {new Date(applicant.registered_at).toLocaleDateString()}
@@ -293,13 +324,13 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
                     <div className="flex items-center gap-2 self-start">
                       {isApproved && (
                         <span className="font-mono text-[10px] font-bold uppercase px-2.5 py-1 border-[1.5px] border-black bg-black text-white flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
                           <span>VERIFIED FELLOW</span>
                         </span>
                       )}
                       {isPending && (
-                        <span className="font-mono text-[10px] font-black uppercase px-2.5 py-1 border-[1.5px] border-[#6A1A4C] bg-[#6A1A4C] text-white">
-                          PENDING REVIEW
+                        <span className="font-mono text-[10px] font-bold uppercase px-2.5 py-1 border-[1.5px] border-black bg-black text-white">
+                          PENDING MANUAL REVIEW
                         </span>
                       )}
                       {isRejected && (
@@ -319,8 +350,8 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
 
                   {/* Offerings & Collaboration Seeking */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                    <div className="p-3 border-[1.5px] border-black bg-[#6A1A4C]/5">
-                      <span className="font-black text-[10px] uppercase text-[#6A1A4C] block mb-1">
+                    <div className="p-3 border-[1.5px] border-black bg-[#fbf6f0]">
+                      <span className="font-black text-[10px] uppercase text-black block mb-1">
                         WHAT THEY OFFER:
                       </span>
                       <p className="font-fun italic text-xs text-black leading-relaxed">
@@ -346,7 +377,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
                           href={applicant.id_document_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-1.5 font-bold text-[#6A1A4C] hover:underline bg-[#6A1A4C]/10 border border-[#6A1A4C] px-2.5 py-1"
+                          className="flex items-center gap-1.5 font-bold text-black hover:bg-black hover:text-white bg-[#fbf6f0] border border-black px-2.5 py-1 transition-colors"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           <span>VIEW {applicant.id_document_type?.toUpperCase() || 'ID'} DOCUMENT ↗</span>
@@ -384,7 +415,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
                         <button
                           onClick={() => handleApprove(applicant.user_id)}
                           disabled={actionUserId === applicant.user_id}
-                          className="px-4 py-1.5 border-[2px] border-black bg-[#6A1A4C] hover:bg-[#4a1235] text-white font-mono text-xs uppercase font-bold cursor-pointer transition-colors flex items-center gap-1.5"
+                          className="px-4 py-1.5 border-[2px] border-black bg-black hover:bg-white hover:text-black text-white font-mono text-xs uppercase font-bold cursor-pointer transition-colors flex items-center gap-1.5"
                         >
                           <UserCheck className="w-3.5 h-3.5" />
                           <span>{actionUserId === applicant.user_id ? 'Approving...' : 'Approve & Verify \u2192'}</span>
@@ -409,7 +440,7 @@ export const AdminCurationDesk: React.FC<AdminCurationDeskProps> = ({ onClose, o
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-black text-white border-[2px] border-black font-bold uppercase cursor-pointer hover:bg-[#6A1A4C]"
+            className="px-5 py-2 bg-black text-white border-[2px] border-black font-bold uppercase cursor-pointer hover:bg-white hover:text-black transition-colors"
           >
             Close Desk
           </button>

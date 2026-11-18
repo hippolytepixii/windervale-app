@@ -62,6 +62,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   // Step 1: Identity (All Mandatory)
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
+  const usernameTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [location, setLocation] = useState('');
@@ -131,6 +135,38 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     } finally {
       setCheckingEmail(false);
     }
+  };
+
+  const handleUsernameChange = (val: string) => {
+    const clean = val.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+    setUsername(clean);
+    if (!clean) {
+      setUsernameStatus('idle');
+      setUsernameMessage(null);
+      return;
+    }
+    if (clean.length < 3) {
+      setUsernameStatus('invalid');
+      setUsernameMessage('Username must contain at least 3 characters.');
+      return;
+    }
+    setUsernameStatus('checking');
+    setUsernameMessage('Checking availability...');
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await api.checkUsername(clean);
+        if (res.available) {
+          setUsernameStatus('available');
+          setUsernameMessage(`✓ @${clean} is available`);
+        } else {
+          setUsernameStatus('taken');
+          setUsernameMessage(res.error || `✗ @${clean} is already claimed.`);
+        }
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 300);
   };
 
   useEffect(() => {
@@ -208,6 +244,25 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       setError('Full Name / Mononym is mandatory.');
       return;
     }
+    const cleanUser = username.trim().toLowerCase().replace(/^@/, '');
+    if (!cleanUser) {
+      setError('Unique username / handle is mandatory.');
+      return;
+    }
+    if (!/^[a-z0-9_-]{3,20}$/.test(cleanUser)) {
+      setError('Username must be 3-20 characters long and contain only lowercase letters, numbers, underscores, or hyphens.');
+      return;
+    }
+    try {
+      const uRes = await api.checkUsername(cleanUser);
+      if (!uRes.available) {
+        setUsernameStatus('taken');
+        setUsernameMessage(`✗ @${cleanUser} is already claimed.`);
+        setError(`The username @${cleanUser} is already claimed. Please choose another unique handle.`);
+        return;
+      }
+      setUsernameStatus('available');
+    } catch {}
     if (!email.trim() || !email.includes('@')) {
       setError('A valid Email Address is mandatory.');
       return;
@@ -314,8 +369,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const handleRegisterSubmit = async () => {
     // Comprehensive pre-submission validation of all mandatory folios
-    if (!name.trim() || !email.trim() || password.length < 8 || !location.trim() || !country.trim()) {
-      setError('All fields in Folio 01 (Identity) are mandatory.');
+    if (!name.trim() || !username.trim() || !email.trim() || password.length < 8 || !location.trim() || !country.trim()) {
+      setError('All fields in Folio 01 (Identity & Handle) are mandatory.');
       setStep('identity');
       return;
     }
@@ -375,6 +430,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       ] : [];
 
       await register({
+        username: username.trim().toLowerCase().replace(/^@/, ''),
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
@@ -677,13 +733,22 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
                     Full Name / Mononym
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-black font-bold uppercase">*Mandatory</span>
                 </div>
                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setName(newName);
+                    if (!username) {
+                      const suggested = newName.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 16);
+                      if (suggested.length >= 3) {
+                        handleUsernameChange(suggested);
+                      }
+                    }
+                  }}
                   placeholder="e.g. Maya Rao"
                   className="w-full bg-white border-[2px] border-black px-3 py-2 text-sm text-black focus:outline-none"
                 />
@@ -692,9 +757,58 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
+                    Unique Username / Handle
+                  </label>
+                  <span className="font-mono text-[9px] text-black font-bold uppercase">*Mandatory</span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm font-bold text-black/50 select-none">
+                    @
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    placeholder="maya_rao"
+                    className="w-full bg-white border-[2px] border-black pl-8 pr-28 py-2 font-mono text-sm text-black focus:outline-none lowercase"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                    {usernameStatus === 'checking' && (
+                      <span className="font-mono text-[9px] text-black/60 font-bold uppercase px-1.5 py-0.5 animate-pulse">
+                        CHECKING...
+                      </span>
+                    )}
+                    {usernameStatus === 'available' && (
+                      <span className="font-mono text-[9px] text-black bg-[#fbf6f0] border border-black font-bold uppercase px-1.5 py-0.5">
+                        ✓ AVAILABLE
+                      </span>
+                    )}
+                    {usernameStatus === 'taken' && (
+                      <span className="font-mono text-[9px] text-white bg-black font-bold uppercase px-1.5 py-0.5">
+                        ✗ CLAIMED
+                      </span>
+                    )}
+                    {usernameStatus === 'invalid' && username.length > 0 && (
+                      <span className="font-mono text-[9px] text-white bg-black font-bold uppercase px-1.5 py-0.5">
+                        MIN 3 CHARS
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {usernameMessage && (
+                  <p className="font-mono text-[10px] mt-1 text-black/80">
+                    {usernameMessage}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
                     Email Address
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-black font-bold uppercase">*Mandatory</span>
                 </div>
                 <input
                   type="email"
@@ -715,7 +829,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
                     Password (Min 8 Characters)
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-black font-bold uppercase">*Mandatory</span>
                 </div>
                 <input
                   type="password"
@@ -733,7 +847,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
                       City / Base
                     </label>
-                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                    <span className="font-mono text-[9px] text-black font-bold uppercase">*Mandatory</span>
                   </div>
                   <input
                     type="text"

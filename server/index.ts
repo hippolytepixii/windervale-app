@@ -120,10 +120,25 @@ function resolveCoordinates(cityName?: string): { lat: number; lng: number } {
 // Register with mandatory versioned legal consent & strict field enforcement
 app.post('/api/auth/register', (req: Request, res: Response) => {
   const {
+    username,
     email, password, name, disciplines, practices, location, country, bio,
     latitude, longitude, acceptances,
     avatar_url, avatar_public, id_document_url, id_document_type, portfolio_url, offerings, collaboration_interests
   } = req.body;
+
+  const rawUsername = (username || '').toLowerCase().trim().replace(/^@/, '');
+  if (!rawUsername) {
+    return res.status(400).json({ error: 'Unique username / handle is required' });
+  }
+
+  if (!/^[a-z0-9_-]{3,20}$/.test(rawUsername)) {
+    return res.status(400).json({ error: 'Username must be 3-20 characters long and contain only lowercase letters, numbers, underscores, or hyphens' });
+  }
+
+  const existingHandle = db.prepare('SELECT user_id FROM profiles WHERE LOWER(handle) = LOWER(?)').get(rawUsername);
+  if (existingHandle) {
+    return res.status(409).json({ error: 'This username is already taken. Please choose another.' });
+  }
 
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Full name or mononym is required' });
@@ -186,11 +201,11 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
   const now = new Date().toISOString();
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
-  const handle = name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(100 + Math.random() * 900);
+  const handle = rawUsername;
 
   const insertUser = db.prepare(`
     INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
-    VALUES (?, ?, ?, ?, 'creative', 1, ?, ?)
+    VALUES (?, ?, ?, ?, 'creative', 0, ?, ?)
   `);
 
   const resolvedCoords = (latitude && longitude)
@@ -262,9 +277,32 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
 
   return res.status(201).json({
     token,
-    user: { id: userId, email, name, role: 'creative', email_verified: 1 },
+    user: { id: userId, email, name, role: 'creative', email_verified: 0 },
     profile: parseProfile(profile)
   });
+});
+
+// Check if username / handle is available
+app.get('/api/auth/check-username', (req: Request, res: Response) => {
+  const username = (req.query.username as string || '').toLowerCase().trim().replace(/^@/, '');
+  if (!username) {
+    return res.status(400).json({ available: false, error: 'Username is required' });
+  }
+
+  if (!/^[a-z0-9_-]{3,20}$/.test(username)) {
+    return res.json({
+      available: false,
+      username,
+      error: 'Username must be 3-20 characters using letters, numbers, underscores, or hyphens'
+    });
+  }
+
+  const existing = db.prepare('SELECT user_id FROM profiles WHERE LOWER(handle) = LOWER(?)').get(username);
+  if (existing) {
+    return res.json({ available: false, username, error: 'Username already taken' });
+  }
+
+  return res.json({ available: true, username });
 });
 
 // Check if email already registered and get approval status
@@ -287,27 +325,10 @@ app.get('/api/auth/check-email', (req: Request, res: Response) => {
   });
 });
 
-// Self-Approval Endpoint for studio fellows and live testers
+// Self-Approval Endpoint disabled: manual admission review is backend-only
 app.post('/api/auth/self-approve', authenticate, (req: AuthRequest, res: Response) => {
-  const userId = req.user!.id;
-  const now = new Date().toISOString();
-
-  db.prepare(`
-    UPDATE profiles SET
-      approval_status = 'approved',
-      verification_status = 'verified',
-      id_verification_status = 'verified',
-      updated_at = ?
-    WHERE user_id = ?
-  `).run(now, userId);
-
-  try { backupRegisteredUsers(); } catch {}
-
-  const updatedProfile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId);
-  return res.json({
-    success: true,
-    approval_status: 'approved',
-    profile: parseProfile(updatedProfile)
+  return res.status(403).json({
+    error: 'Queue skipping disabled. Monograph admission is manually reviewed and approved by the Windervale curation desk on the backend.'
   });
 });
 
@@ -741,21 +762,49 @@ app.post('/api/admin/approve-user', verifyAdmin, (req: Request, res: Response) =
     UPDATE profiles SET
       approval_status = 'approved',
       verification_status = 'verified',
+      id_verification_status = 'verified',
       updated_at = ?
     WHERE user_id = ?
+  `).run(now, userId);
+
+  db.prepare(`
+    UPDATE users SET
+      email_verified = 1,
+      updated_at = ?
+    WHERE id = ?
   `).run(now, userId);
 
   const notifId = generateId('notif');
   try {
     db.prepare(`
       INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
-      VALUES (?, ?, 'system', 'Profile Approved', 'Your profile has been approved by the Windervale curation team. Welcome to the independent creative network.', '/map', 0, ?)
+      VALUES (?, ?, 'system', 'Profile Approved & Email Verified', 'Your profile and email credentials have been approved by the Windervale curation team. Welcome to the independent creative network.', '/map', 0, ?)
     `).run(notifId, userId, now);
   } catch {}
 
   try { backupRegisteredUsers(); } catch {}
 
-  return res.json({ success: true, message: 'Creative approved successfully' });
+  return res.json({ success: true, message: 'Creative approved and email verified successfully' });
+});
+
+app.post('/api/admin/verify-email', verifyAdmin, (req: Request, res: Response) => {
+  const { userId, verified } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  const isVerified = verified !== undefined ? (verified ? 1 : 0) : 1;
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE users SET
+      email_verified = ?,
+      updated_at = ?
+    WHERE id = ?
+  `).run(isVerified, now, userId);
+
+  try { backupRegisteredUsers(); } catch {}
+
+  return res.json({ success: true, email_verified: isVerified });
 });
 
 app.post('/api/admin/reject-user', verifyAdmin, (req: Request, res: Response) => {
@@ -3689,6 +3738,8 @@ app.post('/api/admin/approve-user', requireAdmin, (req: Request, res: Response) 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'User profile not found' });
     }
+
+    db.prepare('UPDATE users SET email_verified = 1, updated_at = ? WHERE id = ?').run(now, userId);
 
     try { backupRegisteredUsers(); } catch {}
 

@@ -223,7 +223,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
       ctx.fillStyle = '#000000';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#6A1A4C';
+      ctx.strokeStyle = '#ffffff';
       ctx.stroke();
 
       // YOU Badge
@@ -263,17 +263,17 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Node center
+        // Node center (Monochrome)
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, isSelected ? 5.5 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected ? '#000000' : '#6A1A4C';
+        ctx.fillStyle = isSelected ? '#000000' : '#ffffff';
         ctx.fill();
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Compatibility Tag Stamp directly on map
-        ctx.fillStyle = isSelected ? '#6A1A4C' : '#000000';
+        // Compatibility Tag Stamp directly on map (Monochrome)
+        ctx.fillStyle = '#000000';
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 1.5;
 
@@ -409,7 +409,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
         {/* Verified Craft & Need Compatibility Banner */}
         <div className="p-3.5 bg-black text-white border-[2px] border-black flex items-center justify-between">
           <div>
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#d8a29e] font-bold block">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-white/70 font-bold block">
               CRAFT &amp; NEED COMPATIBILITY
             </span>
             <div className="flex items-baseline gap-2 mt-0.5">
@@ -421,7 +421,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
               </span>
             </div>
           </div>
-          <span className="font-mono text-[10px] text-[#fbf6f0] font-bold px-2.5 py-1 bg-[#6A1A4C] border border-black uppercase">
+          <span className="font-mono text-[10px] text-black font-bold px-2.5 py-1 bg-white border border-black uppercase">
             {creative.synergy_label || 'Direct Alignment'}
           </span>
         </div>
@@ -432,7 +432,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-black">
               COMPATIBILITY BREAKDOWN (NON-AI)
             </span>
-            <span className="font-mono text-[10px] text-[#6A1A4C] font-bold">
+            <span className="font-mono text-[10px] text-black font-bold">
               {(creative as any).match_percentage || 0}% TOTAL
             </span>
           </div>
@@ -444,7 +444,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                     ✓ {reason.category}
                   </span>
                   {reason.score && (
-                    <span className="font-mono text-[9px] font-bold text-[#6A1A4C] bg-[#6A1A4C]/10 px-1.5 py-0.5 border border-[#6A1A4C]/30">
+                    <span className="font-mono text-[9px] font-bold text-black bg-black/5 px-1.5 py-0.5 border border-black/20">
                       {reason.score}
                     </span>
                   )}
@@ -465,7 +465,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
         {/* Offerings & Seeking */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
           {creative.offerings && (
-            <div className="p-2 border-[1.5px] border-black bg-[#6A1A4C]/10">
+            <div className="p-2 border-[1.5px] border-black bg-[#fbf6f0]">
               <span className="font-bold text-[9px] uppercase text-black block mb-0.5">CAN OFFER:</span>
               <p className="font-fun italic text-xs text-black">{creative.offerings}</p>
             </div>
@@ -482,7 +482,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
         <div className="grid grid-cols-2 gap-2 pt-2 border-t-[2px] border-black">
           <button
             onClick={() => onOpenProfile(creative.user_id)}
-            className="py-2.5 px-3 border-[2px] border-black bg-white text-black font-mono text-xs font-bold uppercase hover:bg-[#6A1A4C] hover:text-white transition-colors text-center cursor-pointer"
+            className="py-2.5 px-3 border-[2px] border-black bg-white text-black font-mono text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors text-center cursor-pointer"
           >
             Full Dossier &rarr;
           </button>
@@ -499,13 +499,13 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
               disabled
               className="py-2.5 px-3 bg-black text-white border-[2px] border-black font-mono text-xs font-bold uppercase text-center cursor-default flex items-center justify-center gap-1.5"
             >
-              <Clock className="w-3.5 h-3.5 stroke-[2] text-[#6A1A4C]" />
+              <Clock className="w-3.5 h-3.5 stroke-[2] text-white" />
               <span>REQUEST PENDING</span>
             </button>
           ) : (
             <button
               onClick={() => setConnectModalOpen(true)}
-              className="py-2.5 px-3 bg-[#6A1A4C] hover:bg-black text-white border-[2px] border-black font-mono text-xs font-bold uppercase text-center flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="py-2.5 px-3 bg-black hover:bg-white hover:text-black text-white border-[2px] border-black font-mono text-xs font-bold uppercase text-center flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               <UserPlus className="w-3.5 h-3.5 stroke-[2]" />
               <span>REQUEST FRIEND</span>
@@ -534,7 +534,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={resetToMe}
-                className="px-2.5 py-1 bg-black text-white font-mono text-[10px] font-bold uppercase border-[1.5px] border-black hover:bg-[#6A1A4C] cursor-pointer transition-colors"
+                className="px-2.5 py-1 bg-black text-white font-mono text-[10px] font-bold uppercase border-[1.5px] border-black hover:bg-white hover:text-black cursor-pointer transition-colors"
               >
                 Center on You
               </button>
@@ -578,14 +578,14 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
             <button
               onClick={() => setZoom(z => Math.min(2.5, z + 0.2))}
               aria-label="Zoom in"
-              className="w-8 h-8 bg-black text-white border-[2px] border-black flex items-center justify-center font-bold cursor-pointer hover:bg-[#6A1A4C] transition-colors"
+              className="w-8 h-8 bg-black text-white border-[2px] border-black flex items-center justify-center font-bold cursor-pointer hover:bg-white hover:text-black transition-colors"
             >
               +
             </button>
             <button
               onClick={() => setZoom(z => Math.max(0.7, z - 0.2))}
               aria-label="Zoom out"
-              className="w-8 h-8 bg-black text-white border-[2px] border-black flex items-center justify-center font-bold cursor-pointer hover:bg-[#6A1A4C] transition-colors"
+              className="w-8 h-8 bg-black text-white border-[2px] border-black flex items-center justify-center font-bold cursor-pointer hover:bg-white hover:text-black transition-colors"
             >
               -
             </button>
@@ -601,7 +601,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                 onClick={() => setSelectedCreative(c)}
                 className="shrink-0 px-3 py-2 bg-[#fbf6f0] hover:bg-white text-black border-[2px] border-black flex items-center gap-2 cursor-pointer transition-colors shadow-none"
               >
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 bg-[#6A1A4C] text-white border border-black">
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 bg-black text-white border border-black">
                   {(c as any).match_percentage || 0}%
                 </span>
                 <span className="font-fun font-bold text-xs">
@@ -664,7 +664,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                   <div
                     key={c.user_id}
                     onClick={() => setSelectedCreative(c)}
-                    className="p-3 bg-white border-[2px] border-black hover:bg-[#6A1A4C]/10 cursor-pointer transition-colors space-y-2"
+                    className="p-3 bg-white border-[2px] border-black hover:bg-black/5 cursor-pointer transition-colors space-y-2"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5">
@@ -679,7 +679,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#6A1A4C] text-white border border-black">
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-black text-white border border-black">
                           {(c as any).match_percentage || 0}%
                         </span>
                         <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 bg-black text-white border border-black uppercase tracking-wider">
@@ -692,7 +692,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                       <span className="font-mono text-[9px] uppercase text-black font-bold">
                         {c.disciplines?.[0] || 'Craft'}
                       </span>
-                      <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase hover:underline">
+                      <span className="font-mono text-[10px] text-black font-bold uppercase hover:underline">
                         Inspect Dossier &rarr;
                       </span>
                     </div>
@@ -736,7 +736,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
 
             {connectSuccess ? (
               <div className="py-6 text-center space-y-2">
-                <span className="w-8 h-8 bg-[#6A1A4C] text-white border-[2px] border-black flex items-center justify-center mx-auto text-base font-bold">
+                <span className="w-8 h-8 bg-black text-white border-[2px] border-black flex items-center justify-center mx-auto text-base font-bold">
                   ✓
                 </span>
                 <p className="font-fun font-bold text-base text-black">
@@ -791,7 +791,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
                   <button
                     type="submit"
                     disabled={sendingConnect || !connectMessage.trim()}
-                    className="py-2 px-4 bg-black hover:bg-[#6A1A4C] hover:text-white border-[2px] border-black text-white font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
+                    className="py-2 px-4 bg-black hover:bg-white hover:text-black border-[2px] border-black text-white font-mono text-xs uppercase font-bold disabled:opacity-40 cursor-pointer transition-colors"
                   >
                     {sendingConnect ? 'Sending...' : 'SEND FRIEND REQUEST \u2192'}
                   </button>
