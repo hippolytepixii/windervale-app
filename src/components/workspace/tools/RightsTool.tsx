@@ -229,7 +229,7 @@ export const RightsTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">02 : RIGHTS</span>
+            <span className="font-mono text-xs text-black font-bold">02 : RIGHTS</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               OWNERSHIP, PERMISSIONS, LICENSING &amp; REVENUE ALLOCATIONS
             </span>
@@ -254,7 +254,7 @@ export const RightsTool: React.FC<ToolProps> = ({
           {userRole === 'owner' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-wine text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ RECORD RIGHTS / SPLIT</span>
@@ -303,7 +303,7 @@ export const RightsTool: React.FC<ToolProps> = ({
                   ? 'bg-[#2D7A4C]'
                   : totalPercentage > 100
                   ? 'bg-[#C84B31]'
-                  : 'bg-[#6A1A4C]'
+                  : 'bg-black'
               }`}
               style={{ width: `${Math.min(totalPercentage, 100)}%` }}
             />
@@ -320,7 +320,7 @@ export const RightsTool: React.FC<ToolProps> = ({
       ) : totalPercentage < 100 ? (
         <div className="p-3 bg-[#fbf6f0] border-2 border-black text-black font-mono text-xs flex items-center justify-between shadow-[2px_2px_0px_#000]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#6A1A4C]" />
+            <span className="w-2 h-2 rounded-full bg-black" />
             <span className="font-bold">ALLOCATION INCOMPLETE : {(100 - totalPercentage).toFixed(1)}% REMAINS UNASSIGNED.</span>
           </div>
           <span className="text-[10px] text-black/60 font-bold uppercase">ALLOCATED: {totalPercentage}% / 100%</span>
@@ -335,7 +335,7 @@ export const RightsTool: React.FC<ToolProps> = ({
       {/* Asset Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b-[2px] border-black pb-2">
         <span className="font-mono text-[10px] uppercase font-bold text-black/60 mr-2 flex items-center gap-1">
-          <Layers className="w-3 h-3 text-[#6A1A4C]" />
+          <Layers className="w-3 h-3 text-black" />
           ASSET LEDGER:
         </span>
         <button
@@ -354,7 +354,7 @@ export const RightsTool: React.FC<ToolProps> = ({
             onClick={() => setActiveAssetFilter(an)}
             className={`px-3 py-1 font-mono text-[10px] uppercase font-bold border border-black transition-colors cursor-pointer ${
               activeAssetFilter === an
-                ? 'bg-[#6A1A4C] text-white'
+                ? 'bg-black text-white'
                 : 'bg-[#fbf6f0] text-black hover:bg-white'
             }`}
           >
@@ -372,7 +372,7 @@ export const RightsTool: React.FC<ToolProps> = ({
           {userRole === 'owner' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-wine text-xs px-4 py-2 cursor-pointer mt-1"
+              className="btn-editorial text-xs px-4 py-2 cursor-pointer mt-1"
             >
               + RECORD FIRST RIGHT / SPLIT
             </button>
@@ -410,7 +410,7 @@ export const RightsTool: React.FC<ToolProps> = ({
                       <span className="font-mono text-[9px] uppercase text-black/50 block font-bold">
                         IP OWNERSHIP
                       </span>
-                      <span className="font-mono text-xl font-black text-[#6A1A4C]">
+                      <span className="font-mono text-xl font-black text-black">
                         {r.ownership_percentage}%
                       </span>
                     </div>
@@ -488,19 +488,19 @@ export const RightsTool: React.FC<ToolProps> = ({
                     </span>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-black/60">Streaming / Direct:</span>
-                      <span className="font-bold text-[#6A1A4C]">
+                      <span className="font-bold text-black">
                         {revSplits.streaming !== undefined ? revSplits.streaming : r.ownership_percentage}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-black/60">Sync / Placement:</span>
-                      <span className="font-bold text-[#6A1A4C]">
+                      <span className="font-bold text-black">
                         {revSplits.sync !== undefined ? revSplits.sync : r.ownership_percentage}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-black/60">Third-Party Licensing:</span>
-                      <span className="font-bold text-[#6A1A4C]">
+                      <span className="font-bold text-black">
                         {revSplits.licensing !== undefined ? revSplits.licensing : r.ownership_percentage}%
                       </span>
                     </div>
@@ -531,7 +531,7 @@ export const RightsTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-2xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   RECORD RIGHTS &middot; ASSET LEDGER
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -785,7 +785,7 @@ export const RightsTool: React.FC<ToolProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                 >
                   RECORD IN RIGHTS LEDGER
                 </button>
@@ -801,7 +801,7 @@ export const RightsTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-[4px_4px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   EDIT RIGHTS LEDGER ENTRY
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -907,9 +907,9 @@ export const RightsTool: React.FC<ToolProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                 >
-                  SAVE CHANGES \u2197
+                  SAVE CHANGES ↗
                 </button>
               </div>
             </form>
@@ -923,7 +923,7 @@ export const RightsTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 max-h-[85vh] flex flex-col shadow-[5px_5px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase tracking-widest">
+                <span className="font-mono text-[10px] text-black font-bold uppercase tracking-widest">
                   IMMUTABLE AUDIT TRAIL
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">

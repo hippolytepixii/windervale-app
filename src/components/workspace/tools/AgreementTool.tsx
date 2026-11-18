@@ -149,7 +149,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">03 : AGREEMENT</span>
+            <span className="font-mono text-xs text-black font-bold">03 : AGREEMENT</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               COVENANTS &amp; DIGITAL CONFIRMATIONS
             </span>
@@ -163,7 +163,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
           {userRole === 'owner' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-wine text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ NEW COVENANT</span>
@@ -188,7 +188,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
           <span className="font-mono text-[10px] text-black/60 uppercase font-bold tracking-wider">
             STRUCTURED COVENANT FLOW
           </span>
-          <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+          <span className="font-mono text-[10px] text-black font-bold uppercase">
             LIVE PROJECT DATA LINKED
           </span>
         </div>
@@ -212,7 +212,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
       <div className="border-[2.5px] border-black bg-white p-6 shadow-[3px_3px_0px_0px_#000] space-y-4">
         <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
           <div>
-            <span className="font-mono text-[10px] uppercase font-bold text-[#6A1A4C] tracking-wider flex items-center gap-1">
+            <span className="font-mono text-[10px] uppercase font-bold text-black tracking-wider flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" />
               PERSONALIZED CONTRACTUAL SUMMARY
             </span>
@@ -244,7 +244,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
             <span className="font-bold text-[9px] uppercase text-black/50 block">
               RECORDED IP OWNERSHIP:
             </span>
-            <p className="font-mono font-black text-xl text-[#6A1A4C]">
+            <p className="font-mono font-black text-xl text-black">
               {myTotalEquity}%
             </p>
             <p className="font-fun text-[11px] text-black/60">
@@ -298,7 +298,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/15 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs uppercase font-bold text-[#6A1A4C]">
+                    <span className="font-mono text-xs uppercase font-bold text-black">
                       COVENANT CHARTER
                     </span>
                     <span
@@ -325,7 +325,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
                   {!isSignedByMe ? (
                     <button
                       onClick={() => handleSign(agr.id)}
-                      className="px-4 py-2 bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs uppercase font-bold border border-black cursor-pointer transition-colors flex items-center gap-1.5 animate-pulse"
+                      className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-mono text-xs uppercase font-bold border border-black cursor-pointer transition-colors flex items-center gap-1.5 animate-pulse"
                     >
                       <PenTool className="w-3.5 h-3.5" />
                       <span>SIGN &amp; RATIFY COVENANT</span>
@@ -387,7 +387,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   PROJECT COVENANT AUTHORING
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -453,7 +453,7 @@ export const AgreementTool: React.FC<ToolProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                 >
                   PUBLISH COVENANT
                 </button>

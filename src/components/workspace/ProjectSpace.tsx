@@ -279,9 +279,9 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
         <div className="max-w-md mx-auto my-12 p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_#000] space-y-4 animate-editorial-fade">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
-              <Lock className="w-6 h-6 text-[#F2CBD2]" />
+              <Lock className="w-6 h-6 text-white" />
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#6A1A4C] font-black block">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
               RESTRICTED SENSITIVE LEDGER
             </span>
             <h3 className="font-fun font-bold text-xl text-black">
@@ -319,7 +319,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             <button
               type="submit"
               disabled={unlockingSensitive || !sensitivePinInput}
-              className="w-full py-2.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
+              className="w-full py-2.5 bg-black hover:bg-zinc-800 text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
             >
               {unlockingSensitive ? 'AUTHENTICATING...' : 'UNLOCK SENSITIVE MODULES \u2197'}
             </button>
@@ -484,7 +484,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
         <p className="font-fun font-bold text-lg text-black">PROJECT NOT FOUND</p>
         <button
           onClick={onBackToProjects}
-          className="px-4 py-2 bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black hover:bg-[#6A1A4C] cursor-pointer"
+          className="px-4 py-2 bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black hover:bg-zinc-800 cursor-pointer"
         >
           &larr; BACK TO PROJECT COVER
         </button>
@@ -511,7 +511,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             <div className="p-3 border-b-[2px] border-black bg-white flex items-center justify-between">
               <button
                 onClick={onBackToProjects}
-                className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-black hover:text-[#6A1A4C] cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-black hover:text-black/70 cursor-pointer transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>&larr; Project Cover</span>
@@ -540,7 +540,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                 </button>
                 <button
                   onClick={handleLockWorkspace}
-                  className="p-1 hover:bg-[#6A1A4C] hover:text-white border border-black cursor-pointer transition-colors flex items-center justify-center"
+                  className="p-1 hover:bg-black hover:text-white border border-black cursor-pointer transition-colors flex items-center justify-center"
                   title="Lock Workspace & Log Out"
                 >
                   <Lock className="w-3.5 h-3.5" />
@@ -558,7 +558,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           {/* Project Summary Card */}
           <div className="p-4 border-b-[2px] border-black bg-[#fbf6f0] space-y-2">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 bg-[#6A1A4C] text-white font-bold">
+              <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 bg-black text-white font-bold">
                 {project.project_type}
               </span>
               <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 border border-black font-bold text-black">
@@ -599,7 +599,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   <CheckCircle className="w-3 h-3" /> RATIFIED
                 </span>
               ) : isCovenantSignedByMe ? (
-                <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase font-bold px-2 py-0.5 bg-[#6A1A4C]/15 border border-[#6A1A4C] text-[#6A1A4C]">
+                <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase font-bold px-2 py-0.5 bg-black/10 border border-black text-black">
                   <FileSignature className="w-3 h-3" /> SIGNED &middot; PENDING CREW
                 </span>
               ) : (
@@ -616,7 +616,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           {/* Tools Column Header */}
           <div className="px-4 py-2.5 bg-black text-white flex items-center justify-between font-mono text-[10px] uppercase tracking-wider font-bold">
             <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-[#6A1A4C]" />
+              <Layers className="w-3.5 h-3.5 text-white" />
               Workspace Modules
             </span>
             <span className="text-white/70">00 &ndash; 12</span>
@@ -634,7 +634,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   onClick={() => setActiveModule(m.key)}
                   className={`w-full p-3.5 text-left transition-all flex items-center justify-between group cursor-pointer focus:outline-none ${
                     isSelected
-                      ? 'bg-black text-white border-l-4 border-l-[#6A1A4C]'
+                      ? 'bg-black text-white border-l-4 border-l-white'
                       : 'bg-[#fbf6f0] text-black hover:bg-white'
                   }`}
                 >
@@ -642,8 +642,8 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                     <span
                       className={`font-mono text-xs font-bold px-2 py-0.5 border border-black shrink-0 ${
                         isSelected
-                          ? 'bg-[#6A1A4C] text-white'
-                          : 'bg-black text-white group-hover:bg-[#6A1A4C]'
+                          ? 'bg-zinc-800 text-white'
+                          : 'bg-black text-white group-hover:bg-zinc-800'
                       }`}
                     >
                       {m.num}
@@ -677,7 +677,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   <ChevronRight
                     className={`w-4 h-4 shrink-0 transition-transform ${
                       isSelected
-                        ? 'text-[#6A1A4C] translate-x-1'
+                        ? 'text-white translate-x-1'
                         : 'text-black/30 group-hover:text-black group-hover:translate-x-0.5'
                     }`}
                   />
@@ -697,14 +697,14 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                 {!isSidebarOpen && (
                   <button
                     onClick={() => setIsSidebarOpen(true)}
-                    className="p-1 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors flex items-center gap-1 font-mono text-[9px] uppercase font-bold mr-1"
+                    className="p-1 bg-black text-white hover:bg-zinc-800 border border-black cursor-pointer transition-colors flex items-center gap-1 font-mono text-[9px] uppercase font-bold mr-1"
                     title="Show Sidebar"
                   >
                     <PanelLeftOpen className="w-3 h-3" />
                     <span>Sidebar</span>
                   </button>
                 )}
-                <span className="w-2 h-2 rounded-full bg-[#6A1A4C]" />
+                <span className="w-2 h-2 rounded-full bg-black" />
                 <span className="font-mono text-[10px] uppercase font-bold tracking-wider text-black">
                   PROJECT CONTEXT &middot; {project.title}
                 </span>
@@ -723,7 +723,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                 <div className="pr-3 space-y-1">
                   <span className="text-[9px] uppercase text-black/50 font-bold block">01. WHAT AM I IN?</span>
                   <span className="font-bold text-black block truncate">{project.title}</span>
-                  <span className="text-[10px] text-[#6A1A4C] uppercase font-bold">[{project.project_type}]</span>
+                  <span className="text-[10px] text-black uppercase font-bold">[{project.project_type}]</span>
                 </div>
                 <div className="px-3 space-y-1">
                   <span className="text-[9px] uppercase text-black/50 font-bold block">02. WHO IS WORKING?</span>
@@ -772,14 +772,14 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                   <button
                     key={action.id}
                     onClick={() => jumpToTool(action.link_tool)}
-                    className="p-2 bg-[#fbf6f0] border border-black hover:border-[#6A1A4C] flex items-center justify-between gap-3 text-left transition-colors cursor-pointer group flex-1 min-w-[240px]"
+                    className="p-2 bg-[#fbf6f0] border border-black hover:border-black flex items-center justify-between gap-3 text-left transition-colors cursor-pointer group flex-1 min-w-[240px]"
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-[9px] uppercase px-1 bg-black text-white font-bold">
                           {action.type}
                         </span>
-                        <span className="font-arthouse font-bold text-xs text-black group-hover:text-[#6A1A4C]">
+                        <span className="font-arthouse font-bold text-xs text-black group-hover:text-black/70">
                           {action.title}
                         </span>
                       </div>
@@ -796,7 +796,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
 
           {/* Top Covenant Prerequisite Banner if Unsigned */}
           {!isCovenantSignedByMe && activeModule !== '03_AGREEMENT' && (
-            <div className="bg-[#6A1A4C] text-white px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b-[2.5px] border-black shrink-0">
+            <div className="bg-black text-white px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b-[2.5px] border-black shrink-0">
               <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
                 <span className="font-mono text-xs font-bold uppercase tracking-wider">
@@ -821,14 +821,14 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
               {!isSidebarOpen && (
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="p-1.5 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors flex items-center gap-1.5 font-mono text-[10px] uppercase font-bold shrink-0"
+                  className="p-1.5 bg-black text-white hover:bg-zinc-800 border border-black cursor-pointer transition-colors flex items-center gap-1.5 font-mono text-[10px] uppercase font-bold shrink-0"
                   title="Show Sidebar"
                 >
                   <PanelLeftOpen className="w-3.5 h-3.5" />
                   <span>Modules</span>
                 </button>
               )}
-              <span className="font-mono text-sm font-bold px-2.5 py-1 bg-[#6A1A4C] text-white border-[2px] border-black">
+              <span className="font-mono text-sm font-bold px-2.5 py-1 bg-black text-white border-[2px] border-black">
                 {currentMod?.num}
               </span>
               <div>
@@ -858,10 +858,10 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
               )}
               <button
                 onClick={handleLockWorkspace}
-                className="px-2.5 py-1 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] font-bold uppercase border border-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_#000]"
+                className="px-2.5 py-1 bg-black text-white hover:bg-zinc-800 font-mono text-[10px] font-bold uppercase border border-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_#000]"
                 title="Lock Workspace and Log Out of Session"
               >
-                <Lock className="w-3 h-3 text-[#F2CBD2]" />
+                <Lock className="w-3 h-3 text-white" />
                 <span>Lock Workspace</span>
               </button>
             </div>
@@ -887,7 +887,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
         <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
           <button
             onClick={() => setActiveModule(null)}
-            className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-[#6A1A4C] hover:text-black cursor-pointer transition-colors"
+            className="flex items-center gap-1.5 font-mono text-xs uppercase font-bold text-black hover:text-black/70 cursor-pointer transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>&larr; PROJECT SPACE</span>
@@ -901,10 +901,10 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             </span>
             <button
               onClick={handleLockWorkspace}
-              className="p-1 bg-black text-white hover:bg-[#6A1A4C] border border-black cursor-pointer transition-colors ml-1"
+              className="p-1 bg-black text-white hover:bg-zinc-800 border border-black cursor-pointer transition-colors ml-1"
               title="Lock Workspace"
             >
-              <Lock className="w-3 h-3 text-[#F2CBD2]" />
+              <Lock className="w-3 h-3 text-white" />
             </button>
           </div>
         </div>
@@ -949,10 +949,10 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           </button>
           <button
             onClick={handleLockWorkspace}
-            className="p-1 border border-black bg-black text-white hover:bg-[#6A1A4C] cursor-pointer flex items-center justify-center"
+            className="p-1 border border-black bg-black text-white hover:bg-zinc-800 cursor-pointer flex items-center justify-center"
             title="Lock Workspace & Log Out"
           >
-            <Lock className="w-3.5 h-3.5 text-[#F2CBD2]" />
+            <Lock className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
       </div>
@@ -961,7 +961,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
       <div className="p-4 bg-white border-[2px] border-black space-y-3 shadow-[2px_2px_0px_#000]">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-[#6A1A4C] text-white font-bold">
+            <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black text-white font-bold">
               {project.project_type}
             </span>
             <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black font-bold text-black">
@@ -1003,7 +1003,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           <span className="font-arthouse text-xs uppercase tracking-wider text-black font-bold">
             Project Operating System
           </span>
-          <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+          <span className="font-mono text-[10px] text-black font-bold uppercase">
             13 Modules (00 &ndash; 12)
           </span>
         </div>
@@ -1013,7 +1013,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
             <button
               key={m.key}
               onClick={() => setActiveModule(m.key)}
-              className="p-3.5 bg-white border-[2px] border-black hover:bg-[#6A1A4C]/10 text-left transition-colors flex items-center justify-between group cursor-pointer focus:outline-none shadow-[2px_2px_0px_#000]"
+              className="p-3.5 bg-white border-[2px] border-black hover:bg-black/5 text-left transition-colors flex items-center justify-between group cursor-pointer focus:outline-none shadow-[2px_2px_0px_#000]"
             >
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs font-bold px-2.5 py-1 bg-black text-white border border-black select-none">
@@ -1021,7 +1021,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="font-arthouse font-bold text-sm text-black group-hover:text-[#6A1A4C] transition-colors">
+                    <h4 className="font-arthouse font-bold text-sm text-black group-hover:text-black/70 transition-colors">
                       {m.title}
                     </h4>
                     {m.isSensitive && workspace?.sensitive_lock_enabled && !isSensitiveUnlocked && (
@@ -1045,7 +1045,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           <div className="w-full max-w-2xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[6px_6px_0px_#000] max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] uppercase text-[#6A1A4C] font-black tracking-widest">
+                <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest">
                   GLOBAL CROSS-MODULE QUERY
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -1097,7 +1097,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
                         <span className="px-1.5 py-0.5 bg-black text-white font-mono text-[9px] uppercase font-bold">
                           {r.module}
                         </span>
-                        <span className="font-arthouse font-bold text-xs text-black group-hover:text-[#6A1A4C]">
+                        <span className="font-arthouse font-bold text-xs text-black group-hover:text-black/70">
                           {r.title}
                         </span>
                       </div>
@@ -1120,7 +1120,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
           <div className="w-full max-w-xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[6px_6px_0px_#000] max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] uppercase text-[#6A1A4C] font-black tracking-widest">
+                <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest">
                   IMMUTABLE AUDIT TRAIL
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">

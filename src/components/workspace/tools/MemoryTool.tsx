@@ -138,7 +138,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">12 : MEMORY</span>
+            <span className="font-mono text-xs text-black font-bold">12 : MEMORY</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">ARCHIVE &amp; PROJECT HISTORY</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">PROJECT MEMORY &amp; ARCHIVE</h2>
@@ -150,7 +150,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
               {activeTab === 'timeline' ? (
                 <button
                   onClick={() => setCreateMemoryModal(true)}
-                  className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+                  className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>+ RECORD ARCHIVE EVENT</span>
@@ -158,7 +158,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
               ) : (
                 <button
                   onClick={() => setCreateDecisionModal(true)}
-                  className="bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs px-4 py-2 border-[2px] border-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000000] cursor-pointer transition-colors"
+                  className="bg-black hover:bg-white hover:text-black text-white font-mono text-xs px-4 py-2 border-[2px] border-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000000] cursor-pointer transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>+ RECORD DECISION</span>
@@ -244,7 +244,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
               {userRole !== 'viewer' && (
                 <button
                   onClick={() => setCreateMemoryModal(true)}
-                  className="btn-editorial-pink mt-4 text-xs px-4 py-2 cursor-pointer"
+                  className="btn-editorial mt-4 text-xs px-4 py-2 cursor-pointer"
                 >
                   RECORD FIRST GENESIS NOTE ↗
                 </button>
@@ -255,11 +255,11 @@ export const MemoryTool: React.FC<ToolProps> = ({
               {filteredMemories.map((m) => (
                 <div
                   key={m.id}
-                  className="p-6 bg-[#FFFDF9] border-[2.5px] border-black shadow-[3px_3px_0px_#000000] hover:border-[#6A1A4C] transition-all group"
+                  className="p-6 bg-[#FFFDF9] border-[2.5px] border-black shadow-[3px_3px_0px_#000000] hover:border-black transition-all group"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-black/15 pb-3 mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black bg-[#6A1A4C] text-white font-bold">
+                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black bg-black text-white font-bold">
                         [{m.event_type}]
                       </span>
                       <h3 className="font-arthouse font-black text-xl text-black">
@@ -269,7 +269,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
 
                     <div className="flex items-center gap-4 font-mono text-xs text-black/60">
                       <span className="flex items-center gap-1.5 text-black font-bold">
-                        <Calendar className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                        <Calendar className="w-3.5 h-3.5 text-black" />
                         {m.event_date}
                       </span>
                       {userRole !== 'viewer' && (
@@ -289,8 +289,8 @@ export const MemoryTool: React.FC<ToolProps> = ({
                   </p>
 
                   {m.full_context && (
-                    <div className="mt-4 p-3 bg-[#fbf6f0] border-l-4 border-[#6A1A4C] font-fun text-xs text-black/80 leading-relaxed">
-                      <span className="font-mono text-[9px] uppercase text-[#6A1A4C] font-bold block mb-1">Deeper Context / Why it matters:</span>
+                    <div className="mt-4 p-3 bg-[#fbf6f0] border-l-4 border-black font-fun text-xs text-black/80 leading-relaxed">
+                      <span className="font-mono text-[9px] uppercase text-black font-bold block mb-1">Deeper Context / Why it matters:</span>
                       {m.full_context}
                     </div>
                   )}
@@ -343,7 +343,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
               {userRole !== 'viewer' && (
                 <button
                   onClick={() => setCreateDecisionModal(true)}
-                  className="bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs px-4 py-2 border-[2px] border-black cursor-pointer transition-colors"
+                  className="bg-black hover:bg-white hover:text-black text-white font-mono text-xs px-4 py-2 border-[2px] border-black cursor-pointer transition-colors"
                 >
                   + RECORD FIRST DECISION ↗
                 </button>
@@ -413,7 +413,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[6px_6px_0px_#000000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">12 : MEMORY : ARCHIVE</span>
+                <span className="font-mono text-[10px] text-black font-bold uppercase">12 : MEMORY : ARCHIVE</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">RECORD HISTORICAL EVENT</h3>
               </div>
               <button onClick={() => setCreateMemoryModal(false)} className="text-black/60 hover:text-black cursor-pointer">
@@ -492,7 +492,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2 cursor-pointer">
                   RECORD TO MEMORY ↗
                 </button>
               </div>
@@ -507,7 +507,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[6px_6px_0px_#000000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">12 : MEMORY : DECISIONS</span>
+                <span className="font-mono text-[10px] text-black font-bold uppercase">12 : MEMORY : DECISIONS</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">RECORD PROJECT DECISION</h3>
               </div>
               <button onClick={() => setCreateDecisionModal(false)} className="text-black/60 hover:text-black cursor-pointer">
@@ -597,7 +597,7 @@ export const MemoryTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs px-5 py-2 border-[2px] border-black cursor-pointer transition-colors">
+                <button type="submit" className="bg-black hover:bg-white hover:text-black text-white font-mono text-xs px-5 py-2 border-[2px] border-black cursor-pointer transition-colors">
                   RECORD DECISION ↗
                 </button>
               </div>

@@ -16,7 +16,7 @@ interface WorkspaceHomeProps {
 }
 
 const TOOLS_CONFIG = [
-  { id: 'crew', num: '01', title: 'CREW', subtitle: 'Collaborator roster & roles', icon: Users, accent: 'text-wv-pink', border: 'hover:border-wv-pink' },
+  { id: 'crew', num: '01', title: 'CREW', subtitle: 'Collaborator roster & roles', icon: Users, accent: 'text-wv-paper', border: 'hover:border-wv-paper' },
   { id: 'rights', num: '02', title: 'RIGHTS', subtitle: 'Ownership, licensing & revenue', icon: Shield, accent: 'text-wv-blood', border: 'hover:border-wv-blood' },
   { id: 'agreement', num: '03', title: 'AGREEMENT', subtitle: 'Covenants & digital confirmations', icon: ScrollText, accent: 'text-wv-dirtywhite', border: 'hover:border-wv-dirtywhite' },
   { id: 'build', num: '04', title: 'BUILD', subtitle: 'Pipeline, tasks & execution', icon: Hammer, accent: 'text-wv-dustyrose', border: 'hover:border-wv-dustyrose' },
@@ -24,9 +24,9 @@ const TOOLS_CONFIG = [
   { id: 'studio', num: '06', title: 'STUDIO', subtitle: 'Assets, scripts & media', icon: Layers, accent: 'text-wv-cobalt', border: 'hover:border-wv-cobalt' },
   { id: 'milestones', num: '07', title: 'MILESTONES', subtitle: 'Timeline & deliverable stages', icon: Flag, accent: 'text-wv-dustyrose', border: 'hover:border-wv-dustyrose' },
   { id: 'money', num: '08', title: 'MONEY', subtitle: 'Funding, budgets & payouts', icon: Coins, accent: 'text-wv-dustyrose', border: 'hover:border-wv-dustyrose' },
-  { id: 'distribution', num: '09', title: 'DISTRIBUTION', subtitle: 'Release, festivals & audience', icon: Film, accent: 'text-wv-pink', border: 'hover:border-wv-pink' },
+  { id: 'distribution', num: '09', title: 'DISTRIBUTION', subtitle: 'Release, festivals & audience', icon: Film, accent: 'text-wv-paper', border: 'hover:border-wv-paper' },
   { id: 'credits', num: '10', title: 'CREDITS', subtitle: 'Permanent contributor record', icon: Film, accent: 'text-wv-dirtywhite', border: 'hover:border-wv-dirtywhite' },
-  { id: 'outcome', num: '11', title: 'OUTCOME', subtitle: 'What happened after the project', icon: Award, accent: 'text-wv-pink', border: 'hover:border-wv-pink' },
+  { id: 'outcome', num: '11', title: 'OUTCOME', subtitle: 'What happened after the project', icon: Award, accent: 'text-wv-paper', border: 'hover:border-wv-paper' },
   { id: 'memory', num: '12', title: 'MEMORY', subtitle: 'Archive & project history', icon: History, accent: 'text-wv-dirtywhite', border: 'hover:border-wv-dirtywhite' },
 ];
 
@@ -84,7 +84,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
               <span className="stamp bg-wv-charcoal border border-wv-border text-wv-dustyrose font-bold">
                 [{project.project_type.toUpperCase()}]
               </span>
-              <span className="stamp bg-wv-charcoal border border-wv-pink text-wv-pink font-bold">
+              <span className="stamp bg-wv-charcoal border border-wv-paper text-wv-paper font-bold">
                 {project.status.toUpperCase()}
               </span>
               <span className="font-mono text-[10px] text-wv-dust">
@@ -114,7 +114,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
               <span className="font-mono text-[10px] uppercase tracking-wider text-wv-dust">CREW [{members.length}]</span>
               <button
                 onClick={() => onSelectTool('crew')}
-                className="font-mono text-[10px] text-wv-pink hover:underline uppercase"
+                className="font-mono text-[10px] text-wv-paper hover:underline uppercase"
               >
                 MANAGE ↗
               </button>
@@ -180,7 +180,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
                         {t.title}
                       </p>
                       {t.deadline && (
-                        <span className="font-mono text-[9px] text-wv-pink mt-0.5 inline-block">
+                        <span className="font-mono text-[9px] text-wv-paper mt-0.5 inline-block">
                           DUE: {t.deadline}
                         </span>
                       )}
@@ -215,7 +215,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
           <div>
             <div className="flex items-center justify-between border-b border-wv-border pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <History className="w-4 h-4 text-wv-pink" />
+                <History className="w-4 h-4 text-wv-paper" />
                 <span className="font-display font-bold text-sm tracking-wider text-wv-paper">
                   RECENT ACTIVITY
                 </span>
@@ -227,7 +227,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
               <div className="space-y-3">
                 {summary.recentActivity.map((act, i) => (
                   <div key={i} className="flex items-start gap-3 text-xs">
-                    <span className="w-1.5 h-1.5 bg-wv-pink mt-1.5 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 bg-wv-paper mt-1.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-wv-dirtywhite font-serif">{act.text}</p>
                       <p className="font-mono text-[9px] text-wv-dust mt-0.5">
@@ -283,7 +283,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
                     </span>
                     <tool.icon className={`w-4 h-4 ${tool.accent}`} />
                   </div>
-                  <h3 className="font-display font-black text-lg text-wv-paper group-hover:text-wv-pink transition-colors">
+                  <h3 className="font-display font-black text-lg text-wv-paper group-hover:text-wv-paper transition-colors">
                     {tool.title}
                   </h3>
                   <p className="font-serif text-xs text-wv-dust line-clamp-2 mt-1">

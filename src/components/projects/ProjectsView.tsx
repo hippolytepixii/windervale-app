@@ -90,7 +90,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ onSelectProject }) =
         </div>
         <button
           onClick={() => setCreateModal(true)}
-          className="btn-editorial-wine text-xs px-3.5 py-1.5 flex items-center gap-1.5 font-sans tracking-wider uppercase font-semibold cursor-pointer "
+          className="btn-editorial text-xs px-3.5 py-1.5 flex items-center gap-1.5 font-sans tracking-wider uppercase font-semibold cursor-pointer "
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Start Project</span>
@@ -104,7 +104,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ onSelectProject }) =
         </div>
       ) : projects.length === 0 ? (
         <div className="py-16 px-6 text-center border border-wv-charcoal bg-wv-charcoal/50 space-y-4 ">
-          <div className="w-12 h-12 border border-wv-dustyrose/30 bg-[#6A1A4C]/20 flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 border border-wv-dustyrose/30 bg-black/20 flex items-center justify-center mx-auto">
             <FolderKanban className="w-5 h-5 text-wv-dustyrose stroke-[1.5]" />
           </div>
           <div className="space-y-2">
@@ -118,7 +118,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ onSelectProject }) =
           <div className="pt-2">
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-wine text-xs px-6 py-2.5 mx-auto block font-sans font-semibold uppercase tracking-wider cursor-pointer "
+              className="btn-editorial text-xs px-6 py-2.5 mx-auto block font-sans font-semibold uppercase tracking-wider cursor-pointer "
             >
               Start a Project &rarr;
             </button>
@@ -202,8 +202,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ onSelectProject }) =
             </p>
 
             {error && (
-              <div className="mb-3 p-2 bg-black border-2 border-[#6A1A4C] text-white font-mono text-[10px] flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-[#6A1A4C]" />
+              <div className="mb-3 p-2 bg-black border-2 border-white text-white font-mono text-[10px] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-white" />
                 <span>{error}</span>
               </div>
             )}
@@ -278,7 +278,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ onSelectProject }) =
                 <button
                   type="submit"
                   disabled={creating || !title.trim()}
-                  className="btn-editorial-wine text-xs px-4 py-2 disabled:opacity-40"
+                  className="btn-editorial text-xs px-4 py-2 disabled:opacity-40"
                 >
                   {creating ? 'CREATING...' : 'ESTABLISH ROOM ↗'}
                 </button>

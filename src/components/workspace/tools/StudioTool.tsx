@@ -96,7 +96,7 @@ export const StudioTool: React.FC<ToolProps> = ({
 
   const getAssetIcon = (type: string) => {
     switch (type) {
-      case 'audio': return <Music className="w-4 h-4 text-[#6A1A4C]" />;
+      case 'audio': return <Music className="w-4 h-4 text-black" />;
       case 'video': return <Video className="w-4 h-4 text-[#C84B31]" />;
       case 'script': return <FileText className="w-4 h-4 text-black" />;
       case 'moodboard': return <Image className="w-4 h-4 text-[#2D7A4C]" />;
@@ -112,7 +112,7 @@ export const StudioTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">05 : STUDIO</span>
+            <span className="font-mono text-xs text-black font-bold">05 : STUDIO</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">ASSETS, SCRIPTS &amp; MEDIA</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">PRODUCTION MATERIALS</h2>
@@ -122,7 +122,7 @@ export const StudioTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setUploadModal(true)}
-              className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ RECORD ASSET</span>
@@ -172,7 +172,7 @@ export const StudioTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setUploadModal(true)}
-              className="btn-editorial-pink mt-2 text-xs px-4 py-2 cursor-pointer"
+              className="btn-editorial mt-2 text-xs px-4 py-2 cursor-pointer"
             >
               ADD MATERIAL ↗
             </button>
@@ -226,7 +226,7 @@ export const StudioTool: React.FC<ToolProps> = ({
                       href={asset.file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="hover:text-[#6A1A4C] flex items-center gap-1 text-[10px] uppercase font-bold text-black border border-black px-2 py-0.5 bg-[#fbf6f0]"
+                      className="hover:underline flex items-center gap-1 text-[10px] uppercase font-bold text-black border border-black px-2 py-0.5 bg-[#fbf6f0]"
                     >
                       ACCESS ↗
                     </a>
@@ -253,7 +253,7 @@ export const StudioTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">05 : STUDIO</span>
+                <span className="font-mono text-[10px] text-black font-bold uppercase">05 : STUDIO</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">RECORD PRODUCTION MATERIAL</h3>
               </div>
               <button onClick={() => setUploadModal(false)} className="text-black/60 hover:text-black cursor-pointer">
@@ -382,7 +382,7 @@ export const StudioTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2 cursor-pointer">
                   RECORD ASSET ↗
                 </button>
               </div>

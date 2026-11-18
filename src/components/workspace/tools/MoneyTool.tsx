@@ -150,7 +150,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">08 : MONEY</span>
+            <span className="font-mono text-xs text-black font-bold">08 : MONEY</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               FUNDING, BUDGETS, REVENUE &amp; PAYOUTS
             </span>
@@ -164,7 +164,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-wine text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ RECORD TRANSACTION</span>
@@ -219,7 +219,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
           <span className="font-mono text-[9px] uppercase font-bold text-black/60 block">
             04. DISTRIBUTABLE POOL
           </span>
-          <p className="font-mono font-black text-2xl text-[#6A1A4C] mt-1">
+          <p className="font-mono font-black text-2xl text-black mt-1">
             {currencySymbol} {waterfall ? waterfall.distributableRevenue.toLocaleString() : summary.remaining.toLocaleString()}
           </p>
           <span className="font-fun text-[10px] text-black/60">Net Distributable Revenue</span>
@@ -267,7 +267,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
           <div className="border-[2.5px] border-black bg-white p-6 shadow-[3px_3px_0px_0px_#000] space-y-5">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-[#6A1A4C] tracking-wider flex items-center gap-1">
+                <span className="font-mono text-[10px] uppercase font-bold text-black tracking-wider flex items-center gap-1">
                   <Calculator className="w-3.5 h-3.5" />
                   VISIBLE MATH BREAKDOWN
                 </span>
@@ -302,7 +302,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                       {currencySymbol} {step.amount.toLocaleString()}
                     </span>
                     {step.formula && (
-                      <span className="font-mono text-[10px] text-[#6A1A4C] block font-bold">
+                      <span className="font-mono text-[10px] text-black/70 block font-bold">
                         {step.formula}
                       </span>
                     )}
@@ -332,7 +332,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
           <div className="border-[2.5px] border-black bg-white p-6 shadow-[3px_3px_0px_0px_#000] space-y-4">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-[#6A1A4C] tracking-wider">
+                <span className="font-mono text-[10px] uppercase font-bold text-black tracking-wider">
                   CONTRACTUAL PAYOUT ALLOCATION
                 </span>
                 <h3 className="font-display font-black text-xl text-black">
@@ -341,7 +341,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
               </div>
               <button
                 onClick={() => onNavigateModule?.('02_RIGHTS')}
-                className="font-mono text-xs uppercase font-bold text-[#6A1A4C] hover:underline cursor-pointer"
+                className="font-mono text-xs uppercase font-bold text-black hover:underline cursor-pointer"
               >
                 Modify Splits in 02 RIGHTS &rarr;
               </button>
@@ -366,7 +366,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                     </div>
 
                     <div className="text-right">
-                      <span className="font-mono text-lg font-black text-[#6A1A4C]">
+                      <span className="font-mono text-lg font-black text-black">
                         {currencySymbol} {p.netPayout.toLocaleString()}
                       </span>
                       <span className="font-mono text-[10px] text-black/70 block bg-[#fbf6f0] px-2 py-0.5 border border-black/20 mt-1">
@@ -422,7 +422,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                     </div>
                     <div>
                       <span className="text-black/60 block">Net Payable:</span>
-                      <span className="font-bold text-[#6A1A4C]">{currencySymbol} {p.netPayout.toLocaleString()}</span>
+                      <span className="font-bold text-black">{currencySymbol} {p.netPayout.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                         t.type === 'revenue'
                           ? 'bg-[#2D7A4C] text-white'
                           : t.type === 'funding'
-                          ? 'bg-[#6A1A4C] text-white'
+                          ? 'bg-zinc-800 text-white'
                           : 'bg-black text-white'
                       }`}
                     >
@@ -483,7 +483,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                         t.type === 'revenue'
                           ? 'text-[#2D7A4C]'
                           : t.type === 'funding'
-                          ? 'text-[#6A1A4C]'
+                          ? 'text-zinc-800'
                           : 'text-[#C84B31]'
                       }`}
                     >
@@ -513,7 +513,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   RECORD FINANCIAL ENTRY
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -664,7 +664,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                       type="checkbox"
                       checked={isRecoupable}
                       onChange={(e) => setIsRecoupable(e.target.checked)}
-                      className="w-4 h-4 accent-[#6A1A4C]"
+                      className="w-4 h-4 accent-black"
                     />
                     <span>Contractually Recoverable / Recoupable from gross revenue</span>
                   </label>
@@ -698,7 +698,7 @@ export const MoneyTool: React.FC<ToolProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                 >
                   RECORD TRANSACTION
                 </button>

@@ -144,7 +144,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">06 : CAPTURE</span>
+            <span className="font-mono text-xs text-black font-bold">06 : CAPTURE</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">FRAGMENTS, NOTES &amp; REFERENCES</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">NOTES, THOUGHTS &amp; FRAGMENTS</h2>
@@ -154,7 +154,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ RECORD FRAGMENT</span>
@@ -177,7 +177,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
       <div className="border-[2px] border-black bg-[#FFFDF9] p-4 shadow-[2px_2px_0px_#000] space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[#6A1A4C] font-black">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black">
               AUTOSAVING SCRATCHPAD
             </span>
             <span className="font-mono text-[10px] text-black/50">
@@ -236,7 +236,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink mt-2 text-xs px-4 py-2 cursor-pointer"
+              className="btn-editorial mt-2 text-xs px-4 py-2 cursor-pointer"
             >
               + RECORD FIRST FRAGMENT ↗
             </button>
@@ -251,16 +251,16 @@ export const CaptureTool: React.FC<ToolProps> = ({
               <div
                 key={c.id}
                 className={`p-5 bg-[#FFFDF9] border-[2.5px] border-black transition-all relative flex flex-col justify-between group shadow-[3px_3px_0px_#000000] ${
-                  c.is_pinned ? 'border-l-[6px] border-l-[#6A1A4C]' : ''
+                  c.is_pinned ? 'border-l-[6px] border-l-black' : ''
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 border-b border-black/15 pb-2 mb-3">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#6A1A4C] font-bold">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-black font-bold">
                       [{c.capture_type}]
                     </span>
                     {c.is_pinned === 1 && (
-                      <span className="flex items-center gap-1 font-mono text-[9px] text-[#6A1A4C] font-bold">
+                      <span className="flex items-center gap-1 font-mono text-[9px] text-black font-bold">
                         <Pin className="w-2.5 h-2.5 fill-current" />
                         PINNED
                       </span>
@@ -273,7 +273,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
 
                   <p className={`mt-3 leading-relaxed ${
                     c.capture_type === 'fragment'
-                      ? 'font-fun italic text-sm text-black/90 pl-3 border-l-2 border-[#6A1A4C]'
+                      ? 'font-fun italic text-sm text-black/90 pl-3 border-l-2 border-black'
                       : c.capture_type === 'reference'
                       ? 'font-mono text-xs text-black/90'
                       : 'font-fun text-xs text-black/85'
@@ -359,7 +359,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">06 : CAPTURE</span>
+                <span className="font-mono text-[10px] text-black font-bold uppercase">06 : CAPTURE</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">RECORD SCRATCHPAD FRAGMENT</h3>
               </div>
               <button onClick={() => setCreateModal(false)} className="text-black/60 hover:text-black cursor-pointer">
@@ -402,7 +402,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
                       type="checkbox"
                       checked={isPinned}
                       onChange={(e) => setIsPinned(e.target.checked)}
-                      className="accent-[#6A1A4C]"
+                      className="accent-black"
                     />
                     <span>PIN TO TOP</span>
                   </label>
@@ -440,7 +440,7 @@ export const CaptureTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2 cursor-pointer">
                   RECORD NOTE ↗
                 </button>
               </div>

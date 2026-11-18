@@ -145,7 +145,7 @@ export const WorkspaceContainer: React.FC<WorkspaceContainerProps> = ({
         {!hideChromeInFocus ? (
           <div className="w-full flex items-center justify-between pb-4 border-b border-wv-border mb-8 animate-editorial-fade">
             <div className="flex items-center gap-3">
-              <span className="stamp bg-wv-pink text-wv-black font-bold">
+              <span className="stamp bg-wv-paper text-wv-black font-bold">
                 FOCUS MODE ACTIVE
               </span>
               <span className="font-display font-black text-xl text-wv-paper uppercase">
@@ -164,7 +164,7 @@ export const WorkspaceContainer: React.FC<WorkspaceContainerProps> = ({
               </button>
               <button
                 onClick={exitFocus}
-                className="btn-editorial-wine text-[10px] px-3 py-1.5 flex items-center gap-1"
+                className="btn-editorial text-[10px] px-3 py-1.5 flex items-center gap-1"
               >
                 <Minimize2 className="w-3 h-3" />
                 <span>EXIT FOCUS MODE ✕</span>
@@ -227,7 +227,7 @@ export const WorkspaceContainer: React.FC<WorkspaceContainerProps> = ({
             {project.title}
           </span>
           <span className="text-wv-border">/</span>
-          <span className="font-mono text-xs text-wv-pink uppercase font-bold">
+          <span className="font-mono text-xs text-wv-paper uppercase font-bold">
             {activeTool}
           </span>
         </div>

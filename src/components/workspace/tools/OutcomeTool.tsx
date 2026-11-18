@@ -87,7 +87,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">11 : OUTCOME</span>
+            <span className="font-mono text-xs text-black font-bold">11 : OUTCOME</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">POST-RELEASE INTELLIGENCE &amp; CONTINUATION</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">PROJECT OUTCOMES &amp; IMPACT</h2>
@@ -97,7 +97,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ RECORD OUTCOME</span>
@@ -152,7 +152,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink mt-4 text-xs px-4 py-2"
+              className="btn-editorial mt-4 text-xs px-4 py-2"
             >
               RECORD PROJECT OUTCOME ↗
             </button>
@@ -163,15 +163,15 @@ export const OutcomeTool: React.FC<ToolProps> = ({
           {filteredOutcomes.map((o) => (
             <div
               key={o.id}
-              className="p-5 bg-[#FFFDF9] border-[2.5px] border-black shadow-[3px_3px_0px_#000000] flex flex-col justify-between group hover:border-[#6A1A4C] transition-all"
+              className="p-5 bg-[#FFFDF9] border-[2.5px] border-black shadow-[3px_3px_0px_#000000] flex flex-col justify-between group hover:border-black transition-all"
             >
               <div>
                 <div className="flex items-center justify-between border-b border-black/15 pb-2 mb-3 font-mono text-[10px] text-black/60">
-                  <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black bg-[#6A1A4C] text-white font-bold">
+                  <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black bg-black text-white font-bold">
                     {o.outcome_type.replace('_', ' ')}
                   </span>
                   <span className="flex items-center gap-1 font-bold text-black/70">
-                    <Calendar className="w-3 h-3 text-[#6A1A4C]" />
+                    <Calendar className="w-3 h-3 text-black" />
                     {o.event_date}
                   </span>
                 </div>
@@ -182,7 +182,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
 
                 {o.venue_or_channel && (
                   <p className="font-mono text-xs text-black/80 flex items-center gap-1.5 mt-2 font-bold">
-                    <MapPin className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                    <MapPin className="w-3.5 h-3.5 text-black" />
                     {o.venue_or_channel}
                   </p>
                 )}
@@ -200,7 +200,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
                     href={o.external_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-1 text-[#6A1A4C] hover:underline uppercase"
+                    className="flex items-center gap-1 text-black hover:underline uppercase"
                   >
                     <span>EXTERNAL RECORD</span>
                     <ExternalLink className="w-3 h-3" />
@@ -319,7 +319,7 @@ export const OutcomeTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2">
                   ARCHIVE OUTCOME ↗
                 </button>
               </div>

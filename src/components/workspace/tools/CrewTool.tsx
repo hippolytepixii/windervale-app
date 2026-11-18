@@ -221,7 +221,7 @@ export const CrewTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">01 : CREW</span>
+            <span className="font-mono text-xs text-black font-bold">01 : CREW</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               COLLABORATOR ROSTER &amp; ROLES
             </span>
@@ -239,7 +239,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                   loadFriends();
                   setFriendsModalOpen(true);
                 }}
-                className="py-2 px-3.5 bg-black hover:bg-[#6A1A4C] border-[2px] border-black text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="py-2 px-3.5 bg-black hover:bg-white hover:text-black border-[2px] border-black text-white font-mono text-xs font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Users className="w-3.5 h-3.5" />
                 <span>INVITE FROM ALLIES &rarr;</span>
@@ -247,7 +247,7 @@ export const CrewTool: React.FC<ToolProps> = ({
 
               <button
                 onClick={() => setInviteModal(true)}
-                className="btn-editorial-wine text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer"
+                className="btn-editorial text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ ADD COLLABORATOR</span>
@@ -277,7 +277,7 @@ export const CrewTool: React.FC<ToolProps> = ({
             Crew distinguishes <strong>Person</strong> (identity) vs. <strong>Project Role</strong> (responsibility) vs. <strong>Actual Contribution</strong> (what was specifically contributed).
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[10px] font-bold text-[#6A1A4C]">
+        <div className="flex items-center gap-3 text-[10px] font-bold text-black">
           <span>Feeds into : Rights &middot; Agreement &middot; Credits &middot; Money</span>
         </div>
       </div>
@@ -311,7 +311,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                         className={`font-mono text-[9px] uppercase px-1.5 py-0.5 border border-black font-bold ${
                           m.role === 'owner'
                             ? 'bg-black text-white'
-                            : 'bg-[#6A1A4C] text-white'
+                            : 'bg-black/20 text-black'
                         }`}
                       >
                         {m.role}
@@ -384,7 +384,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onNavigateModule?.('02_RIGHTS')}
-                    className="hover:underline text-[#6A1A4C] font-bold cursor-pointer"
+                    className="hover:underline text-black font-bold cursor-pointer"
                     title="View rights allocation"
                   >
                     Rights &rarr;
@@ -392,7 +392,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                   <span className="text-black/30">&middot;</span>
                   <button
                     onClick={() => onNavigateModule?.('10_CREDITS')}
-                    className="hover:underline text-[#6A1A4C] font-bold cursor-pointer"
+                    className="hover:underline text-black font-bold cursor-pointer"
                     title="View colophon credit"
                   >
                     Credit &rarr;
@@ -410,7 +410,7 @@ export const CrewTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   EDIT COLLABORATOR RECORD
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -459,7 +459,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                       type="button"
                       key={cr}
                       onClick={() => setEditProjectRole(cr)}
-                      className="px-2 py-0.5 bg-white border border-black font-mono text-[9px] hover:bg-[#6A1A4C] hover:text-white cursor-pointer"
+                      className="px-2 py-0.5 bg-white border border-black font-mono text-[9px] hover:bg-black hover:text-white cursor-pointer"
                     >
                       {cr}
                     </button>
@@ -565,7 +565,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                   <button
                     type="submit"
                     disabled={savingEdit}
-                    className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                    className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                   >
                     {savingEdit ? 'SAVING...' : 'SAVE RECORD'}
                   </button>
@@ -582,7 +582,7 @@ export const CrewTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   DIRECTORY INVITATION
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -670,7 +670,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                 <button
                   type="submit"
                   disabled={inviting || !selectedCreativeId}
-                  className="btn-editorial-wine text-xs px-5 py-2 cursor-pointer font-bold"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer font-bold"
                 >
                   {inviting ? 'INVITING...' : invitedSuccess ? 'INVITED!' : 'SEND INVITATION'}
                 </button>
@@ -686,7 +686,7 @@ export const CrewTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-xl bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 max-h-[85vh] overflow-y-auto shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   NETWORK ALLIES
                 </span>
                 <h3 className="font-fun font-bold text-xl text-black">
@@ -737,7 +737,7 @@ export const CrewTool: React.FC<ToolProps> = ({
                       <button
                         onClick={() => handleInviteFriend(f)}
                         disabled={invitingFriendId === f.partner_id}
-                        className="px-3 py-1 bg-black text-white hover:bg-[#6A1A4C] font-mono text-[10px] uppercase font-bold border border-black cursor-pointer transition-colors"
+                        className="px-3 py-1 bg-black text-white hover:bg-white hover:text-black font-mono text-[10px] uppercase font-bold border border-black cursor-pointer transition-colors"
                       >
                         {invitingFriendId === f.partner_id
                           ? 'ADDING...'

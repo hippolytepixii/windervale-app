@@ -167,7 +167,7 @@ export const BuildTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">04 : BUILD</span>
+            <span className="font-mono text-xs text-black font-bold">04 : BUILD</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">CREATIVE PIPELINE &amp; DELIVERABLES</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">
@@ -188,7 +188,7 @@ export const BuildTool: React.FC<ToolProps> = ({
             ) : (
               <button
                 onClick={() => setCreateDecisionModal(true)}
-                className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5"
+                className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ RECORD DECISION</span>
@@ -241,8 +241,8 @@ export const BuildTool: React.FC<ToolProps> = ({
         <div className="border-[2.5px] border-black bg-[#FFFDF9] p-4 sm:p-5 space-y-2.5 shadow-none">
           <div className="flex items-center justify-between border-b border-black/15 pb-2">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#6A1A4C] animate-pulse" />
-              <span className="font-mono text-[10px] font-black tracking-widest uppercase text-[#6A1A4C]">
+              <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+              <span className="font-mono text-[10px] font-black tracking-widest uppercase text-black">
                 STUDIO PROTOCOL &middot; COVENANT SIGNATURE REQUIRED
               </span>
             </div>
@@ -259,9 +259,9 @@ export const BuildTool: React.FC<ToolProps> = ({
             </span>
             <button
               onClick={onOpenAgreement}
-              className="px-4 py-2 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <span>REVIEW & SIGN COVENANT ✍</span>
+              <span>REVIEW &amp; SIGN COVENANT ✍</span>
               <span>&rarr;</span>
             </button>
           </div>
@@ -274,13 +274,13 @@ export const BuildTool: React.FC<ToolProps> = ({
           {/* Creative Pipeline Stages Track */}
           <div className="p-3 bg-[#fbf6f0] border-[2px] border-black">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">CREATIVE PIPELINE</span>
+              <span className="font-mono text-[9px] text-black font-bold uppercase">CREATIVE PIPELINE</span>
               <span className="font-mono text-[9px] text-black/60 font-bold">LIFECYCLE PROGRESSION</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-1 font-mono text-[10px] text-center font-bold">
               {['Idea', 'Development', 'Pre-production', 'Production', 'Post-production', 'Final'].map((stg, idx) => (
                 <div key={stg} className="p-1.5 border border-black bg-white flex items-center justify-center gap-1 shadow-[1px_1px_0px_#000000]">
-                  <span className="text-[#6A1A4C] text-[9px]">{idx + 1}.</span>
+                  <span className="text-black font-bold text-[9px]">{idx + 1}.</span>
                   <span className="truncate">{stg}</span>
                 </div>
               ))}
@@ -303,7 +303,7 @@ export const BuildTool: React.FC<ToolProps> = ({
               onClick={() => setFilterStatus('todo')}
               className={`font-mono text-xs px-3 py-1 border transition-all ${
                 filterStatus === 'todo'
-                  ? 'border-black bg-[#6A1A4C] text-white font-bold'
+                  ? 'border-black bg-black text-white font-bold'
                   : 'border-black/30 text-black/60 hover:text-black hover:border-black'
               }`}
             >
@@ -313,7 +313,7 @@ export const BuildTool: React.FC<ToolProps> = ({
               onClick={() => setFilterStatus('in_progress')}
               className={`font-mono text-xs px-3 py-1 border transition-all ${
                 filterStatus === 'in_progress'
-                  ? 'border-black bg-[#6A1A4C] text-white font-bold'
+                  ? 'border-black bg-black text-white font-bold'
                   : 'border-black/30 text-black/60 hover:text-black hover:border-black'
               }`}
             >
@@ -323,7 +323,7 @@ export const BuildTool: React.FC<ToolProps> = ({
               onClick={() => setFilterStatus('completed')}
               className={`font-mono text-xs px-3 py-1 border transition-all ${
                 filterStatus === 'completed'
-                  ? 'border-black bg-[#6A1A4C] text-white font-bold'
+                  ? 'border-black bg-black text-white font-bold'
                   : 'border-black/30 text-black/60 hover:text-black hover:border-black'
               }`}
             >
@@ -360,9 +360,9 @@ export const BuildTool: React.FC<ToolProps> = ({
                       onClick={() => handleStatusChange(t.id, t.status)}
                       className={`w-5 h-5 rounded-none border-[2px] border-black flex items-center justify-center shrink-0 mt-0.5 cursor-pointer ${
                         t.status === 'completed'
-                          ? 'bg-[#6A1A4C] text-white'
+                          ? 'bg-black text-white'
                           : t.status === 'in_progress'
-                          ? 'bg-[#F3C8CD] text-black'
+                          ? 'bg-black/20 text-black'
                           : 'bg-white hover:bg-black/10'
                       }`}
                       title="Click to cycle status: to-do -> in progress -> completed"
@@ -414,7 +414,7 @@ export const BuildTool: React.FC<ToolProps> = ({
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     <button
                       onClick={() => handleDeleteTask(t.id)}
-                      className="p-1.5 text-black/40 hover:text-[#6A1A4C] hover:bg-black/5 transition-colors cursor-pointer"
+                      className="p-1.5 text-black/40 hover:text-black hover:bg-black/5 transition-colors cursor-pointer"
                       title="Delete task"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -445,7 +445,7 @@ export const BuildTool: React.FC<ToolProps> = ({
               {userRole !== 'viewer' && (
                 <button
                   onClick={() => setCreateDecisionModal(true)}
-                  className="btn-editorial-pink text-xs px-4 py-1.5"
+                  className="btn-editorial text-xs px-4 py-1.5"
                 >
                   + RECORD FIRST DECISION
                 </button>
@@ -460,7 +460,7 @@ export const BuildTool: React.FC<ToolProps> = ({
                 >
                   <div className="flex items-center justify-between border-b border-black/15 pb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] font-bold uppercase bg-[#6A1A4C] text-white px-2 py-0.5">
+                      <span className="font-mono text-[10px] font-bold uppercase bg-black text-white px-2 py-0.5">
                         {d.category || 'Creative Direction'}
                       </span>
                       <span className="font-mono text-[10px] text-black/60 flex items-center gap-1">
@@ -706,7 +706,7 @@ export const BuildTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2 cursor-pointer">
                   RECORD DECISION ↗
                 </button>
               </div>

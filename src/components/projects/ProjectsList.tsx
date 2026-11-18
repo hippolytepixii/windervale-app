@@ -99,7 +99,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-wv-border pb-6 mb-8">
         <div>
-          <span className="font-mono text-xs uppercase text-wv-pink">PRODUCTION ARCHIVE</span>
+          <span className="font-mono text-xs uppercase text-wv-paper">PRODUCTION ARCHIVE</span>
           <h1 className="font-display font-black text-4xl sm:text-5xl text-wv-paper tracking-tight mt-1">
             PROJECT WORKSPACES
           </h1>
@@ -110,7 +110,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
 
         <button
           onClick={() => setCreateModalOpen(true)}
-          className="btn-editorial-wine px-5 py-3 text-xs flex items-center gap-2"
+          className="btn-editorial px-5 py-3 text-xs flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>START A PROJECT ↗</span>
@@ -146,7 +146,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
               onClick={() => setSelectedStatus(s)}
               className={`font-mono text-[10px] px-2 py-0.5 border transition-all uppercase whitespace-nowrap ${
                 selectedStatus === s
-                  ? 'border-wv-pink bg-wv-pink/20 text-wv-pink font-bold'
+                  ? 'border-wv-paper bg-wv-paper/20 text-wv-paper font-bold'
                   : 'border-wv-border text-wv-dust/70 hover:text-wv-paper'
               }`}
             >
@@ -167,7 +167,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
           <p className="font-serif text-sm text-wv-dust mt-1">Nothing has started under these parameters.</p>
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="btn-editorial-wine mt-6 text-xs px-6 py-2.5"
+            className="btn-editorial mt-6 text-xs px-6 py-2.5"
           >
             CREATE YOUR FIRST PROJECT ↗
           </button>
@@ -192,7 +192,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
                       [{p.project_type}]
                     </span>
                     <span className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 border ${
-                      p.status === 'in progress' ? 'bg-wv-dustyrose text-wv-black font-bold border-wv-dustyrose' : 'bg-wv-black/90 text-wv-pink border-wv-pink/40'
+                      p.status === 'in progress' ? 'bg-wv-dustyrose text-wv-black font-bold border-wv-dustyrose' : 'bg-wv-black/90 text-wv-paper border-wv-paper/40'
                     }`}>
                       {p.status}
                     </span>
@@ -201,7 +201,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
 
                 {/* Project Content */}
                 <div className="p-5">
-                  <h3 className="font-display font-black text-xl text-wv-paper group-hover:text-wv-pink transition-colors line-clamp-1">
+                  <h3 className="font-display font-black text-xl text-wv-paper group-hover:text-wv-paper transition-colors line-clamp-1">
                     {p.title}
                   </h3>
                   <p className="font-serif text-xs text-wv-dirtywhite/90 line-clamp-3 mt-2 leading-relaxed">
@@ -246,7 +246,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
           <div className="w-full max-w-xl bg-wv-charcoal border-2 border-wv-paper p-6 sm:p-8  max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-wv-border pb-3 mb-5">
               <div>
-                <span className="font-mono text-xs text-wv-pink uppercase">NEW INITIATION</span>
+                <span className="font-mono text-xs text-wv-paper uppercase">NEW INITIATION</span>
                 <h2 className="font-display font-bold text-2xl text-wv-paper">START A PROJECT</h2>
               </div>
               <button onClick={() => setCreateModalOpen(false)} className="text-wv-dust hover:text-wv-paper">
@@ -356,7 +356,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onOpenWorkspace }) =
                 <button
                   type="submit"
                   disabled={creating}
-                  className="btn-editorial-wine text-xs px-6 py-2.5"
+                  className="btn-editorial text-xs px-6 py-2.5"
                 >
                   {creating ? 'CREATING STUDIO...' : 'INITIALIZE WORKSPACE ↗'}
                 </button>

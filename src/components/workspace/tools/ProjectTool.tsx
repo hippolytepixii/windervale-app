@@ -127,7 +127,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">00 : PROJECT</span>
+            <span className="font-mono text-xs text-black font-bold">00 : PROJECT</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
               PROJECT IDENTITY, INTENT &amp; STATUS
             </span>
@@ -141,7 +141,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="btn-editorial-wine text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>{isEditing ? 'CANCEL EDIT' : 'EDIT CHARTER'}</span>
@@ -185,7 +185,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                   onClick={() => handleQuickStatusChange(opt.id)}
                   className={`px-3 py-1 font-mono text-[10px] uppercase font-bold border border-black transition-colors cursor-pointer ${
                     isActive
-                      ? 'bg-[#6A1A4C] text-white border-black shadow-[2px_2px_0px_0px_#000]'
+                      ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_#000]'
                       : 'bg-white text-black hover:bg-[#f3eae4]'
                   }`}
                 >
@@ -353,7 +353,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
             <button
               type="submit"
               disabled={saving}
-              className="btn-editorial-wine text-xs px-6 py-2 cursor-pointer font-bold"
+              className="btn-editorial text-xs px-6 py-2 cursor-pointer font-bold"
             >
               {saving ? 'SAVING...' : 'SAVE PROJECT CHARTER'}
             </button>
@@ -365,7 +365,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
           {/* Top Identity Block */}
           <div className="border-[2.5px] border-black bg-[#fbf6f0] p-6 shadow-[3px_3px_0px_0px_#000]">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="px-2 py-0.5 bg-[#6A1A4C] text-white font-mono text-[10px] uppercase font-bold">
+              <span className="px-2 py-0.5 bg-black text-white font-mono text-[10px] uppercase font-bold">
                 {project.project_type || 'Creative Work'}
               </span>
               <span className="px-2 py-0.5 border border-black font-mono text-[10px] uppercase font-bold bg-white text-black">
@@ -419,7 +419,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
             {/* Format & Outputs */}
             <div className="border-[2px] border-black bg-white p-5 space-y-3">
               <div className="flex items-center gap-2 border-b border-black/15 pb-2">
-                <Layers className="w-4 h-4 text-[#6A1A4C]" />
+                <Layers className="w-4 h-4 text-black" />
                 <h4 className="font-mono text-xs uppercase font-bold text-black">
                   Format &amp; Outputs
                 </h4>
@@ -455,7 +455,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
             {/* Leadership & Personnel */}
             <div className="border-[2px] border-black bg-white p-5 space-y-3">
               <div className="flex items-center gap-2 border-b border-black/15 pb-2">
-                <Users className="w-4 h-4 text-[#6A1A4C]" />
+                <Users className="w-4 h-4 text-black" />
                 <h4 className="font-mono text-xs uppercase font-bold text-black">
                   Lead &amp; Collaborators
                 </h4>
@@ -482,7 +482,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                 </span>
                 <button
                   onClick={() => onNavigateModule?.('01_CREW')}
-                  className="font-mono text-[10px] uppercase font-bold text-[#6A1A4C] hover:underline cursor-pointer flex items-center gap-1"
+                  className="font-mono text-[10px] uppercase font-bold text-black hover:underline cursor-pointer flex items-center gap-1"
                 >
                   01 CREW &rarr;
                 </button>
@@ -492,7 +492,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
             {/* Operating System Connections */}
             <div className="border-[2px] border-black bg-white p-5 space-y-3">
               <div className="flex items-center gap-2 border-b border-black/15 pb-2">
-                <ShieldCheck className="w-4 h-4 text-[#6A1A4C]" />
+                <ShieldCheck className="w-4 h-4 text-black" />
                 <h4 className="font-mono text-xs uppercase font-bold text-black">
                   Operating Connections
                 </h4>
@@ -502,7 +502,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                   <span className="text-black/60">02 RIGHTS:</span>
                   <button
                     onClick={() => onNavigateModule?.('02_RIGHTS')}
-                    className="font-bold text-[#6A1A4C] hover:underline cursor-pointer"
+                    className="font-bold text-black hover:underline cursor-pointer"
                   >
                     Ledger &rarr;
                   </button>
@@ -511,7 +511,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                   <span className="text-black/60">03 AGREEMENT:</span>
                   <button
                     onClick={() => onNavigateModule?.('03_AGREEMENT')}
-                    className="font-bold text-[#6A1A4C] hover:underline cursor-pointer"
+                    className="font-bold text-black hover:underline cursor-pointer"
                   >
                     Covenant &rarr;
                   </button>
@@ -520,7 +520,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                   <span className="text-black/60">08 MONEY:</span>
                   <button
                     onClick={() => onNavigateModule?.('08_MONEY')}
-                    className="font-bold text-[#6A1A4C] hover:underline cursor-pointer"
+                    className="font-bold text-black hover:underline cursor-pointer"
                   >
                     Waterfall &rarr;
                   </button>
@@ -529,7 +529,7 @@ export const ProjectTool: React.FC<ToolProps> = ({
                   <span className="text-black/60">09 DISTRIBUTION:</span>
                   <button
                     onClick={() => onNavigateModule?.('09_DISTRIBUTION')}
-                    className="font-bold text-[#6A1A4C] hover:underline cursor-pointer"
+                    className="font-bold text-black hover:underline cursor-pointer"
                   >
                     Releases &rarr;
                   </button>

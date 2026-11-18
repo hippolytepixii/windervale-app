@@ -81,7 +81,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 : DECISIONS</span>
+            <span className="font-mono text-xs text-black font-bold">07 : DECISIONS</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">STRUCTURED CONSENSUS LOG</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">DECISION LOG</h2>
@@ -90,7 +90,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setCreateModal(true)}
-            className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5"
+            className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>+ RECORD DECISION</span>
@@ -122,7 +122,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
           <p className="font-display text-lg text-wv-paper">NO DECISIONS RECORDED YET</p>
           <button
             onClick={() => setCreateModal(true)}
-            className="btn-editorial-pink mt-4 text-xs px-4 py-2"
+            className="btn-editorial mt-4 text-xs px-4 py-2"
           >
             RECORD FIRST DECISION ↗
           </button>
@@ -132,13 +132,13 @@ export const DecisionsTool: React.FC<ToolProps> = ({
           {decisions.map((d) => (
             <div
               key={d.id}
-              className="p-6 bg-wv-charcoal border border-wv-border hover:border-wv-pink transition-all flex flex-col justify-between group"
+              className="p-6 bg-wv-charcoal border border-wv-border hover:border-black transition-all flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-center justify-between border-b border-wv-border pb-2 mb-4 font-mono text-[10px] text-wv-dust">
                   <span className="text-wv-dustyrose uppercase font-bold">[{d.category || 'CREATIVE'}]</span>
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-wv-pink" />
+                    <Calendar className="w-3 h-3 text-black" />
                     {d.decision_date}
                   </span>
                 </div>
@@ -151,8 +151,8 @@ export const DecisionsTool: React.FC<ToolProps> = ({
                 </h3>
 
                 {/* The "WHY" block */}
-                <div className="mt-4 p-3.5 bg-wv-surface border-l-2 border-wv-pink">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-wv-pink font-bold block mb-1">
+                <div className="mt-4 p-3.5 bg-wv-surface border-l-2 border-black">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-black font-bold block mb-1">
                     WHY:
                   </span>
                   <p className="font-serif italic text-xs text-wv-paper leading-relaxed">
@@ -171,7 +171,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
                 <span>MADE BY: <strong className="text-wv-paper uppercase">{d.made_by}</strong></span>
                 <button
                   onClick={() => handleDelete(d.id)}
-                  className="hover:text-[#6A1A4C] opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="hover:text-black opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Remove decision"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -207,14 +207,14 @@ export const DecisionsTool: React.FC<ToolProps> = ({
               </div>
 
               <div>
-                <label className="block font-mono text-xs uppercase text-wv-pink mb-1">WHY / The Artistic Rationale (Crucial)</label>
+                <label className="block font-mono text-xs uppercase text-wv-paper mb-1">WHY / The Artistic Rationale (Crucial)</label>
                 <textarea
                   required
                   rows={2}
                   value={whyContext}
                   onChange={(e) => setWhyContext(e.target.value)}
                   placeholder="Explain why: e.g. The visual language should feel archival, tactile, and non-commercial."
-                  className="w-full bg-wv-surface border-2 border-wv-pink/60 p-2.5 font-serif italic text-xs text-wv-paper focus:outline-none"
+                  className="w-full bg-wv-surface border-2 border-wv-border p-2.5 font-serif italic text-xs text-wv-paper focus:outline-none"
                 />
               </div>
 
@@ -266,7 +266,7 @@ export const DecisionsTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2">
                   LOG DECISION ↗
                 </button>
               </div>

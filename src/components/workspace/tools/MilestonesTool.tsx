@@ -111,7 +111,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">07 : MILESTONES</span>
+            <span className="font-mono text-xs text-black font-bold">07 : MILESTONES</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">MAJOR GATES &amp; APPROVAL STATES</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">MILESTONES &amp; GATES</h2>
@@ -121,7 +121,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+              className="btn-editorial text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ ADD MILESTONE</span>
@@ -156,7 +156,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
           {userRole !== 'viewer' && (
             <button
               onClick={() => setCreateModal(true)}
-              className="btn-editorial-pink mt-2 text-xs px-4 py-2 cursor-pointer"
+              className="btn-editorial mt-2 text-xs px-4 py-2 cursor-pointer"
             >
               SET FIRST MILESTONE ↗
             </button>
@@ -172,7 +172,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
               <div key={m.id} className="relative group">
                 {/* Marker Node on Timeline */}
                 <span className={`absolute -left-[32px] sm:-left-[41px] top-2 w-4 h-4 border-[2px] border-black transition-all ${
-                  isCompleted ? 'bg-[#2D7A4C]' : m.status === 'in_progress' ? 'bg-[#6A1A4C]' : 'bg-white'
+                  isCompleted ? 'bg-[#2D7A4C]' : m.status === 'in_progress' ? 'bg-black' : 'bg-white'
                 }`} />
 
                 <div className="p-6 bg-[#FFFDF9] border-[2.5px] border-black shadow-[3px_3px_0px_#000000] hover:border-black transition-all">
@@ -182,7 +182,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
                         isCompleted
                           ? 'border-[#2D7A4C] bg-[#2D7A4C]/10 text-[#2D7A4C]'
                           : m.status === 'in_progress'
-                          ? 'border-[#6A1A4C] bg-[#6A1A4C]/10 text-[#6A1A4C]'
+                          ? 'border-black bg-black text-white'
                           : 'border-black/30 bg-[#fbf6f0] text-black'
                       }`}>
                         {m.status.replace('_', ' ')}
@@ -210,7 +210,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
 
                     <div className="flex items-center gap-4 font-mono text-xs text-black/60">
                       <span className="flex items-center gap-1.5 text-black font-bold">
-                        <Calendar className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                        <Calendar className="w-3.5 h-3.5 text-black" />
                         {m.due_date}
                       </span>
                       {userRole !== 'viewer' && (
@@ -247,7 +247,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
                     </div>
                     <div className="w-full h-2.5 bg-[#fbf6f0] border border-black overflow-hidden">
                       <div
-                        className="h-full bg-[#6A1A4C] transition-all duration-300"
+                        className="h-full bg-black transition-all duration-300"
                         style={{ width: `${m.progress}%` }}
                       />
                     </div>
@@ -259,7 +259,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
                         step="5"
                         value={m.progress}
                         onChange={(e) => handleUpdateProgress(m.id, parseInt(e.target.value))}
-                        className="w-full accent-[#6A1A4C] h-1 bg-transparent cursor-pointer mt-2"
+                        className="w-full accent-black h-1 bg-transparent cursor-pointer mt-2"
                       />
                     )}
                   </div>
@@ -276,7 +276,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
           <div className="w-full max-w-lg bg-[#FFFDF9] border-[2.5px] border-black p-6 shadow-[6px_6px_0px_#000000]">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3 mb-4">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">07 : MILESTONES</span>
+                <span className="font-mono text-[10px] text-black font-bold uppercase">07 : MILESTONES</span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">ESTABLISH MILESTONE</h3>
               </div>
               <button onClick={() => setCreateModal(false)} className="text-black/60 hover:text-black cursor-pointer">
@@ -371,7 +371,7 @@ export const MilestonesTool: React.FC<ToolProps> = ({
                 >
                   CANCEL
                 </button>
-                <button type="submit" className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer">
+                <button type="submit" className="btn-editorial text-xs px-5 py-2 cursor-pointer">
                   SAVE MILESTONE ↗
                 </button>
               </div>

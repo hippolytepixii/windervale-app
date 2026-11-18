@@ -1299,9 +1299,9 @@ app.get('/api/projects', authenticate, (req: AuthRequest, res: Response) => {
            (SELECT count(*) FROM workspace_tasks WHERE project_id = p.id AND status != 'completed' AND (is_archived = 0 OR is_archived IS NULL)) as pending_tasks_count
     FROM projects p
     LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = ?
-    WHERE (pm.user_id IS NOT NULL OR p.visibility = 'public')
+    WHERE (p.created_by = ? OR pm.user_id = ?)
   `;
-  const params: any[] = [userId];
+  const params: any[] = [userId, userId, userId];
 
   if (workspaceId) {
     query += ' AND p.workspace_id = ?';

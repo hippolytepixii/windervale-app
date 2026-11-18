@@ -45,6 +45,13 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
   const [showPin, setShowPin] = useState(false);
 
+  // Project-level and general unlock modal states
+  const [projectToUnlock, setProjectToUnlock] = useState<Project | null>(null);
+  const [projectUnlockPin, setProjectUnlockPin] = useState('');
+  const [projectUnlockError, setProjectUnlockError] = useState<string | null>(null);
+  const [unlockingProject, setUnlockingProject] = useState(false);
+  const [showGeneralUnlockModal, setShowGeneralUnlockModal] = useState(false);
+
   // Initial Security Setup states (comes first in flow if workspace has no PIN)
   const [setupDismissed, setSetupDismissed] = useState(false);
   const [setupPin, setSetupPin] = useState('');
@@ -127,23 +134,12 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     setSetupDismissed(sessionSkipped);
 
     if (hasPin) {
-      if (sessionUnlocked) {
-        setIsUnlocked(true);
-        loadProjects(ws.id);
-      } else {
-        setIsUnlocked(false);
-        setProjects([]);
-      }
+      setIsUnlocked(sessionUnlocked);
     } else {
-      // If workspace has no PIN configured yet, check if user chose open access
-      if (sessionSkipped) {
-        setIsUnlocked(true);
-        loadProjects(ws.id);
-      } else {
-        setIsUnlocked(false);
-        setProjects([]);
-      }
+      setIsUnlocked(true);
     }
+    // Always load user's projects so they are visible whether locked or not
+    loadProjects(ws.id);
   };
 
   const handleSetupPassword = async (e: React.FormEvent) => {
@@ -265,6 +261,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
       setRecoveryMode(false);
       setRecoveryPassword('');
       setRecoveryNewPin('');
+      setShowGeneralUnlockModal(false);
       loadProjects(activeWorkspace.id);
       loadWorkspaces();
     } catch (err: any) {
@@ -280,6 +277,59 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
     sessionStorage.removeItem(`unlocked_sensitive_${activeWorkspace.id}`);
     setIsUnlocked(false);
     setSecurityModalOpen(false);
+    loadProjects(activeWorkspace.id);
+  };
+
+  const handleProjectClick = (p: Project) => {
+    const hasPin = Boolean(activeWorkspace?.has_pin || activeWorkspace?.is_locked);
+    if (hasPin && !isUnlocked) {
+      setProjectToUnlock(p);
+      setProjectUnlockPin('');
+      setProjectUnlockError(null);
+    } else {
+      onSelectProject(p.id);
+    }
+  };
+
+  const handleUnlockAndEnterProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeWorkspace || !projectToUnlock || !projectUnlockPin) return;
+
+    setUnlockingProject(true);
+    setProjectUnlockError(null);
+    try {
+      await api.unlockWorkspace(activeWorkspace.id, projectUnlockPin);
+      sessionStorage.setItem(`unlocked_ws_${activeWorkspace.id}`, 'true');
+      setIsUnlocked(true);
+      const targetId = projectToUnlock.id;
+      setProjectToUnlock(null);
+      setProjectUnlockPin('');
+      onSelectProject(targetId);
+    } catch (err: any) {
+      setProjectUnlockError(err.message || 'Incorrect security PIN. Access denied.');
+    } finally {
+      setUnlockingProject(false);
+    }
+  };
+
+  const handleGeneralUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeWorkspace || !pinInput) return;
+
+    setUnlocking(true);
+    setUnlockError(null);
+    try {
+      await api.unlockWorkspace(activeWorkspace.id, pinInput);
+      sessionStorage.setItem(`unlocked_ws_${activeWorkspace.id}`, 'true');
+      setIsUnlocked(true);
+      setPinInput('');
+      setShowGeneralUnlockModal(false);
+      loadProjects(activeWorkspace.id);
+    } catch (err: any) {
+      setUnlockError(err.message || 'Incorrect security PIN. Access denied.');
+    } finally {
+      setUnlocking(false);
+    }
   };
 
   const handleUpdateSecurity = async (e: React.FormEvent) => {
@@ -508,17 +558,177 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 </button>
               </div>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#C84B31]/15 border border-[#C84B31] text-[#C84B31] font-mono text-[10px] font-bold uppercase">
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>LOCKED</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-black text-white border border-black font-mono text-[10px] font-bold uppercase">
+                  <Lock className="w-3.5 h-3.5 text-white" />
+                  <span>SESSION LOCKED</span>
+                </span>
+                <button
+                  onClick={() => {
+                    setUnlockError(null);
+                    setShowGeneralUnlockModal(true);
+                  }}
+                  className="px-3 py-1.5 bg-black text-white hover:bg-white hover:text-black font-mono text-[10px] font-bold uppercase border-[2px] border-black cursor-pointer transition-colors flex items-center gap-1.5 shadow-[2px_2px_0px_#000]"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>UNLOCK &rarr;</span>
+                </button>
+              </div>
             )
-          ) : null}
+          ) : (
+            <button
+              onClick={() => {
+                setLockAction('set');
+                setSecurityModalOpen(true);
+              }}
+              className="px-2.5 py-1 bg-white hover:bg-black hover:text-white border border-black font-mono text-[10px] font-bold uppercase transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <Key className="w-3 h-3" />
+              <span>SET PIN</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 1. INITIAL WORKSPACE SECURITY SETUP (Comes First in Flow if Workspace Has No PIN) */}
-      {!hasPin && !setupDismissed ? (
+      {projectsLoading ? (
+        <div className="py-20 text-center font-mono text-xs text-black/60 animate-pulse font-bold">
+          Retrieving workspace projects...
+        </div>
+      ) : projects.length > 0 ? (
+        /* PROJECT DIRECTORY: Always displayed when projects exist */
+        <div className="space-y-6">
+          {/* If locked, show locked notification banner */}
+          {hasPin && !isUnlocked && (
+            <div className="p-3 bg-black text-white border-[2.5px] border-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#000]">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-white shrink-0" />
+                <span><strong>WORKSPACE SESSION LOCKED:</strong> Only your private projects are visible. Click below or any project card to unlock and re-enter.</span>
+              </div>
+              <button
+                onClick={() => {
+                  setUnlockError(null);
+                  setShowGeneralUnlockModal(true);
+                }}
+                className="px-3 py-1 bg-white text-black hover:bg-[#fbf6f0] border border-white font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
+              >
+                UNLOCK WITH PIN &rarr;
+              </button>
+            </div>
+          )}
+
+          {/* If no PIN set, show open access notice banner */}
+          {!hasPin && (
+            <div className="p-3 bg-[#fbf6f0] border-[2px] border-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#000]">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-black shrink-0" />
+                <span><strong>OPEN ACCESS:</strong> Workspace has no password. You can set a private security PIN anytime.</span>
+              </div>
+              <button
+                onClick={() => {
+                  setLockAction('set');
+                  setSecurityModalOpen(true);
+                }}
+                className="px-3 py-1 bg-black text-white hover:bg-white hover:text-black border border-black font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
+              >
+                SET PASSWORD NOW &rarr;
+              </button>
+            </div>
+          )}
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-[2.5px] border-black pb-4 gap-3">
+            <div>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black block">
+                COLLABORATIVE STUDIO &middot; PRAXIS DIRECTORY
+              </span>
+              <h1 className="font-fun font-bold text-2xl sm:text-3xl lg:text-4xl text-black lowercase tracking-normal mt-0.5">
+                what am i making?
+              </h1>
+              <p className="font-fun italic text-xs sm:text-sm text-black/75 mt-1">
+                Dedicated project environments with the 12 production tools, immutable records, and rights protection.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (hasPin && !isUnlocked) {
+                  setUnlockError(null);
+                  setShowGeneralUnlockModal(true);
+                } else {
+                  setCreateModal(true);
+                }
+              }}
+              className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white border-[2px] border-black text-xs flex items-center gap-1.5 font-mono tracking-wider uppercase font-bold cursor-pointer transition-colors self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Project</span>
+            </button>
+          </div>
+
+          {/* Projects Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {projects.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => handleProjectClick(p)}
+                className="p-5 bg-[#fbf6f0] border-[2.5px] border-black hover:bg-white cursor-pointer transition-colors flex flex-col gap-3 group shadow-[2px_2px_0px_#000]"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black border border-black text-white font-bold">
+                      {p.project_type}
+                    </span>
+                    <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black text-black font-bold">
+                      {p.status || 'Active'}
+                    </span>
+                  </div>
+                  {p.user_role && (
+                    <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
+                      [{p.user_role}]
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="font-fun font-bold text-xl text-black group-hover:underline transition-colors">
+                    {p.title}
+                  </h3>
+                  {p.description && (
+                    <p className="font-mono text-xs text-black/85 mt-1 line-clamp-2 leading-relaxed">
+                      {p.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-black/20 text-xs text-black/70 font-mono mt-auto">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                      <Users className="w-3 h-3 text-black" />
+                      {p.member_count || 1} Collaborators
+                    </span>
+                    {p.target_date && (
+                      <span className="flex items-center gap-1.5 font-mono text-[10px]">
+                        <Calendar className="w-3 h-3 text-black/60" />
+                        {p.target_date}
+                      </span>
+                    )}
+                  </div>
+                  {hasPin && !isUnlocked ? (
+                    <span className="font-mono text-xs tracking-wider uppercase font-bold text-black group-hover:translate-x-0.5 transition-all flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      <span>RE-ENTER PROJECT (PIN) &rarr;</span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-xs tracking-wider uppercase font-bold text-black group-hover:translate-x-0.5 transition-all flex items-center gap-1">
+                      <span>RE-ENTER PROJECT &rarr;</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : !hasPin && !setupDismissed ? (
+        /* 1. INITIAL WORKSPACE SECURITY SETUP (Shown if Workspace Has No PIN and No Projects) */
         <div className="max-w-lg mx-auto my-8 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
@@ -619,7 +829,7 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
           </form>
         </div>
       ) : hasPin && !isUnlocked ? (
-        /* 2. WORKSPACE LOCK SCREEN (When Locked and Not Unlocked in Session) */
+        /* 2. WORKSPACE LOCK SCREEN (Shown if Locked and No Projects) */
         <div className="max-w-md mx-auto my-12 p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto border-[2px] border-black">
@@ -749,196 +959,94 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
           )}
         </div>
       ) : (
-        /* 3. UNLOCKED PROJECT DIRECTORY & MODULE INTERFACE */
-        <div className="space-y-6">
-          {!hasPin && (
-            <div className="p-3 bg-[#fbf6f0] border-[2px] border-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs shadow-[2px_2px_0px_#000]">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-black shrink-0" />
-                <span><strong>WORKSPACE UNPROTECTED:</strong> Set a private security PIN now to protect your creative projects, covenants, and revenue splits.</span>
-              </div>
-              <button
-                onClick={() => setSetupDismissed(false)}
-                className="px-3 py-1 bg-black text-white hover:bg-white hover:text-black border border-black font-bold uppercase text-[10px] tracking-wider cursor-pointer transition-colors shrink-0"
-              >
-                SET PASSWORD NOW &rarr;
-              </button>
+        /* 3. FIRST PROJECT INITIATION FORM (Shown if Unlocked and No Projects) */
+        <div className="max-w-xl mx-auto my-4 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
+          <div className="text-center space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
+              STEP 02 OF 02 : ESTABLISH YOUR PROJECT
+            </span>
+            <h2 className="font-fun font-bold text-2xl sm:text-3xl text-black lowercase">
+              what are you creating?
+            </h2>
+            <p className="font-mono text-xs text-black/80 leading-relaxed max-w-md mx-auto">
+              Start your first project in {activeWorkspace?.name || 'this workspace'} to unlock the 12 creative tools (Crew, Rights, Agreement, Build, Studio, Money, Credits...).
+            </p>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+              <span>{error}</span>
             </div>
           )}
-          {/* Header answering 'what am i making?' (Only shown when projects exist) */}
-          {projects.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-[2.5px] border-black pb-4 gap-3">
+
+          <form onSubmit={handleCreateProject} className="space-y-4">
+            <div>
+              <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                Project Title *
+              </label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. The Dissolve (Short Film)"
+                className="w-full p-2.5 bg-white border-[2px] border-black font-arthouse font-bold text-sm text-black focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-black font-black block">
-                  COLLABORATIVE STUDIO &middot; PRAXIS DIRECTORY
-                </span>
-                <h1 className="font-fun font-bold text-2xl sm:text-3xl lg:text-4xl text-black lowercase tracking-normal mt-0.5">
-                  what am i making?
-                </h1>
-                <p className="font-fun italic text-xs sm:text-sm text-black/75 mt-1">
-                  Dedicated project environments with the 12 production tools, immutable records, and rights protection.
-                </p>
-              </div>
-              <button
-                onClick={() => setCreateModal(true)}
-                className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white border-[2px] border-black text-xs flex items-center gap-1.5 font-mono tracking-wider uppercase font-bold cursor-pointer transition-colors self-start sm:self-auto"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Project</span>
-              </button>
-            </div>
-          )}
-
-          {/* Projects Content: Step 02 in Center Flow if No Projects Exist Yet */}
-          {projectsLoading ? (
-            <div className="py-20 text-center font-mono text-xs text-black/60 animate-pulse font-bold">
-              Retrieving workspace projects...
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="max-w-xl mx-auto my-4 p-6 sm:p-8 bg-[#fbf6f0] border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000] space-y-6 animate-editorial-fade">
-              <div className="text-center space-y-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-black font-black block">
-                  STEP 02 OF 02 : ESTABLISH YOUR PROJECT
-                </span>
-                <h2 className="font-fun font-bold text-2xl sm:text-3xl text-black lowercase">
-                  what are you creating?
-                </h2>
-                <p className="font-mono text-xs text-black/80 leading-relaxed max-w-md mx-auto">
-                  Start your first project in {activeWorkspace?.name || 'this workspace'} to unlock the 12 creative tools (Crew, Rights, Agreement, Build, Studio, Money, Credits...).
-                </p>
+                <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                  Medium / Discipline *
+                </label>
+                <select
+                  value={projectType}
+                  onChange={(e) => setProjectType(e.target.value)}
+                  className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black uppercase focus:outline-none cursor-pointer"
+                >
+                  {PROJECT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {error && (
-                <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleCreateProject} className="space-y-4">
-                <div>
-                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
-                    Project Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. The Dissolve (Short Film)"
-                    className="w-full p-2.5 bg-white border-[2px] border-black font-arthouse font-bold text-sm text-black focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
-                      Medium / Discipline *
-                    </label>
-                    <select
-                      value={projectType}
-                      onChange={(e) => setProjectType(e.target.value)}
-                      className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black uppercase focus:outline-none cursor-pointer"
-                    >
-                      {PROJECT_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
-                      Target Premiere / Date
-                    </label>
-                    <input
-                      type="date"
-                      value={targetDate}
-                      onChange={(e) => setTargetDate(e.target.value)}
-                      className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
-                    Creative Synopsis / Intent
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Brief outline of the creative work, themes, or production scope..."
-                    className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none leading-relaxed resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={creating || !title.trim()}
-                  className="w-full py-3.5 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
-                >
-                  <span>{creating ? 'INITIALIZING PROJECT ENVIRONMENT...' : 'ESTABLISH PROJECT & ENTER 12 TOOLS \u2192'}</span>
-                </button>
-              </form>
+              <div>
+                <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                  Target Premiere / Date
+                </label>
+                <input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {projects.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => onSelectProject(p.id)}
-                  className="p-5 bg-[#fbf6f0] border-[2.5px] border-black hover:bg-white cursor-pointer transition-colors flex flex-col gap-3 group shadow-[2px_2px_0px_#000]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-black border border-black text-white font-bold">
-                        {p.project_type}
-                      </span>
-                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black text-black font-bold">
-                        {p.status || 'Active'}
-                      </span>
-                    </div>
-                    {p.user_role && (
-                      <span className="font-mono text-[10px] text-black/60 font-bold uppercase">
-                        [{p.user_role}]
-                      </span>
-                    )}
-                  </div>
 
-                  <div>
-                    <h3 className="font-fun font-bold text-xl text-black group-hover:underline transition-colors">
-                      {p.title}
-                    </h3>
-                    {p.description && (
-                      <p className="font-mono text-xs text-black/85 mt-1 line-clamp-2 leading-relaxed">
-                        {p.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-black/20 text-xs text-black/70 font-mono mt-auto">
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
-                        <Users className="w-3 h-3 text-black" />
-                        {p.member_count || 1} Collaborators
-                      </span>
-                      {p.target_date && (
-                        <span className="flex items-center gap-1.5 font-mono text-[10px]">
-                          <Calendar className="w-3 h-3 text-black/60" />
-                          {p.target_date}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-mono text-xs tracking-wider uppercase font-bold text-black group-hover:translate-x-0.5 transition-all flex items-center gap-0.5">
-                      Project Cover &rarr;
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                Creative Synopsis / Intent
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief outline of the creative work, themes, or production scope..."
+                className="w-full p-2.5 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none leading-relaxed resize-none"
+              />
             </div>
-          )}
+
+            <button
+              type="submit"
+              disabled={creating || !title.trim()}
+              className="w-full py-3.5 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase tracking-wider border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_#000]"
+            >
+              <span>{creating ? 'INITIALIZING PROJECT ENVIRONMENT...' : 'ESTABLISH PROJECT & ENTER 12 TOOLS \u2192'}</span>
+            </button>
+          </form>
         </div>
       )}
 
@@ -1303,6 +1411,236 @@ export const WorkspaceLanding: React.FC<WorkspaceLandingProps> = ({ onSelectProj
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* RE-ENTER PROJECT WITH PIN MODAL */}
+      {projectToUnlock && activeWorkspace && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[5px_5px_0px_#000] animate-editorial-fade">
+            <div className="flex items-center justify-between border-b-[2px] border-black pb-2">
+              <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-black" />
+                <span>PRIVATE PROJECT ACCESS</span>
+              </span>
+              <button
+                onClick={() => {
+                  setProjectToUnlock(null);
+                  setProjectUnlockPin('');
+                  setProjectUnlockError(null);
+                }}
+                className="text-black hover:bg-black hover:text-white p-1 border border-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-fun font-bold text-xl text-black leading-tight">
+                {projectToUnlock.title}
+              </h3>
+              <p className="font-mono text-xs text-black/80">
+                Enter your workspace security PIN to re-enter this project.
+              </p>
+            </div>
+
+            {projectUnlockError && (
+              <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+                <span>{projectUnlockError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUnlockAndEnterProject} className="space-y-4">
+              <div>
+                <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1.5">
+                  Workspace Security PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    maxLength={8}
+                    required
+                    autoFocus
+                    value={projectUnlockPin}
+                    onChange={(e) => setProjectUnlockPin(e.target.value)}
+                    placeholder="Enter PIN"
+                    className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.4em] text-lg text-black focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black cursor-pointer"
+                  >
+                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-2 border-t-[2px] border-black">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProjectToUnlock(null);
+                    setProjectUnlockPin('');
+                    setProjectUnlockError(null);
+                  }}
+                  className="font-mono text-xs text-black/60 hover:text-black uppercase cursor-pointer"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={unlockingProject || !projectUnlockPin}
+                  className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors shadow-[2px_2px_0px_#000]"
+                >
+                  {unlockingProject ? 'AUTHENTICATING...' : 'RE-ENTER PROJECT \u2192'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* GENERAL WORKSPACE UNLOCK MODAL */}
+      {showGeneralUnlockModal && activeWorkspace && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-[#fbf6f0] border-[2.5px] border-black p-6 space-y-4 shadow-[5px_5px_0px_#000] animate-editorial-fade">
+            <div className="flex items-center justify-between border-b-[2px] border-black pb-2">
+              <span className="font-mono text-[10px] uppercase text-black font-black tracking-widest flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-black" />
+                <span>WORKSPACE AUTHENTICATION</span>
+              </span>
+              <button
+                onClick={() => {
+                  setShowGeneralUnlockModal(false);
+                  setPinInput('');
+                  setUnlockError(null);
+                  setRecoveryMode(false);
+                }}
+                className="text-black hover:bg-black hover:text-white p-1 border border-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-fun font-bold text-xl text-black leading-tight">
+                log in to workspace
+              </h3>
+              <p className="font-mono text-xs text-black/80">
+                Enter the security PIN for &ldquo;{activeWorkspace.name}&rdquo; to unlock this session.
+              </p>
+            </div>
+
+            {unlockError && (
+              <div className="p-3 bg-black border border-black text-white font-mono text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
+                <span>{unlockError}</span>
+              </div>
+            )}
+
+            {!recoveryMode ? (
+              <form onSubmit={handleGeneralUnlock} className="space-y-4">
+                <div>
+                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1.5">
+                    Workspace Security PIN
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPin ? 'text' : 'password'}
+                      maxLength={8}
+                      required
+                      autoFocus
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value)}
+                      placeholder="Enter 4 - 8 digit PIN"
+                      className="w-full p-3 bg-white border-[2px] border-black font-mono text-center tracking-[0.4em] text-lg text-black focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black cursor-pointer"
+                    >
+                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-2 border-t-[2px] border-black">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecoveryMode(true);
+                      setUnlockError(null);
+                    }}
+                    className="font-mono text-[10px] text-black/60 hover:text-black uppercase underline cursor-pointer"
+                  >
+                    Forgot PIN?
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={unlocking || !pinInput}
+                    className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors shadow-[2px_2px_0px_#000]"
+                  >
+                    {unlocking ? 'AUTHENTICATING...' : 'UNLOCK WORKSPACE \u2192'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleRecoverPin} className="space-y-3">
+                <div className="p-2.5 bg-white border border-black text-xs font-fun italic text-black/80">
+                  Verify with your main account password to reset your PIN.
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                    Account Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={recoveryPassword}
+                    onChange={(e) => setRecoveryPassword(e.target.value)}
+                    placeholder="Your account login password"
+                    className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] uppercase font-bold text-black mb-1">
+                    New 4 - 8 Digit PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={8}
+                    required
+                    value={recoveryNewPin}
+                    onChange={(e) => setRecoveryNewPin(e.target.value)}
+                    placeholder="New Security PIN"
+                    className="w-full p-2 bg-white border-[2px] border-black font-mono text-xs text-black focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3 pt-2 border-t-[2px] border-black">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecoveryMode(false);
+                      setUnlockError(null);
+                    }}
+                    className="font-mono text-xs text-black/60 hover:text-black uppercase cursor-pointer"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={recovering || !recoveryPassword || !recoveryNewPin}
+                    className="px-4 py-2 bg-black hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase border-[2px] border-black disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    {recovering ? 'RECOVERING...' : 'RESET PIN & UNLOCK'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

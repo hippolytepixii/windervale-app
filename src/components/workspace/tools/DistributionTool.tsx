@@ -192,7 +192,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
       case 'completed':
         return 'bg-[#2D7A4C] text-white';
       case 'active':
-        return 'bg-[#6A1A4C] text-white';
+        return 'bg-black text-white';
       case 'submitted':
         return 'bg-[#C84B31] text-white';
       default:
@@ -218,7 +218,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[2px] border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-[#6A1A4C] font-bold">09 : DISTRIBUTION</span>
+            <span className="font-mono text-xs text-black font-bold">09 : DISTRIBUTION</span>
             <span className="font-mono text-[10px] text-black/60 font-bold uppercase">RELEASE, FESTIVALS, LICENSING &amp; AUDIENCE</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-black mt-1">DISTRIBUTION &amp; OUTREACH</h2>
@@ -229,7 +229,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
             <>
               <button
                 onClick={() => setSubmitWindervaleModal(true)}
-                className="bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs px-3.5 py-2 border-[2px] border-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000000] cursor-pointer transition-all"
+                className="bg-black hover:bg-white hover:text-black text-white font-mono text-xs px-3.5 py-2 border-[2px] border-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000000] cursor-pointer transition-all"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>✦ SUBMIT TO WINDERVALE</span>
@@ -237,7 +237,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
 
               <button
                 onClick={() => setCreateModal(true)}
-                className="btn-editorial-pink text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer"
+                className="btn-editorial text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ ADD ENTRY</span>
@@ -262,7 +262,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
       <div className="border-[2.5px] border-black bg-[#FFFDF9] p-5 shadow-[4px_4px_0px_#000000] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] bg-[#6A1A4C] text-white px-2 py-0.5 font-bold uppercase">
+            <span className="font-mono text-[9px] bg-black text-white px-2 py-0.5 font-bold uppercase">
               WINDERVALE CURATION &middot; DIRECT DISTRIBUTION
             </span>
             <span className="font-mono text-[9px] text-black/60 font-bold uppercase">
@@ -279,7 +279,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
         {userRole !== 'viewer' && (
           <button
             onClick={() => setSubmitWindervaleModal(true)}
-            className="shrink-0 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs uppercase font-bold px-4 py-2.5 border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#6A1A4C] flex items-center gap-1.5"
+            className="shrink-0 bg-black hover:bg-white hover:text-black text-white font-mono text-xs uppercase font-bold px-4 py-2.5 border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000] flex items-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5 text-white" />
             <span>SUBMIT WORK NOW &rarr;</span>
@@ -319,7 +319,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => setSubmitWindervaleModal(true)}
-                className="bg-[#6A1A4C] text-white font-mono text-xs px-4 py-1.5 border-[2px] border-black hover:bg-black cursor-pointer transition-colors"
+                className="bg-black text-white font-mono text-xs px-4 py-1.5 border-[2px] border-black hover:bg-white hover:text-black cursor-pointer transition-colors"
               >
                 ✦ SUBMIT WORK TO WINDERVALE
               </button>
@@ -343,16 +343,16 @@ export const DistributionTool: React.FC<ToolProps> = ({
               <div
                 key={r.id}
                 className={`border-[2.5px] border-black bg-[#FFFDF9] p-5 space-y-3 relative group flex flex-col justify-between ${
-                  isWv ? 'border-l-[6px] border-l-[#6A1A4C]' : ''
+                  isWv ? 'border-l-[6px] border-l-black' : ''
                 } ${isLicensing ? 'border-l-[6px] border-l-[#2D7A4C]' : ''}`}
               >
                 <div>
                   <div className="flex items-center justify-between border-b border-black/15 pb-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="p-1 bg-[#6A1A4C] text-white">
+                      <span className="p-1 bg-black text-white">
                         {getCategoryIcon(r.category)}
                       </span>
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#6A1A4C]">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-black">
                         {isWv ? '✦ WINDERVALE CURATION' : r.category}
                       </span>
                     </div>
@@ -448,7 +448,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
                         href={r.external_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1 hover:text-[#6A1A4C] transition-colors"
+                        className="p-1 hover:text-black transition-colors"
                         title="Open Preview or External URL"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -477,7 +477,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
           <div className="border-[2.5px] border-black bg-[#FFFDF9] max-w-lg w-full p-6 space-y-4 shadow-[0_12px_32px_rgba(0,0,0,0.5)] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   09 : DISTRIBUTION : DIRECT CURATION INTAKE
                 </span>
                 <h3 className="font-arthouse font-black text-xl text-black uppercase">
@@ -598,7 +598,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
                     required
                     checked={wvConfirmed}
                     onChange={(e) => setWvConfirmed(e.target.checked)}
-                    className="mt-0.5 accent-[#6A1A4C]"
+                    className="mt-0.5 accent-black"
                   />
                   <label htmlFor="wvConfirm" className="font-fun text-xs text-black/80 leading-snug cursor-pointer">
                     I confirm that this submission is cleared by project collaborators (01 CREW) and covenants (03 AGREEMENT) for Windervale editorial consideration.
@@ -616,7 +616,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs uppercase font-bold px-5 py-2.5 border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
+                    className="bg-black hover:bg-white hover:text-black text-white font-mono text-xs uppercase font-bold px-5 py-2.5 border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{submitting ? 'TRANSMITTING...' : 'TRANSMIT WORK TO WINDERVALE &rarr;'}</span>
@@ -634,7 +634,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
           <div className="border-[2.5px] border-black bg-[#FFFDF9] max-w-lg w-full p-6 space-y-4 shadow-[0_12px_32px_rgba(0,0,0,0.5)] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div>
-                <span className="font-mono text-[10px] text-[#6A1A4C] font-bold uppercase">
+                <span className="font-mono text-[10px] text-black font-bold uppercase">
                   RECORD ENTRY
                 </span>
                 <h3 className="font-arthouse font-black text-lg text-black uppercase">
@@ -880,7 +880,7 @@ export const DistributionTool: React.FC<ToolProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn-editorial-pink text-xs px-5 py-2 cursor-pointer"
+                  className="btn-editorial text-xs px-5 py-2 cursor-pointer"
                 >
                   + SAVE ENTRY
                 </button>
