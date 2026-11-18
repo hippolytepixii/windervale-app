@@ -155,10 +155,10 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
         {/* Modal Header */}
         <div className="space-y-1 pr-8">
           <div className="flex items-center gap-2">
-            <span className="p-1 bg-[#6A1A4C] text-white">
+            <span className="p-1 bg-[#000000] text-white">
               <Smartphone className="w-4 h-4" />
             </span>
-            <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#6A1A4C]">
+            <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#000000]">
               OFFICIAL STANDALONE APPLICATION
             </span>
           </div>
@@ -180,8 +180,8 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
 
         {/* Native Android / Desktop Instant Install Button if prompt ready */}
         {canPrompt && (
-          <div className="p-4 bg-[#6A1A4C]/10 border-[2px] border-[#6A1A4C] space-y-2">
-            <div className="font-mono text-[10px] uppercase font-black text-[#6A1A4C] tracking-wider flex items-center gap-1.5">
+          <div className="p-4 bg-[#000000]/10 border-[2px] border-[#000000] space-y-2">
+            <div className="font-mono text-[10px] uppercase font-black text-[#000000] tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               <span>DIRECT ONE-TAP INSTALL READY</span>
             </div>
@@ -190,7 +190,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
             </p>
             <button
               onClick={handleNativePrompt}
-              className="w-full py-3 bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer shadow-[3px_3px_0px_#000000] flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 bg-[#000000] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer shadow-[3px_3px_0px_#000000] flex items-center justify-center gap-2 transition-colors"
             >
               <Download className="w-4 h-4" />
               <span>INSTALL NATIVE APP NOW</span>
@@ -212,7 +212,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
                 </span>
                 <div className="space-y-0.5">
                   <span className="font-black text-black uppercase flex items-center gap-1.5">
-                    Tap the Share Button <Share className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                    Tap the Share Button <Share className="w-3.5 h-3.5 text-[#000000]" />
                   </span>
                   <p className="font-fun text-xs text-black/75">
                     In Safari, tap the Share icon (square with an upward arrow) located at the bottom of your screen.
@@ -226,7 +226,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
                 </span>
                 <div className="space-y-0.5">
                   <span className="font-black text-black uppercase flex items-center gap-1.5">
-                    Select &apos;Add to Home Screen&apos; <PlusSquare className="w-3.5 h-3.5 text-[#6A1A4C]" />
+                    Select &apos;Add to Home Screen&apos; <PlusSquare className="w-3.5 h-3.5 text-[#000000]" />
                   </span>
                   <p className="font-fun text-xs text-black/75">
                     Scroll down through the share options and tap &quot;Add to Home Screen&quot;.
@@ -286,7 +286,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ isOpen, onClos
           <span>SECURE PWA &middot; NO APP STORE ACCOUNT NEEDED</span>
           <button
             onClick={onClose}
-            className="font-bold underline text-black hover:text-[#6A1A4C] cursor-pointer"
+            className="font-bold underline text-black hover:text-[#000000] cursor-pointer"
           >
             DISMISS
           </button>
@@ -327,7 +327,7 @@ export const InstallAppButton: React.FC<{
           type="button"
           className={`inline-flex items-center gap-3 bg-[#FFFDF9] hover:bg-black text-black hover:text-[#FFFDF9] border-[2.5px] border-black px-6 py-3.5 sm:py-4 rounded-full shadow-[5px_5px_0px_#000000] hover:shadow-[2px_2px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all duration-200 cursor-pointer select-none font-mono text-xs font-black uppercase tracking-wider ${className}`}
         >
-          <Smartphone className="w-4 h-4 text-[#6A1A4C]" />
+          <Smartphone className="w-4 h-4 text-[#000000]" />
           <span>DOWNLOAD MOBILE APP</span>
         </button>
         <InstallAppModal isOpen={showModal} onClose={() => setShowModal(false)} />
@@ -341,7 +341,7 @@ export const InstallAppButton: React.FC<{
         <button
           onClick={handleClick}
           type="button"
-          className={`w-full text-center py-3 px-5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs uppercase font-bold border-[2px] border-black shadow-[3px_3px_0px_#000000] transition-colors cursor-pointer flex items-center justify-center gap-2 ${className}`}
+          className={`w-full text-center py-3 px-5 bg-black hover:bg-[#000000] text-white font-mono text-xs uppercase font-bold border-[2px] border-black shadow-[3px_3px_0px_#000000] transition-colors cursor-pointer flex items-center justify-center gap-2 ${className}`}
         >
           <Download className="w-4 h-4" />
           <span>INSTALL STANDALONE APP</span>
@@ -357,7 +357,7 @@ export const InstallAppButton: React.FC<{
       <button
         onClick={handleClick}
         type="button"
-        className={`inline-flex items-center gap-1.5 font-mono text-[10px] md:text-xs font-black uppercase tracking-widest bg-[#6A1A4C] hover:bg-black text-white px-3 py-1 rounded-full border border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer select-none ${className}`}
+        className={`inline-flex items-center gap-1.5 font-mono text-[10px] md:text-xs font-black uppercase tracking-widest bg-[#000000] hover:bg-black text-white px-3 py-1 rounded-full border border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer select-none ${className}`}
         title="Install Standalone App on Mobile"
       >
         <Smartphone className="w-3.5 h-3.5" />
@@ -402,12 +402,12 @@ export const MobileInstallTopBanner: React.FC = () => {
 
   return (
     <>
-      <div className="w-full bg-[#6A1A4C] text-white border-b-[2px] border-black px-3 py-2 flex items-center justify-between gap-2 z-50 text-xs font-mono relative">
+      <div className="w-full bg-[#000000] text-white border-b-[2px] border-black px-3 py-2 flex items-center justify-between gap-2 z-50 text-xs font-mono relative">
         <div
           onClick={handleInstallClick}
           className="flex items-center gap-2 cursor-pointer flex-1 min-w-0"
         >
-          <span className="p-1 bg-white text-[#6A1A4C] rounded-sm shrink-0">
+          <span className="p-1 bg-white text-[#000000] rounded-sm shrink-0">
             <Smartphone className="w-3.5 h-3.5" />
           </span>
           <div className="truncate">
@@ -468,7 +468,7 @@ export const StandaloneAppPlaque: React.FC = () => {
       <div className="bg-[#FFFDF9] rounded-3xl border-[2.5px] border-black p-6 sm:p-7 space-y-4 shadow-[7px_7px_0px_#000000] text-black relative">
         <div className="flex items-center justify-between border-b-[2px] border-black pb-2.5">
           <span className="font-mono text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
-            <span className="p-1 bg-[#6A1A4C] text-white">
+            <span className="p-1 bg-[#000000] text-white">
               <Smartphone className="w-3.5 h-3.5" />
             </span>
             <span>STANDALONE MOBILE APPLICATION</span>

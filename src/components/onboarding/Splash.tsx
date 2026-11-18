@@ -173,7 +173,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
 
         {/* ====================================================================
             SECTION 2: THE 8 MOVEMENTS (TABLE OF CONTENTS)
-            - ONLY these cards are colored in dusty baby pink (#F2CBD2)
+            - ONLY these cards are colored in dusty baby pink (#fbf6f0)
             - Fonts inside these cards are bold black
             - Rounded cards with 2.5px black border and black brutalist shadow
             - Pure clean typography (drawings and doodles removed)
@@ -200,7 +200,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
 
           {/* 
             8 MOVEMENTS: DUSTY BABY PINK ROUNDED CARDS
-            - Color: Dusty Baby Pink (#F2CBD2)
+            - Color: Dusty Baby Pink (#fbf6f0)
             - Fonts: Bold Black
             - Clean layout without drawings
           */}
@@ -208,7 +208,7 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
             {articles.map((art) => (
               <div
                 key={art.num}
-                className="rounded-3xl border-[2.5px] border-black bg-[#F2CBD2] hover:bg-[#F7D6DC] text-black p-6 space-y-4 transition-all duration-200 hover:-translate-y-2 hover:shadow-[8px_8px_0px_#000000] shadow-[4px_4px_0px_#000000] relative group flex flex-col justify-between"
+                className="rounded-3xl border-[2.5px] border-black bg-[#fbf6f0] hover:bg-[#ffffff] text-black p-6 space-y-4 transition-all duration-200 hover:-translate-y-2 hover:shadow-[8px_8px_0px_#000000] shadow-[4px_4px_0px_#000000] relative group flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar with Big Bold Number */}

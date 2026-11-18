@@ -313,7 +313,7 @@ export const RightsTool: React.FC<ToolProps> = ({
 
       {/* Calculation & Allocation Validation Banner */}
       {totalPercentage > 100 ? (
-        <div className="p-3 bg-black border-2 border-black text-[#F2CBD2] font-mono text-xs font-bold flex items-center gap-2">
+        <div className="p-3 bg-black border-2 border-black text-white font-mono text-xs font-bold flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-[#C84B31] shrink-0" />
           <span>ERROR: TOTAL IP OWNERSHIP ALLOCATION EXCEEDS 100% ({totalPercentage}%). REVISE LEDGER TO VALIDATE.</span>
         </div>

@@ -145,7 +145,7 @@ const MainLayout: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#fbf6f0] flex items-center justify-center font-mono text-xs text-[#6A1A4C] font-bold tracking-widest film-grain">
+      <div className="min-h-screen bg-[#fbf6f0] flex items-center justify-center font-mono text-xs text-black font-bold tracking-widest film-grain">
         INITIALIZING WINDERVALE...
       </div>
     );

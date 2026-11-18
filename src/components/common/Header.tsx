@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
             onClick={() => onNavigate('map')}
             className="text-left group flex items-baseline gap-3 focus:outline-none"
           >
-            <span className="font-brand text-2xl sm:text-3xl tracking-normal text-[#fbf6f0] group-hover:text-[#6A1A4C] transition-colors lowercase">
+            <span className="font-brand text-2xl sm:text-3xl tracking-normal text-[#fbf6f0] group-hover:text-white transition-colors lowercase">
               windervale
             </span>
             <span className="hidden md:inline-block font-mono text-[10px] uppercase tracking-widest text-wv-dust border-l border-wv-border pl-3">
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
             className="flex items-center gap-2 px-3 py-1.5 bg-wv-charcoal border border-wv-border text-wv-dust hover:text-wv-paper hover:border-wv-paper text-xs font-mono transition-all"
             title="Search People, Projects, Library (⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-wv-dustyrose" />
+            <Search className="w-3.5 h-3.5 text-white" />
             <span className="hidden sm:inline">SEARCH</span>
             <kbd className="hidden sm:inline text-[9px] bg-wv-surface px-1.5 py-0.5 border border-wv-border text-wv-dust">⌘K</kbd>
           </button>
@@ -84,12 +84,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
               <div className="relative">
                 <button
                   onClick={() => setShowNotifs(!showNotifs)}
-                  className="relative p-2 bg-wv-charcoal border border-wv-border text-wv-paper hover:border-wv-pink transition-all"
+                  className="relative p-2 bg-wv-charcoal border border-wv-border text-wv-paper hover:border-white transition-all"
                   aria-label="Notifications"
                 >
                   <Bell className="w-4 h-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-black text-white border border-[#6A1A4C] font-mono text-[9px] w-4 h-4 flex items-center justify-center font-bold">
+                    <span className="absolute -top-1 -right-1 bg-black text-white border border-white font-mono text-[9px] w-4 h-4 flex items-center justify-center font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -99,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
                   <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-wv-charcoal border border-wv-border  p-4 z-50 animate-editorial-fade">
                     <div className="flex items-center justify-between pb-3 border-b border-wv-border mb-3">
                       <span className="font-mono text-xs uppercase tracking-wider text-wv-dust">NOTIFICATIONS [{notifications.length}]</span>
-                      <span className="font-mono text-[10px] text-wv-pink">{unreadCount} UNREAD</span>
+                      <span className="font-mono text-[10px] text-white font-bold">{unreadCount} UNREAD</span>
                     </div>
                     <div className="max-h-72 overflow-y-auto space-y-2">
                       {notifications.length === 0 ? (
@@ -109,15 +109,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
                           <div
                             key={n.id}
                             className={`p-2.5 border text-xs transition-colors ${
-                              n.is_read ? 'border-wv-border/50 bg-wv-black/40 text-wv-dust' : 'border-wv-pink/40 bg-wv-surface text-wv-paper'
+                              n.is_read ? 'border-wv-border/50 bg-wv-black/40 text-wv-dust' : 'border-white/40 bg-wv-surface text-wv-paper'
                             }`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-mono font-bold text-[10px] text-wv-dustyrose uppercase">[{n.type}]</span>
+                              <span className="font-mono font-bold text-[10px] text-white/80 uppercase">[{n.type}]</span>
                               {!n.is_read && (
                                 <button
                                   onClick={() => markAsRead(n.id)}
-                                  className="text-[10px] text-wv-pink hover:underline"
+                                  className="text-[10px] text-white underline hover:text-white/80"
                                 >
                                   Mark read
                                 </button>
@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
                 onClick={() => onNavigate('profile')}
                 className={`flex items-center gap-2.5 px-2.5 py-1.5 border transition-all ${
                   activeView === 'profile'
-                    ? 'border-wv-pink bg-wv-pink/10 text-wv-pink'
+                    ? 'border-white bg-white text-black'
                     : 'border-wv-border bg-wv-charcoal hover:border-wv-paper text-wv-paper'
                 }`}
               >
@@ -156,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
                 onClick={onOpenSettings}
                 className={`p-2 border transition-all ${
                   activeView === 'settings'
-                    ? 'border-wv-dustyrose bg-wv-dustyrose/10 text-wv-dustyrose'
+                    ? 'border-white bg-white text-black'
                     : 'border-wv-border bg-wv-charcoal hover:border-wv-paper text-wv-paper'
                 }`}
                 title="Account, Privacy & Legal Settings"
@@ -168,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenSettings, on
             <div className="flex items-center gap-2">
               <button
                 onClick={() => login('maya@windervale.art', 'windervale2026')}
-                className="px-3 py-1.5 text-xs font-bold font-mono bg-black text-white border-2 border-black hover:bg-[#6A1A4C] hover:text-white transition-all"
+                className="px-3 py-1.5 text-xs font-bold font-mono bg-black text-white border-2 border-black hover:bg-white hover:text-black transition-all"
               >
                 ENTER AS MAYA ↗
               </button>

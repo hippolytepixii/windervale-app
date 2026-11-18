@@ -8,11 +8,11 @@ interface NavigationProps {
 
 export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }) => {
   const navItems = [
-    { id: 'map', num: '01', label: 'MAP', sub: 'Discovery', icon: Compass, accent: 'group-hover:text-wv-dustyrose' },
-    { id: 'projects', num: '02', label: 'PROJECTS', sub: 'Studio & Workspaces', icon: FolderKanban, accent: 'group-hover:text-wv-pink' },
-    { id: 'library', num: '03', label: 'LIBRARY', sub: 'Editorial Press', icon: BookOpen, accent: 'group-hover:text-wv-dirtywhite' },
-    { id: 'fund', num: '04', label: 'FUND', sub: 'Grants Ecosystem', icon: Banknote, accent: 'group-hover:text-wv-dustyrose' },
-    { id: 'profile', num: '05', label: 'PROFILE', sub: 'Member Profile', icon: UserCheck, accent: 'group-hover:text-wv-pink' },
+    { id: 'map', num: '01', label: 'MAP', sub: 'Discovery', icon: Compass, accent: 'group-hover:text-white' },
+    { id: 'projects', num: '02', label: 'PROJECTS', sub: 'Studio & Workspaces', icon: FolderKanban, accent: 'group-hover:text-white' },
+    { id: 'library', num: '03', label: 'LIBRARY', sub: 'Editorial Press', icon: BookOpen, accent: 'group-hover:text-white' },
+    { id: 'fund', num: '04', label: 'FUND', sub: 'Grants Ecosystem', icon: Banknote, accent: 'group-hover:text-white' },
+    { id: 'profile', num: '05', label: 'PROFILE', sub: 'Member Profile', icon: UserCheck, accent: 'group-hover:text-white' },
   ];
 
   return (
@@ -33,7 +33,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }
               >
                 {/* Active Indicator Bar */}
                 {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-wv-pink" />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
                 )}
                 
                 <span className="font-mono text-[10px] text-wv-dust group-hover:text-wv-paper transition-colors">
@@ -45,7 +45,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }
                     <span className="font-display font-black text-sm tracking-wider uppercase">
                       {item.label}
                     </span>
-                    <item.icon className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-wv-pink' : 'text-wv-dust/60'}`} />
+                    <item.icon className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-white' : 'text-wv-dust/60'}`} />
                   </div>
                   <span className="hidden md:block font-mono text-[9px] uppercase tracking-wider text-wv-dust/70">
                     {item.sub}
@@ -58,7 +58,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onNavigate }
 
         {/* Status ticker */}
         <div className="hidden lg:flex items-center gap-2 pl-4 font-mono text-[10px] text-wv-dust uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-none bg-wv-dustyrose animate-pulse" />
+          <span className="w-2 h-2 rounded-none bg-white animate-pulse" />
           <span>AUTONOMOUS NETWORK : ONLINE</span>
         </div>
       </div>

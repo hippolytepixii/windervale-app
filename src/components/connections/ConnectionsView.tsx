@@ -98,7 +98,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
             <div>
               <h3 className="font-fun font-bold text-base text-black">{conn.partner_name}</h3>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-mono text-[9px] text-[#3b0764] bg-[#f3e8ff] border border-[#581c87] px-1.5 py-0.2 font-bold uppercase">
+                <span className="font-mono text-[9px] text-[#000000] bg-[#ffffff] border border-[#000000] px-1.5 py-0.2 font-bold uppercase">
                   ACTIVE ALLY THREAD
                 </span>
                 <span className="font-mono text-[10px] text-black/60">
@@ -119,7 +119,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
 
         {/* Message History */}
         <div className="flex-1 overflow-y-auto space-y-2.5 p-3 bg-white border-[2px] border-black mb-3 text-xs">
-          <div className="p-3 bg-[#6A1A4C]/10 border-l-[3px] border-black text-black/85 text-xs mb-3">
+          <div className="p-3 bg-[#000000]/10 border-l-[3px] border-black text-black/85 text-xs mb-3">
             <span className="font-bold text-black block font-mono text-[9px] uppercase mb-0.5">ORIGINAL INTENT &middot; {new Date(conn.created_at).toLocaleDateString()}</span>
             "{conn.message}"
           </div>
@@ -161,7 +161,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
           <button
             type="submit"
             disabled={sendingMsg || !newMessage.trim()}
-            className="px-4 py-2 bg-[#3b0764] hover:bg-[#581c87] text-[#f3e8ff] border-[2px] border-black font-mono text-xs uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-40"
+            className="px-4 py-2 bg-[#000000] hover:bg-[#000000] text-[#ffffff] border-[2px] border-black font-mono text-xs uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-40"
           >
             <Send className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">SEND NOTE</span>
@@ -192,7 +192,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
               {accepted.length} {accepted.length === 1 ? 'Connected Ally' : 'Connected Allies'}
             </span>
             {pendingReceived.length > 0 && (
-              <span className="font-mono text-[10px] font-bold px-2.5 py-1 bg-[#3b0764] text-[#f3e8ff] border-[1.5px] border-black">
+              <span className="font-mono text-[10px] font-bold px-2.5 py-1 bg-[#000000] text-[#ffffff] border-[1.5px] border-black">
                 {pendingReceived.length} Action Required
               </span>
             )}
@@ -208,7 +208,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
         /* Literary Empty State */
         <div className="py-16 px-6 text-center border-[2.5px] border-black bg-[#fbf6f0] space-y-4 max-w-xl mx-auto">
           <div className="w-14 h-14 border-[2px] border-black bg-black flex items-center justify-center mx-auto">
-            <Users className="w-6 h-6 text-[#6A1A4C] stroke-[2]" />
+            <Users className="w-6 h-6 text-[#000000] stroke-[2]" />
           </div>
           <div className="space-y-1.5">
             <h3 className="font-fun font-bold text-2xl text-black lowercase">
@@ -222,7 +222,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
           <div className="pt-3">
             <button
               onClick={onOpenMap}
-              className="py-3 px-6 bg-black hover:bg-[#6A1A4C] hover:text-white text-white font-mono text-xs tracking-wider uppercase font-bold border-[2px] border-black cursor-pointer transition-colors"
+              className="py-3 px-6 bg-black hover:bg-[#000000] hover:text-white text-white font-mono text-xs tracking-wider uppercase font-bold border-[2px] border-black cursor-pointer transition-colors"
             >
               Discover on the Map &rarr;
             </button>
@@ -251,7 +251,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                           <p className="font-fun italic text-xs text-black/70">{c.partner_disciplines?.join(', ')}</p>
                         </div>
                       </div>
-                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-[#6A1A4C] text-[#f3e8ff] font-bold border border-black">
+                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 bg-[#000000] text-[#ffffff] font-bold border border-black">
                         Review Required
                       </span>
                     </div>
@@ -267,7 +267,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                       </button>
                       <button
                         onClick={() => handleAccept(c.id)}
-                        className="px-4 py-1.5 bg-black text-white font-black text-xs font-mono tracking-wider uppercase border-[2px] border-black hover:bg-[#6A1A4C] cursor-pointer transition-colors"
+                        className="px-4 py-1.5 bg-black text-white font-black text-xs font-mono tracking-wider uppercase border-[2px] border-black hover:bg-[#000000] cursor-pointer transition-colors"
                       >
                         Accept &rarr;
                       </button>
@@ -353,8 +353,8 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                             onClick={() => openChat(c)}
                             className={`px-3 py-1 border-[2px] border-black text-xs font-mono uppercase tracking-wider font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
                               isSelected
-                                ? 'bg-[#6A1A4C] text-white hover:bg-white hover:text-black'
-                                : 'bg-black text-white hover:bg-[#6A1A4C]'
+                                ? 'bg-[#000000] text-white hover:bg-white hover:text-black'
+                                : 'bg-black text-white hover:bg-[#000000]'
                             }`}
                           >
                             <MessageSquare className="w-3 h-3" />

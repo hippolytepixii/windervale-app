@@ -75,10 +75,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
         {/* Folio */}
         <div className="flex items-center justify-between border-b-[2.5px] border-black pb-3 font-mono text-[10px]">
           <span className="font-bold text-black tracking-widest uppercase flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#6A1A4C] stroke-[2.5]" />
+            <Shield className="w-3.5 h-3.5 text-[#000000] stroke-[2.5]" />
             WINDERVALE CURATION DESK
           </span>
-          <span className="font-bold text-white bg-[#6A1A4C] border-[1.5px] border-black px-2 py-0.5 uppercase">
+          <span className="font-bold text-white bg-[#000000] border-[1.5px] border-black px-2 py-0.5 uppercase">
             ADMIN ONLY
           </span>
         </div>
@@ -98,7 +98,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
 
         {error && (
           <div className="p-3 bg-black text-white border-[2px] border-black font-mono text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#6A1A4C] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-[#000000] shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -128,7 +128,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
           <button
             type="submit"
             disabled={loading || !passkey.trim()}
-            className="w-full py-3 px-4 bg-black hover:bg-[#6A1A4C] hover:text-white text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors disabled:opacity-50"
+            className="w-full py-3 px-4 bg-black hover:bg-[#000000] hover:text-white text-white font-arthouse font-bold text-xs uppercase tracking-wider border-[2.5px] border-black cursor-pointer transition-colors disabled:opacity-50"
           >
             {loading ? 'VERIFYING PASSKEY...' : 'ENTER CURATION DESK \u2192'}
           </button>

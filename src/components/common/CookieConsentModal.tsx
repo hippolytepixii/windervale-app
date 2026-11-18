@@ -74,10 +74,10 @@ export const CookieConsentModal: React.FC = () => {
           <div className="border-[2.5px] border-black bg-[#FFFDF9] p-4 sm:p-5 shadow-[6px_6px_0px_#000000] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5 max-w-2xl">
               <div className="flex items-center gap-2">
-                <span className="p-1 bg-[#6A1A4C] text-white">
+                <span className="p-1 bg-[#000000] text-white">
                   <Cookie className="w-3.5 h-3.5" />
                 </span>
-                <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#6A1A4C]">
+                <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#000000]">
                   COOKIES, PRIVACY &middot; CREATIVE PROTOCOL
                 </span>
               </div>
@@ -117,7 +117,7 @@ export const CookieConsentModal: React.FC = () => {
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="px-4 py-2 bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
+                className="px-4 py-2 bg-[#000000] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Accept All Covenants</span>
@@ -134,11 +134,11 @@ export const CookieConsentModal: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between border-b-[2px] border-black pb-3">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-[#6A1A4C] text-white">
+                <span className="p-1.5 bg-[#000000] text-white">
                   <Shield className="w-4 h-4" />
                 </span>
                 <div>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase tracking-wider block">
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase tracking-wider block">
                     WINDERVALE AUTONOMOUS COVENANT
                   </span>
                   <h3 className="font-arthouse font-black text-lg sm:text-xl text-black uppercase">
@@ -193,7 +193,7 @@ export const CookieConsentModal: React.FC = () => {
                 </div>
 
                 {currentDoc.summary && (
-                  <div className="p-3 bg-[#fbf6f0] border-l-4 border-[#6A1A4C] font-fun text-xs text-black/90 leading-relaxed italic">
+                  <div className="p-3 bg-[#fbf6f0] border-l-4 border-[#000000] font-fun text-xs text-black/90 leading-relaxed italic">
                     {currentDoc.summary}
                   </div>
                 )}
@@ -218,7 +218,7 @@ export const CookieConsentModal: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAcceptAll}
-                  className="px-5 py-2 bg-[#6A1A4C] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
+                  className="px-5 py-2 bg-[#000000] hover:bg-black text-white font-mono text-xs uppercase font-bold border-[2px] border-black cursor-pointer transition-colors shadow-[2px_2px_0px_#000000] flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Accept All Covenants</span>

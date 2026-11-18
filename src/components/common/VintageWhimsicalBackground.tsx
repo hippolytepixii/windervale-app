@@ -9,7 +9,7 @@ import React from 'react';
  * - Whimsical swirling storybook clouds & wind ribbons
  * - Victorian 8-pointed starbursts & constellation lines
  * - Corner flourishes for seamless tiling
- * Color: Ethereal watermark blending gently with Glistening Grape (#6A1A4C).
+ * Color: Ethereal watermark blending gently with Glistening Grape (#000000).
  */
 export const VintageWhimsicalBackground: React.FC<{ className?: string }> = ({
   className = '',
@@ -84,7 +84,7 @@ export const VintageWhimsicalBackground: React.FC<{ className?: string }> = ({
                 {/* Diagonal Rays */}
                 <path d="M -7 -7 L 7 7" strokeWidth="0.8" />
                 <path d="M 7 -7 L -7 7" strokeWidth="0.8" />
-                <circle cx="0" cy="0" r="1.8" fill="#6A1A4C" stroke="currentColor" strokeWidth="0.8" />
+                <circle cx="0" cy="0" r="1.8" fill="#000000" stroke="currentColor" strokeWidth="0.8" />
               </g>
 
               {/* === 5. Whimsical Constellation Lines & Stars === */}

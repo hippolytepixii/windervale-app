@@ -52,7 +52,7 @@
   border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #6A1A4C;
+  background: #333333;
 }
 
 /* Subtle Film Grain Texture Overlay */
@@ -89,8 +89,8 @@
   border-radius: 0px;
 }
 .btn-editorial:hover {
-  background-color: #6A1A4C;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #000000;
   transform: translate(-1px, -1px);
   /* box-shadow removed for bold borders */
 }
@@ -99,7 +99,7 @@
   /* box-shadow removed for bold borders */
 }
 
-/* Replaced btn-editorial-wine with Arthouse Stark Black & Glistening Grape */
+/* Replaced btn-editorial-wine with Arthouse Stark Black */
 .btn-editorial-wine {
   border: 2.5px solid #000000;
   background-color: #000000;
@@ -112,8 +112,8 @@
   transition: all 0.15s ease-in-out;
 }
 .btn-editorial-wine:hover {
-  background-color: #6A1A4C;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #000000;
   transform: translate(-2px, -2px);
   /* box-shadow removed for bold borders */
 }
@@ -161,14 +161,14 @@
 
 .btn-editorial-rose {
   border: 2.5px solid #000000;
-  background-color: #6A1A4C;
+  background-color: #000000;
   color: #ffffff;
   font-weight: 800;
   /* box-shadow removed for bold borders */
 }
 .btn-editorial-rose:hover {
-  background-color: #82225e;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #000000;
   transform: translate(-1px, -1px);
   /* box-shadow removed for bold borders */
 }
@@ -204,8 +204,8 @@
   gap: 0.75rem;
 }
 .btn-editorial-poster:hover {
-  background-color: #6A1A4C;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #000000;
   transform: translate(-2px, -2px);
   /* box-shadow removed for bold borders */
 }

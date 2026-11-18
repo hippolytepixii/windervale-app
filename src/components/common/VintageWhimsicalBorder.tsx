@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Vintage Whimsical Border Design
- * Crafted to blend harmoniously with PANTONE Glistening Grape (#6A1A4C).
+ * Crafted to blend harmoniously with PANTONE Glistening Grape (#000000).
  * Uses soft, elegant vintage rosewood tones (#542d39 / #4a2732) and fluid calligraphic curves.
  * Frames the borders of the page without colliding or mixing with the typography.
  */

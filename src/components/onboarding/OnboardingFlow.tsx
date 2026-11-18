@@ -571,7 +571,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     <div className="min-h-screen bg-[#fbf6f0] text-black p-4 sm:p-6 md:p-10 flex flex-col justify-center items-center select-none film-grain">
       {/* 
         Arthouse Cinema Magazine Questionnaire Container
-        Palette: Pantone Glistening Grape (#6A1A4C), Stark Black, Crisp Ivory
+        Palette: Pantone Glistening Grape (#000000), Stark Black, Crisp Ivory
         Boxes: Bold Black Borders (border-[2.5px] border-black)
         Fonts: Fraunces & Syne
       */}
@@ -587,7 +587,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             }}
             className={`py-2 px-3 font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
               step === 'login'
-                ? 'bg-black text-white shadow-[2px_2px_0px_#6A1A4C]'
+                ? 'bg-black text-white shadow-[2px_2px_0px_#000000]'
                 : 'bg-[#fbf6f0] text-black hover:bg-white'
             }`}
           >
@@ -602,7 +602,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             }}
             className={`py-2 px-3 font-arthouse font-bold text-xs uppercase tracking-wider border-[2px] border-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
               step !== 'login'
-                ? 'bg-black text-white shadow-[2px_2px_0px_#6A1A4C]'
+                ? 'bg-black text-white shadow-[2px_2px_0px_#000000]'
                 : 'bg-[#fbf6f0] text-black hover:bg-white'
             }`}
           >
@@ -615,7 +615,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           <span className="font-bold text-black tracking-widest uppercase">
             {step === 'login' ? 'WINDERVALE ACCESS' : 'WINDERVALE ADMISSION'}
           </span>
-          <span className="font-mono text-[10px] font-bold text-white bg-[#6A1A4C] px-2 py-0.5 uppercase tracking-wider">
+          <span className="font-mono text-[10px] font-bold text-white bg-[#000000] px-2 py-0.5 uppercase tracking-wider">
             {step === 'identity' && 'FOLIO 01 : IDENTITY'}
             {step === 'media_id' && 'FOLIO 02 : PORTRAIT & VERIFICATION'}
             {step === 'practice' && 'FOLIO 03 : PRACTICE & DISCIPLINES'}
@@ -626,7 +626,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         </div>
 
         {applicationNotice && (
-          <div className="mb-4 p-3.5 bg-[#6A1A4C] text-white font-mono text-xs flex items-center gap-2.5 border-[2px] border-black shadow-[2px_2px_0px_#000000]">
+          <div className="mb-4 p-3.5 bg-[#000000] text-white font-mono text-xs flex items-center gap-2.5 border-[2px] border-black shadow-[2px_2px_0px_#000000]">
             <ShieldCheck className="w-4 h-4 text-white shrink-0" />
             <div className="space-y-0.5">
               <span className="font-bold uppercase tracking-wider block">APPLICATION REQUIRED</span>
@@ -637,7 +637,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
         {error && (
           <div className="mb-4 p-3 bg-black text-white font-mono text-xs flex items-center gap-2 border-[2px] border-black">
-            <AlertCircle className="w-4 h-4 text-[#6A1A4C] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-[#000000] shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -647,7 +647,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           <div className="space-y-4 animate-editorial-fade">
             {/* Existing Account Detected Banner */}
             {existingAccountNotice ? (
-              <div className="p-3.5 bg-[#6A1A4C] text-white border-[2px] border-black flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-[2px_2px_0px_#000000]">
+              <div className="p-3.5 bg-[#000000] text-white border-[2px] border-black flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-[2px_2px_0px_#000000]">
                 <div className="space-y-0.5">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider block">
                     ACCOUNT ALREADY REGISTERED
@@ -670,12 +670,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               </div>
             ) : (
               /* Already Registered Notice */
-              <div className="p-3 bg-[#6A1A4C]/10 border border-[#6A1A4C] flex items-center justify-between text-xs">
+              <div className="p-3 bg-[#000000]/10 border border-[#000000] flex items-center justify-between text-xs">
                 <span className="font-mono text-black text-[11px] font-medium">Already registered or approved?</span>
                 <button
                   type="button"
                   onClick={() => setStep('login')}
-                  className="font-mono font-bold uppercase text-[#6A1A4C] hover:underline cursor-pointer text-xs"
+                  className="font-mono font-bold uppercase text-[#000000] hover:underline cursor-pointer text-xs"
                 >
                   Member Sign In &rarr;
                 </button>
@@ -697,7 +697,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <button
                   type="button"
                   onClick={() => handleOpenOAuth('google')}
-                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#6A1A4C] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#000000] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -710,7 +710,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <button
                   type="button"
                   onClick={() => handleOpenOAuth('apple')}
-                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#6A1A4C] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#000000] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 170 170">
                     <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.07-7.64-7.85-11.83-14.34-5.96-9.14-10.4-19.34-13.32-30.59-2.92-11.25-4.39-21.73-4.39-31.43 0-14.3 3.6-26.15 10.79-35.53 7.2-9.39 16.22-14.15 27.07-14.28 5.75 0 11.75 1.57 18 4.7 6.25 3.13 10.37 4.77 12.38 4.92 1.63-.26 5.86-1.89 12.69-4.89 6.83-3 12.98-4.32 18.45-3.96 14.13.78 25.13 5.85 33.02 15.22-11.64 7.07-17.3 16.73-17 28.98.3 9.4 3.99 17.26 11.06 23.59 7.07 6.33 15.35 10.05 24.84 11.16-2.18 6.53-4.68 13.06-7.5 19.59zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.64 5.53-6.7 12.39-10.47 20.59-11.3 0 .98.05 1.83.16 2.54.1 2.22-.38 4.88-1.44 7.97-1.06 3.09-2.6 6.04-4.62 8.85-4.47 6.07-10.59 9.87-18.35 11.41-.66-4.63-2.2-9.43-4.62-17.83z"/>
@@ -863,7 +863,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     <label className="block font-arthouse text-[10px] font-bold uppercase tracking-wider text-black">
                       Country
                     </label>
-                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                    <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                   </div>
                   <input
                     type="text"
@@ -889,7 +889,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 type="button"
                 disabled={!name.trim() || !email.trim() || !email.includes('@') || password.length < 8 || !location.trim() || !country.trim()}
                 onClick={handleAdvanceFromIdentity}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-2.5 px-5 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>Continue to Portrait &amp; ID</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -916,12 +916,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider block">
                   01 : Monograph Portrait Photo
                 </span>
-                <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
               </div>
               <div className="flex items-center gap-3.5">
                 <div
                   onClick={() => avatarInputRef.current?.click()}
-                  className="w-16 h-16 border-[2px] border-dashed border-black bg-[#6A1A4C]/10 flex items-center justify-center cursor-pointer hover:bg-[#6A1A4C]/20 overflow-hidden shrink-0 group"
+                  className="w-16 h-16 border-[2px] border-dashed border-black bg-[#000000]/10 flex items-center justify-center cursor-pointer hover:bg-[#000000]/20 overflow-hidden shrink-0 group"
                 >
                   {avatarBase64 ? (
                     <img src={avatarBase64} alt="Portrait" className="w-full h-full object-cover" />
@@ -948,7 +948,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     Natural light portrait, darkroom still, or creative headshot.
                   </p>
                   {!avatarBase64 && (
-                    <span className="font-mono text-[10px] text-[#6A1A4C] font-bold block mt-1">
+                    <span className="font-mono text-[10px] text-[#000000] font-bold block mt-1">
                       [!] Required: Please select and upload your portrait.
                     </span>
                   )}
@@ -982,7 +982,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <span className="font-arthouse text-[10px] uppercase font-bold text-black tracking-wider">
                   02 : Government ID Document
                 </span>
-                <span className="font-mono text-[9px] bg-[#6A1A4C] text-white px-1.5 py-0.5 uppercase font-bold">
+                <span className="font-mono text-[9px] bg-[#000000] text-white px-1.5 py-0.5 uppercase font-bold">
                   *MANDATORY &amp; ENCRYPTED
                 </span>
               </div>
@@ -1026,15 +1026,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     <span className="font-arthouse text-xs uppercase tracking-wider text-black block font-bold">
                       Upload ID Document File / Scan *
                     </span>
-                    <span className="font-mono text-[10px] text-[#6A1A4C] font-bold block">
+                    <span className="font-mono text-[10px] text-[#000000] font-bold block">
                       [!] Required: Passport, Driver's License, or National ID.
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="p-2 bg-[#6A1A4C]/10 border-l-[3px] border-[#6A1A4C] flex items-start gap-2 text-[10px] font-fun italic text-black leading-relaxed">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#6A1A4C] shrink-0 mt-0.5" />
+              <div className="p-2 bg-[#000000]/10 border-l-[3px] border-[#000000] flex items-start gap-2 text-[10px] font-fun italic text-black leading-relaxed">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#000000] shrink-0 mt-0.5" />
                 <span>
                   Encrypted at rest. Used solely to verify authentic human identity. Never displayed publicly or shared.
                 </span>
@@ -1053,7 +1053,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 type="button"
                 disabled={!avatarBase64 || !idBase64}
                 onClick={handleAdvanceFromMedia}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-2.5 px-5 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>Continue to Practice &amp; Disciplines</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1078,9 +1078,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
-                    Disciplines ({selectedDisciplines.length}) <span className="text-[#6A1A4C] font-mono">*Mandatory</span>
+                    Disciplines ({selectedDisciplines.length}) <span className="text-[#000000] font-mono">*Mandatory</span>
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] uppercase font-bold">
+                  <span className="font-mono text-[9px] text-[#000000] uppercase font-bold">
                     Required for Admission
                   </span>
                 </div>
@@ -1094,8 +1094,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                         onClick={() => toggleDiscipline(d)}
                         className={`px-2 py-0.5 text-xs font-arthouse uppercase tracking-wider transition-all cursor-pointer ${
                           isSel
-                            ? 'bg-[#6A1A4C] text-white font-bold border-[2px] border-black'
-                            : 'bg-white text-black border-[1.5px] border-black hover:bg-[#6A1A4C]/15'
+                            ? 'bg-[#000000] text-white font-bold border-[2px] border-black'
+                            : 'bg-white text-black border-[1.5px] border-black hover:bg-[#000000]/15'
                         }`}
                       >
                         {d}
@@ -1109,7 +1109,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     .map((d) => (
                       <span
                         key={d}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-arthouse uppercase tracking-wider bg-[#6A1A4C] text-white font-bold border-[2px] border-black"
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-arthouse uppercase tracking-wider bg-[#000000] text-white font-bold border-[2px] border-black"
                       >
                         <span>{d}</span>
                         <button
@@ -1151,13 +1151,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                         }
                       }}
                       placeholder="Type custom discipline (e.g. Sculptor, Choreographer)..."
-                      className="flex-1 bg-white border-[2px] border-black px-3 py-1.5 text-xs font-mono text-black placeholder:text-black/40 focus:outline-none focus:border-[#6A1A4C]"
+                      className="flex-1 bg-white border-[2px] border-black px-3 py-1.5 text-xs font-mono text-black placeholder:text-black/40 focus:outline-none focus:border-[#000000]"
                       autoFocus
                     />
                     <button
                       type="button"
                       onClick={handleAddCustomDiscipline}
-                      className="px-3.5 py-1.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs uppercase font-bold border-[2px] border-black transition-colors cursor-pointer shrink-0"
+                      className="px-3.5 py-1.5 bg-black hover:bg-[#000000] text-white font-mono text-xs uppercase font-bold border-[2px] border-black transition-colors cursor-pointer shrink-0"
                     >
                       + ADD
                     </button>
@@ -1170,7 +1170,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
                     Physical Mediums &amp; Tools ({selectedMediums.length})
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {MEDIUMS_LIST.map((m) => {
@@ -1203,7 +1203,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                         <button
                           type="button"
                           onClick={() => removeCustomMedium(m)}
-                          className="hover:text-[#6A1A4C] cursor-pointer font-mono text-sm leading-none ml-0.5"
+                          className="hover:text-[#000000] cursor-pointer font-mono text-sm leading-none ml-0.5"
                           title="Remove"
                         >
                           &times;
@@ -1245,7 +1245,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     <button
                       type="button"
                       onClick={handleAddCustomMedium}
-                      className="px-3.5 py-1.5 bg-black hover:bg-[#6A1A4C] text-white font-mono text-xs uppercase font-bold border-[2px] border-black transition-colors cursor-pointer shrink-0"
+                      className="px-3.5 py-1.5 bg-black hover:bg-[#000000] text-white font-mono text-xs uppercase font-bold border-[2px] border-black transition-colors cursor-pointer shrink-0"
                     >
                       + ADD
                     </button>
@@ -1258,7 +1258,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
                     Portfolio / Reel / Archive Link
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                 </div>
                 <div className="relative">
                   <LinkIcon className="w-4 h-4 text-black absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1278,7 +1278,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
                     Monograph Statement / Bio (Min 15 Characters)
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                 </div>
                 <textarea
                   rows={3}
@@ -1303,7 +1303,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 type="button"
                 disabled={selectedDisciplines.length === 0 || selectedMediums.length === 0 || !portfolioLink.trim() || bio.trim().length < 15}
                 onClick={handleAdvanceFromPractice}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
+                className="py-2.5 px-5 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
               >
                 <span>Continue to Offer &amp; Seek</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1330,7 +1330,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
                     What Can You Offer?
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
                 </div>
                 <textarea
                   rows={3}
@@ -1347,7 +1347,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <label className="block font-arthouse text-[10px] uppercase font-bold tracking-wider text-black">
                     What Do You Want / What Are You Seeking?
                   </label>
-                  <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
+                  <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory (Min 10 Chars)</span>
                 </div>
                 <textarea
                   rows={3}
@@ -1372,7 +1372,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 type="button"
                 disabled={whatCanYouOffer.trim().length < 10 || whatDoYouWant.trim().length < 10}
                 onClick={handleAdvanceFromOfferSeek}
-                className="py-2.5 px-5 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-2.5 px-5 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>Continue to Founding Covenants</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1400,12 +1400,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   required
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
+                  className="mt-0.5 w-4 h-4 accent-[#000000]"
                 />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-arthouse font-bold text-black uppercase text-xs block">Terms of Service</span>
-                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                    <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                   </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     You retain 100% intellectual property ownership of your work.
@@ -1419,12 +1419,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   required
                   checked={acceptPrivacy}
                   onChange={(e) => setAcceptPrivacy(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
+                  className="mt-0.5 w-4 h-4 accent-[#000000]"
                 />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-arthouse font-bold text-black uppercase text-xs block">Privacy Policy</span>
-                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                    <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                   </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     Private workspaces are confidential and never sold or indexed.
@@ -1438,12 +1438,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   required
                   checked={acceptGuidelines}
                   onChange={(e) => setAcceptGuidelines(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#6A1A4C]"
+                  className="mt-0.5 w-4 h-4 accent-[#000000]"
                 />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-arthouse font-bold text-black uppercase text-xs block">Community Guidelines</span>
-                    <span className="font-mono text-[9px] text-[#6A1A4C] font-bold uppercase">*Mandatory</span>
+                    <span className="font-mono text-[9px] text-[#000000] font-bold uppercase">*Mandatory</span>
                   </div>
                   <span className="font-fun italic text-[11px] text-black/80">
                     Credit honestly, establish split sheets early, and honour shared work.
@@ -1464,7 +1464,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 type="button"
                 disabled={loading || !acceptTerms || !acceptPrivacy || !acceptGuidelines}
                 onClick={handleRegisterSubmit}
-                className="py-3 px-6 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-3 px-6 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>{loading ? 'Transmitting Monograph...' : 'Submit Admission Application \u2192'}</span>
               </button>
@@ -1490,7 +1490,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <button
                   type="button"
                   onClick={() => handleOpenOAuth('google')}
-                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#6A1A4C] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-white border-[2px] border-black hover:bg-[#000000] hover:text-white text-black font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -1503,7 +1503,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <button
                   type="button"
                   onClick={() => handleOpenOAuth('apple')}
-                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#6A1A4C] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-black text-white border-[2px] border-black hover:bg-[#000000] font-arthouse font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 170 170">
                     <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.07-7.64-7.85-11.83-14.34-5.96-9.14-10.4-19.34-13.32-30.59-2.92-11.25-4.39-21.73-4.39-31.43 0-14.3 3.6-26.15 10.79-35.53 7.2-9.39 16.22-14.15 27.07-14.28 5.75 0 11.75 1.57 18 4.7 6.25 3.13 10.37 4.77 12.38 4.92 1.63-.26 5.86-1.89 12.69-4.89 6.83-3 12.98-4.32 18.45-3.96 14.13.78 25.13 5.85 33.02 15.22-11.64 7.07-17.3 16.73-17 28.98.3 9.4 3.99 17.26 11.06 23.59 7.07 6.33 15.35 10.05 24.84 11.16-2.18 6.53-4.68 13.06-7.5 19.59zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.64 5.53-6.7 12.39-10.47 20.59-11.3 0 .98.05 1.83.16 2.54.1 2.22-.38 4.88-1.44 7.97-1.06 3.09-2.6 6.04-4.62 8.85-4.47 6.07-10.59 9.87-18.35 11.41-.66-4.63-2.2-9.43-4.62-17.83z"/>
@@ -1554,14 +1554,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <button
                 type="button"
                 onClick={() => setStep('identity')}
-                className="font-mono text-xs text-black/70 hover:text-[#6A1A4C] underline font-bold cursor-pointer"
+                className="font-mono text-xs text-black/70 hover:text-[#000000] underline font-bold cursor-pointer"
               >
                 New practitioner? Apply for Admission &rarr;
               </button>
               <button
                 type="submit"
                 disabled={loading || !loginEmail || !loginPassword}
-                className="py-3 px-6 bg-black hover:bg-[#6A1A4C] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="py-3 px-6 bg-black hover:bg-[#000000] text-white font-arthouse font-bold text-xs tracking-wider uppercase disabled:opacity-40 flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
               >
                 <span>{loading ? 'Authenticating...' : 'Sign In to Workspace \u2192'}</span>
               </button>

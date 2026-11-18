@@ -55,7 +55,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               <div className="relative">
                 <span>{t.icon}</span>
                 {t.id === 'connections' && pendingConnectionsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 w-4 h-4 bg-[#6A1A4C] text-white font-mono text-[9px] font-black flex items-center justify-center border border-black">
+                  <span className="absolute -top-1.5 -right-2.5 w-4 h-4 bg-black text-white font-mono text-[9px] font-black flex items-center justify-center border border-white">
                     {pendingConnectionsCount}
                   </span>
                 )}

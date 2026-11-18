@@ -124,7 +124,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
           <div className="pt-6 border-t border-wv-border/50">
             <button
               onClick={logout}
-              className="w-full text-left font-mono text-xs p-3 text-[#6A1A4C] hover:text-white hover:bg-black border border-transparent hover:border-black flex items-center justify-between transition-all"
+              className="w-full text-left font-mono text-xs p-3 text-[#000000] hover:text-white hover:bg-black border border-transparent hover:border-black flex items-center justify-between transition-all"
             >
               <span>LOGOUT SESSION</span>
               <LogOut className="w-3.5 h-3.5" />
@@ -334,7 +334,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
 
                 {passwordMsg && (
                   <div className={`p-2 font-mono text-xs border ${
-                    passwordMsg.type === 'success' ? 'border-[#6A1A4C] text-[#6A1A4C]' : 'border-black text-[#6A1A4C]'
+                    passwordMsg.type === 'success' ? 'border-[#000000] text-[#000000]' : 'border-black text-[#000000]'
                   }`}>
                     {passwordMsg.text}
                   </div>
@@ -391,7 +391,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
           {activeTab === 'deletion' && (
             <div className="space-y-6 animate-editorial-fade">
               <div className="border-b border-wv-border pb-3">
-                <span className="font-mono text-xs uppercase text-[#6A1A4C] font-bold">IRREVOCABLE TERMINATION</span>
+                <span className="font-mono text-xs uppercase text-[#000000] font-bold">IRREVOCABLE TERMINATION</span>
                 <h2 className="font-display font-black text-2xl text-wv-paper mt-1">
                   ACCOUNT DELETION WORKFLOW
                 </h2>
