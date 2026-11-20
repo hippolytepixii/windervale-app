@@ -92,8 +92,10 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
   const [userRole, setUserRole] = useState<'owner' | 'member' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
 
-  // Project context panel toggle
-  const [showProjectContext, setShowProjectContext] = useState(true);
+  // Project context panel toggle:
+  // First tool ('00_PROJECT'): open by default.
+  // Other tools: hidden by default, but can be viewed anytime via 'Show Brief'.
+  const [showProjectContext, setShowProjectContext] = useState(false);
 
   // Sensitive lock state
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState(false);
@@ -149,6 +151,16 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
       onEnterModuleScreen(activeModule !== null);
     }
   }, [activeModule, onEnterModuleScreen]);
+
+  // Keep brief open by default only on the first tool ('00_PROJECT');
+  // keep it hidden by default on all other tools while giving an option to view it.
+  useEffect(() => {
+    if (activeModule === '00_PROJECT') {
+      setShowProjectContext(true);
+    } else {
+      setShowProjectContext(false);
+    }
+  }, [activeModule]);
 
   const loadProject = async () => {
     setLoading(true);
@@ -692,7 +704,7 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
         <section className="flex-1 min-w-0 bg-white flex flex-col h-full overflow-y-auto">
           {/* Top Project Context Intelligence Header (Answers the Core Questions) */}
           <div className="border-b-[2.5px] border-black bg-[#FFFDF9] shrink-0">
-            <div className="px-4 py-2.5 bg-[#fbf6f0] border-b border-black/20 flex items-center justify-between">
+            <div className={`px-4 py-2 bg-[#fbf6f0] flex items-center justify-between ${showProjectContext ? 'border-b border-black/20' : ''}`}>
               <div className="flex items-center gap-2">
                 {!isSidebarOpen && (
                   <button
@@ -711,7 +723,8 @@ export const ProjectSpace: React.FC<ProjectSpaceProps> = ({
               </div>
               <button
                 onClick={() => setShowProjectContext(!showProjectContext)}
-                className="font-mono text-[10px] text-black/60 hover:text-black flex items-center gap-1 uppercase cursor-pointer"
+                className="font-mono text-[10px] text-black hover:text-black flex items-center gap-1.5 uppercase cursor-pointer px-2.5 py-1 bg-white hover:bg-black hover:text-white border border-black transition-colors shadow-[1px_1px_0px_#000]"
+                title={showProjectContext ? 'Collapse Project Brief' : 'Expand Project Brief'}
               >
                 <span>{showProjectContext ? 'Hide Brief' : 'Show Brief'}</span>
                 {showProjectContext ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
