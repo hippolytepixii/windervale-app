@@ -88,6 +88,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
   const pendingReceived = connections.filter(c => c.status === 'pending' && c.recipient_id === user?.id);
   const pendingSent = connections.filter(c => c.status === 'pending' && c.requester_id === user?.id);
   const accepted = connections.filter(c => c.status === 'accepted');
+  const connected = accepted;
   // Reusable conversation thread component
   const renderConversationThread = (conn: Connection, isInline: boolean = false) => {
     return (
@@ -289,6 +290,19 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                       <span className="font-mono text-[9px] uppercase px-2 py-0.5 border border-black text-black/70 font-bold">
                         Awaiting Response
                       </span>
+                    </div>
+                    {c.message && (
+                      <div className="p-2.5 bg-white border-l-[3px] border-black text-xs font-fun text-black/85 italic leading-relaxed">
+                        "{c.message}"
+                      </div>
+                    )}
+                    <div className="flex items-center justify-end pt-1">
+                      <button
+                        onClick={() => onOpenProfile(c.partner_id || c.recipient_id)}
+                        className="text-xs font-mono font-bold uppercase tracking-wider hover:underline cursor-pointer text-black"
+                      >
+                        Inspect Dossier &rarr;
+                      </button>
                     </div>
                   </div>
                 ))}

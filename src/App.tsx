@@ -16,6 +16,7 @@ import { SettingsView } from './components/settings/SettingsView';
 import { CurationPendingView } from './components/onboarding/CurationPendingView';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { CookieConsentModal } from './components/common/CookieConsentModal';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const MainLayout: React.FC = () => {
   const { user, profile, refreshProfile, isLoading } = useAuth();
@@ -290,7 +291,9 @@ const MainLayout: React.FC = () => {
         pendingConnectionsCount={pendingCount}
         onOpenSettings={() => setShowSettings(true)}
       >
-        {renderContent()}
+        <ErrorBoundary fallbackTitle="network & allies view restoration" onReset={() => setActiveTab('map')}>
+          {renderContent()}
+        </ErrorBoundary>
       </WebAppShell>
     );
   }
@@ -299,7 +302,9 @@ const MainLayout: React.FC = () => {
     <MobileAppShell>
       {/* Dynamic Screen Port */}
       <main className="flex-1 flex flex-col">
-        {renderContent()}
+        <ErrorBoundary fallbackTitle="screen view restoration" onReset={() => setActiveTab('map')}>
+          {renderContent()}
+        </ErrorBoundary>
       </main>
 
       {/* 4-Tab Thumb Navigation (Hidden when inside a specific Project Module for 100% focus) */}

@@ -365,7 +365,7 @@ export const HumanMap: React.FC<HumanMapProps> = ({ onOpenProfile }) => {
   };
 
   // Render the candidate dossier content
-  const renderDossierCard = (creative: Creative) => {
+  const renderDossierCard = (creative: Profile) => {
     const connStatus = existingConnections[creative.user_id] || (sentRequestIds.has(creative.user_id) ? 'pending' : null);
 
     return (
