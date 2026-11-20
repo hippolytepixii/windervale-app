@@ -53,12 +53,12 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
       <div
         className={`${
           showBrandLogo
-            ? 'w-full px-2 sm:px-4 flex items-center justify-between py-1 sm:py-1.5'
-            : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1 sm:py-1.5'
+            ? 'w-full px-2 sm:px-4 flex items-center py-1 sm:py-1.5'
+            : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center py-1 sm:py-1.5'
         }`}
       >
         {/* Left Toolbar: Distinct Brand Logo, 4 Numbered Editorial Tabs, and Utility Actions */}
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto py-0.5">
+        <div className="flex items-center gap-2 sm:gap-3 py-0.5">
           {/* Authentic Brand Logo Mark (Separated from tabs, unmistakable brand presence) */}
           {showBrandLogo && (
             <div
@@ -170,16 +170,6 @@ export const WebNavRibbon: React.FC<WebNavRibbonProps> = ({
               </button>
             )}
           </div>
-        </div>
-
-        {/* Editorial Masthead Right Dateline (Subtle status badge so widescreen feels balanced) */}
-        <div className="hidden lg:flex items-center gap-3 font-mono text-[10px] text-black/60 pr-2 select-none shrink-0">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-black inline-block animate-pulse" />
-            <span className="font-bold text-black uppercase tracking-wider">PRAXIS ONLINE</span>
-          </span>
-          <span>&middot;</span>
-          <span className="uppercase tracking-widest">EDITION 2026</span>
         </div>
       </div>
     </nav>
